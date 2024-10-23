@@ -1,93 +1,45 @@
 package search
 
+import android.graphics.Rect
 import android.os.Bundle
-import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.core.widget.addTextChangedListener
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import anim.animateVisibilityChanges
+import co.appreactor.feedk.AtomLinkRel
 import co.appreactor.news.R
 import co.appreactor.news.databinding.FragmentSearchBinding
-import com.google.android.material.internal.TextWatcherAdapter
-import common.AppFragment
-import common.CardListAdapterDecoration
-import common.hideKeyboard
-import common.screenWidth
-import common.showKeyboard
-import db.Link
 import entries.EntriesAdapter
-import entries.EntriesAdapterCallback
-import entries.EntriesAdapterItem
 import kotlinx.coroutines.launch
+import navigation.hideKeyboard
+import navigation.openUrl
+import navigation.showKeyboard
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class SearchFragment : AppFragment() {
+class SearchFragment : Fragment() {
 
-    private val args by lazy {
-        SearchFragmentArgs.fromBundle(requireArguments())
-    }
-
-    private val model: SearchViewModel by viewModel()
+    private val model: SearchModel by viewModel()
 
     private var _binding: FragmentSearchBinding? = null
     private val binding get() = _binding!!
 
-    private val adapter = EntriesAdapter(
-        callback = object : EntriesAdapterCallback {
-            override fun onItemClick(item: EntriesAdapterItem) {
-//                lifecycleScope.launchWhenResumed {
-//                    val entry = model.getEntry(item.id).first() ?: return@launchWhenResumed
-//                    val feed = model.getFeed(entry.feedId).first() ?: return@launchWhenResumed
-//
-//                    model.setRead(listOf(entry.id), true)
-//
-//                    if (feed.openEntriesInBrowser) {
-//                        openUrl(
-//                            url = entry.links.first { it.rel == "alternate" }.href,
-//                            useBuiltInBrowser = model.getConf().first().useBuiltInBrowser
-//                        )
-//                    } else {
-//                        val action =
-//                            SearchFragmentDirections.actionSearchFragmentToEntryFragment(item.id)
-//                        findNavController().navigate(action)
-//                    }
-//                }
-            }
-
-            override fun onDownloadAudioEnclosureClick(link: Link) {
-//                lifecycleScope.launchWhenResumed {
-//                    runCatching {
-//                        model.downloadPodcast(item.id)
-//                    }.onFailure {
-//                        showErrorDialog(it)
-//                    }
-//                }
-            }
-
-            override fun onPlayAudioEnclosureClick(link: Link) {
-//                lifecycleScope.launch {
-//                    runCatching {
-//                        val entry = model.getEntry(item.id).first() ?: return@launch
-//                        model.setRead(listOf(entry.id), true)
-//
-//                        openCachedPodcast(
-//                            cacheUri = model.getCachedPodcastUri(entry.id),
-//                            enclosureLinkType = entry.links.first { it.rel == "enclosure" }.type,
-//                        )
-//                    }.onFailure {
-//                        showErrorDialog(it)
-//                    }
-//                }
-            }
-        }
-    )
+    private val adapter by lazy {
+        EntriesAdapter(requireActivity()) { onListItemClick(it) }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         _binding = FragmentSearchBinding.inflate(inflater, container, false)
         return binding.root
@@ -96,68 +48,105 @@ class SearchFragment : AppFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        searchPanel.isVisible = true
+        initToolbar()
+        initList()
 
-        toolbar?.setupUpNavigation(hideKeyboard = true)
-
-        lifecycleScope.launch {
-            model.searchString.collect {
-                searchPanelClearButton.isVisible = it.isNotEmpty()
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                model.state.collect { binding.setState(it) }
             }
-        }
-
-        searchPanelText.addTextChangedListener(object : TextWatcherAdapter() {
-            override fun afterTextChanged(s: Editable) {
-                model.searchString.value = s.toString()
-            }
-        })
-
-        searchPanelClearButton.setOnClickListener {
-            searchPanelText.setText("")
-        }
-
-        searchPanelText.requestFocus()
-        requireContext().showKeyboard()
-
-        lifecycleScope.launch {
-            model.showProgress.collect {
-                binding.progress.isVisible = it
-            }
-        }
-
-        lifecycleScope.launch {
-            model.showEmpty.collect {
-                binding.message.isVisible = it
-            }
-        }
-
-        binding.list.setHasFixedSize(true)
-        binding.list.layoutManager = LinearLayoutManager(context)
-        binding.list.adapter = adapter
-        binding.list.addItemDecoration(
-            CardListAdapterDecoration(
-                resources.getDimensionPixelSize(
-                    R.dimen.entries_cards_gap
-                )
-            )
-        )
-
-        adapter.screenWidth = screenWidth()
-
-        lifecycleScope.launch {
-            model.searchResults.collect { results ->
-                adapter.submitList(results)
-            }
-        }
-
-        lifecycleScope.launch {
-            model.onViewCreated(args.filter!!)
         }
     }
 
     override fun onDestroyView() {
-        searchPanel.isVisible = false
-        requireContext().hideKeyboard(searchPanelText)
         super.onDestroyView()
+        _binding = null
+    }
+
+    private fun initToolbar() {
+        binding.toolbar.setNavigationOnClickListener {
+            hideKeyboard(binding.query)
+            findNavController().popBackStack()
+        }
+
+        binding.query.addTextChangedListener(
+            afterTextChanged = {
+                binding.clear.isVisible = it!!.isNotEmpty()
+                model.setArgs(SearchModel.Args(query = it.toString()))
+            }
+        )
+
+        binding.query.requestFocus()
+        showKeyboard(binding.query)
+
+        binding.clear.setOnClickListener { binding.query.setText("") }
+    }
+
+    private fun initList() {
+        binding.list.apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(context)
+            this.adapter = this@SearchFragment.adapter
+            val cardsGapPx = resources.getDimensionPixelSize(R.dimen.entries_cards_gap)
+            addItemDecoration(CardListAdapterDecoration(cardsGapPx))
+        }
+    }
+
+    private fun FragmentSearchBinding.setState(state: SearchModel.State) {
+        animateVisibilityChanges(
+            views = listOf(toolbar, list, progress, message),
+            visibleViews = when (state) {
+                is SearchModel.State.QueryIsEmpty,
+                is SearchModel.State.QueryIsTooShort -> listOf(toolbar)
+                is SearchModel.State.RunningQuery -> listOf(toolbar, progress)
+                is SearchModel.State.ShowingQueryResults -> listOf(toolbar, list)
+            },
+        )
+
+        if (state is SearchModel.State.ShowingQueryResults) {
+            adapter.submitList(state.items)
+        }
+    }
+
+    private fun onListItemClick(item: EntriesAdapter.Item) {
+        model.markAsRead(item.id)
+
+        if (item.openInBrowser) {
+            val htmlLink = item.links.firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
+
+            if (htmlLink != null) {
+                openUrl(
+                    url = htmlLink.href.toString(),
+                    useBuiltInBrowser = item.useBuiltInBrowser,
+                )
+            } else {
+                val action = SearchFragmentDirections.actionSearchFragmentToEntryFragment(item.id)
+                findNavController().navigate(action)
+            }
+        } else {
+            val action = SearchFragmentDirections.actionSearchFragmentToEntryFragment(item.id)
+            findNavController().navigate(action)
+        }
+    }
+
+    private class CardListAdapterDecoration(private val gapInPixels: Int) :
+        RecyclerView.ItemDecoration() {
+
+        override fun getItemOffsets(
+            outRect: Rect,
+            view: View,
+            parent: RecyclerView,
+            state: RecyclerView.State,
+        ) {
+            val position = parent.getChildAdapterPosition(view)
+
+            val bottomGap = if (position == (parent.adapter?.itemCount ?: 0) - 1) {
+                gapInPixels
+            } else {
+                0
+            }
+
+            outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
+        }
     }
 }

@@ -1,6 +1,9 @@
 package entry
 
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.PixelFormat
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Handler
@@ -12,7 +15,7 @@ import com.squareup.picasso.Picasso
 import com.squareup.picasso.Target
 
 class TextViewImage(
-    private val textView: TextView
+    private val textView: TextView,
 ) : Drawable(), Target {
 
     private var drawable: Drawable? = null
@@ -25,6 +28,10 @@ class TextViewImage(
 
     override fun setColorFilter(colorFilter: ColorFilter?) {}
 
+    @Deprecated(
+        message = "Deprecated in Java",
+        replaceWith = ReplaceWith("PixelFormat.OPAQUE", "android.graphics.PixelFormat"),
+    )
     override fun getOpacity() = PixelFormat.OPAQUE
 
     override fun onBitmapLoaded(unprocessedBitmap: Bitmap, from: Picasso.LoadedFrom) {
@@ -36,7 +43,7 @@ class TextViewImage(
                 unprocessedBitmap,
                 textView.width,
                 (unprocessedBitmap.height * scaleFactor).toInt(),
-                true
+                true,
             )
         } else {
             unprocessedBitmap
@@ -52,7 +59,7 @@ class TextViewImage(
                 0,
                 -verticalCutoff.toInt(),
                 bitmap.width,
-                -verticalCutoff.toInt() + bitmap.height
+                -verticalCutoff.toInt() + bitmap.height,
             )
         }
 

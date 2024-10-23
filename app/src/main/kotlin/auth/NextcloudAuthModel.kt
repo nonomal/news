@@ -1,55 +1,50 @@
 package auth
 
 import androidx.lifecycle.ViewModel
-import api.NewsApiSwitcher
-import api.nextcloud.NextcloudNewsApiBuilder
-import common.ConfRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
+import api.nextcloud.NextcloudApiBuilder
+import conf.ConfRepo
+import okhttp3.HttpUrl
 import org.koin.android.annotation.KoinViewModel
+import sync.BackgroundSyncScheduler
 
 @KoinViewModel
 class NextcloudAuthModel(
-    private val nextcloudApiSwitcher: NewsApiSwitcher,
-    private val confRepo: ConfRepository,
+    private val confRepo: ConfRepo,
+    private val syncScheduler: BackgroundSyncScheduler,
 ) : ViewModel() {
 
-    suspend fun requestFeeds(
-        serverUrl: String,
+    suspend fun testBackend(
+        url: HttpUrl,
         username: String,
         password: String,
         trustSelfSignedCerts: Boolean,
     ) {
-        val api = NextcloudNewsApiBuilder().build(
-            serverUrl,
-            username,
-            password,
-            trustSelfSignedCerts,
+        val api = NextcloudApiBuilder().build(
+            url = url.toString().trim('/'),
+            username = username,
+            password = password,
+            trustSelfSignedCerts = trustSelfSignedCerts,
         )
 
-        withContext(Dispatchers.Default) { api.getFeeds() }
+        api.getFeeds()
     }
 
-    suspend fun setServer(
-        serverUrl: String,
+    fun setBackend(
+        url: HttpUrl,
         username: String,
         password: String,
         trustSelfSignedCerts: Boolean,
     ) {
-        val newConf = confRepo.select().first().copy(
-            nextcloudServerUrl = serverUrl,
-            nextcloudServerTrustSelfSignedCerts = trustSelfSignedCerts,
-            nextcloudServerUsername = username,
-            nextcloudServerPassword = password,
-        )
+        confRepo.update {
+            it.copy(
+                backend = ConfRepo.BACKEND_NEXTCLOUD,
+                nextcloud_server_url = url.toString().trim('/'),
+                nextcloud_server_trust_self_signed_certs = trustSelfSignedCerts,
+                nextcloud_server_username = username,
+                nextcloud_server_password = password,
+            )
+        }
 
-        confRepo.upsert(newConf)
-    }
-
-    suspend fun setBackend(newBackend: String) {
-        val newConf = confRepo.select().first().copy(backend = newBackend)
-        confRepo.upsert(newConf)
-        nextcloudApiSwitcher.switch(newBackend)
+        syncScheduler.schedule()
     }
 }

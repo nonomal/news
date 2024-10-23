@@ -4,9 +4,10 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import android.widget.RadioButton
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.fragment.navArgs
@@ -14,19 +15,19 @@ import co.appreactor.news.R
 import co.appreactor.news.databinding.FragmentFeedSettingsBinding
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
-import common.AppFragment
-import common.showErrorDialog
-import common.showKeyboard
-import kotlinx.coroutines.flow.first
+import dialog.showErrorDialog
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import navigation.showKeyboard
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class FeedSettingsFragment : AppFragment() {
+class FeedSettingsFragment : Fragment() {
 
     private val args: FeedSettingsFragmentArgs by navArgs()
 
-    private val model: FeedSettingsViewModel by viewModel()
+    private val model: FeedSettingsModel by viewModel()
 
     private var _binding: FragmentFeedSettingsBinding? = null
     private val binding get() = _binding!!
@@ -43,63 +44,10 @@ class FeedSettingsFragment : AppFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            val feed = model.getFeed(args.feedId).first()
+        binding.toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
 
-            if (feed == null) {
-                findNavController().popBackStack()
-                return@launch
-            }
-
-            toolbar?.apply {
-                setupUpNavigation()
-                title = feed.title
-            }
-
-            binding.apply {
-                openEntriesInBrowser.apply {
-                    isChecked = feed.openEntriesInBrowser
-
-                    setOnCheckedChangeListener { _, isChecked ->
-                        model.setOpenEntriesInBrowser(args.feedId, isChecked)
-                    }
-                }
-
-                updatePreviewImagesPanel()
-
-                blockedWords.text = feed.blockedWords.replace(",", ", ")
-
-                blockedWordsPanel.setOnClickListener {
-                    val dialog = MaterialAlertDialogBuilder(requireContext())
-                        .setTitle(getString(R.string.blocked_words))
-                        .setView(R.layout.dialog_blocked_words)
-                        .setPositiveButton(android.R.string.ok) { dialogInterface, _ ->
-                            lifecycleScope.launchWhenResumed {
-                                runCatching {
-                                    val dialog = dialogInterface as AlertDialog
-                                    val blockedWords =
-                                        dialog.findViewById<TextInputEditText>(R.id.blockedWords)!!
-                                    val formattedBlockedWords =
-                                        model.formatBlockedWords(blockedWords.text.toString())
-                                    model.setBlockedWords(feed.id, formattedBlockedWords)
-                                    binding.blockedWords.text = formattedBlockedWords.replace(",", ", ")
-                                }.onFailure {
-                                    showErrorDialog(it)
-                                }
-                            }
-                        }
-                        .setNegativeButton(R.string.cancel, null)
-                        .setOnDismissListener { hideKeyboard() }
-                        .show()
-
-                    val blockedWords = dialog.findViewById<TextInputEditText>(R.id.blockedWords)!!
-                    val formattedBlockedWords = model.formatBlockedWords(blockedWords.text.toString())
-                    model.setBlockedWords(feed.id, formattedBlockedWords)
-
-                    requireContext().showKeyboard()
-                }
-            }
-        }
+        model.feedId.update { args.feedId }
+        model.state.onEach { binding.setState(it) }.launchIn(viewLifecycleOwner.lifecycleScope)
     }
 
     override fun onDestroyView() {
@@ -107,11 +55,71 @@ class FeedSettingsFragment : AppFragment() {
         _binding = null
     }
 
-    private fun updatePreviewImagesPanel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val feed = model.getFeed(args.feedId).first()!!
+    private fun FragmentFeedSettingsBinding.setState(state: FeedSettingsModel.State) {
+        when (state) {
+            is FeedSettingsModel.State.LoadingFeed -> {
+                progress.isVisible = true
+                settings.isVisible = false
+            }
 
-            binding.showPreviewImages.text = when (feed.showPreviewImages) {
+            is FeedSettingsModel.State.ShowingFeedSettings -> {
+                toolbar.title = state.feed.title
+                progress.isVisible = false
+                settings.isVisible = true
+
+                syncOpenEntriesInBrowser(state.feed.ext_open_entries_in_browser ?: false)
+                syncBlockedWords(state.feed.ext_blocked_words)
+                syncShowPreviewImages(state.feed.ext_show_preview_images)
+            }
+        }
+    }
+
+    private fun syncOpenEntriesInBrowser(openEntriesInBrowser: Boolean) {
+        binding.openEntriesInBrowser.apply {
+            isChecked = openEntriesInBrowser
+
+            setOnCheckedChangeListener { _, isChecked ->
+                viewLifecycleOwner.lifecycleScope.launch {
+                    runCatching { model.setOpenEntriesInBrowser(args.feedId, isChecked) }
+                        .onFailure { showErrorDialog(it) }
+                }
+            }
+        }
+    }
+
+    private fun syncBlockedWords(blockedWords: String) {
+        binding.blockedWords.text = model.formatBlockedWords(blockedWords)
+
+        binding.blockedWordsPanel.setOnClickListener {
+            val dialog = MaterialAlertDialogBuilder(requireContext())
+                .setTitle(getString(R.string.blocked_words))
+                .setView(R.layout.dialog_blocked_words)
+                .setPositiveButton(android.R.string.ok) { dialogInterface, _ ->
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        runCatching {
+                            val dialog = dialogInterface as AlertDialog
+                            val blockedWordsView = dialog.findViewById<TextInputEditText>(R.id.blockedWords)!!
+                            val formattedBlockedWords = model.formatBlockedWords(blockedWordsView.text.toString())
+                            model.setBlockedWords(args.feedId, formattedBlockedWords)
+                            binding.blockedWords.text = formattedBlockedWords.replace(",", ", ")
+                        }.onFailure {
+                            showErrorDialog(it)
+                        }
+                    }
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+
+            val blockedWordsView = dialog.findViewById<TextInputEditText>(R.id.blockedWords)!!
+            blockedWordsView.append(blockedWords)
+            blockedWordsView.requestFocus()
+            blockedWordsView.postDelayed({ showKeyboard(blockedWordsView) }, 300)
+        }
+    }
+
+    private fun syncShowPreviewImages(showPreviewImages: Boolean?) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            binding.showPreviewImages.text = when (showPreviewImages) {
                 true -> getString(R.string.show)
                 false -> getString(R.string.hide)
                 else -> getString(R.string.follow_settings)
@@ -127,7 +135,7 @@ class FeedSettingsFragment : AppFragment() {
                 val btnHide = dialog.findViewById<RadioButton>(R.id.hide)!!
                 val btnFollowSettings = dialog.findViewById<RadioButton>(R.id.followSettings)!!
 
-                val checkedButton = when (feed.showPreviewImages) {
+                val checkedButton = when (showPreviewImages) {
                     true -> btnShow
                     false -> btnHide
                     else -> btnFollowSettings
@@ -136,9 +144,13 @@ class FeedSettingsFragment : AppFragment() {
                 checkedButton.isChecked = true
 
                 val saveValue = fun(value: Boolean?) {
-                    runBlocking { model.setShowPreviewImages(args.feedId, value) }
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        runCatching { model.setShowPreviewImages(args.feedId, value) }
+                            .onSuccess { syncShowPreviewImages(value) }
+                            .onFailure { showErrorDialog(it) }
+                    }
+
                     dialog.dismiss()
-                    updatePreviewImagesPanel()
                 }
 
                 btnShow.setOnClickListener { saveValue.invoke(true) }
@@ -146,11 +158,5 @@ class FeedSettingsFragment : AppFragment() {
                 btnFollowSettings.setOnClickListener { saveValue.invoke(null) }
             }
         }
-    }
-
-    private fun hideKeyboard() {
-        requireActivity().window.setSoftInputMode(
-            WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN
-        )
     }
 }

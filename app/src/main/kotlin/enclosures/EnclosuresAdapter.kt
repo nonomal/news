@@ -9,56 +9,86 @@ import androidx.recyclerview.widget.RecyclerView
 import co.appreactor.news.databinding.ListItemEnclosureBinding
 import db.Link
 
-class EnclosuresAdapter(private val listener: Listener) :
-    ListAdapter<Link, EnclosuresAdapter.ViewHolder>(DiffCallback()) {
+class EnclosuresAdapter(
+    private val callback: Callback,
+) : ListAdapter<EnclosuresAdapter.Item, EnclosuresAdapter.ViewHolder>(DiffCallback()) {
 
     override fun onCreateViewHolder(
         parent: ViewGroup,
-        viewType: Int
+        viewType: Int,
     ): ViewHolder {
-        val binding = ListItemEnclosureBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false,
+        return ViewHolder(
+            ListItemEnclosureBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false,
+            )
         )
-
-        return ViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(getItem(position), listener)
+        holder.bind(getItem(position), callback)
     }
 
-    interface Listener {
-        fun onDeleteClick(item: Link)
+    interface Callback {
+        fun onDownloadClick(item: Item)
+        fun onPlayClick(item: Item)
+        fun onDeleteClick(item: Item)
     }
+
+    data class Item(
+        val entryId: String,
+        val enclosure: Link,
+        val primaryText: String,
+        val secondaryText: String,
+    )
 
     class ViewHolder(
         private val binding: ListItemEnclosureBinding,
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(item: Link, listener: Listener) = binding.apply {
-            binding.primaryText.text = item.title
-            binding.secondaryText.text = item.href.toString()
-            binding.delete.isVisible = item.extEnclosureDownloadProgress == 1.0
-            binding.delete.setOnClickListener { listener.onDeleteClick(item) }
+        fun bind(item: Item, callback: Callback) = binding.apply {
+            binding.primaryText.text = item.primaryText
+            binding.secondaryText.text = item.secondaryText
+            binding.supportingText.isVisible = false
+
+            if (item.enclosure.extEnclosureDownloadProgress == null) {
+                download.isVisible = true
+                downloading.isVisible = false
+                downloadProgress.isVisible = false
+                play.isVisible = false
+                delete.isVisible = false
+            } else {
+                val progress = item.enclosure.extEnclosureDownloadProgress
+                val progressPercent = (progress * 100).toInt()
+                download.isVisible = false
+                downloading.isVisible = progress != 1.0
+                downloadProgress.isVisible = progress != 1.0
+                downloadProgress.progress = progressPercent
+                play.isVisible = progress == 1.0
+                delete.isVisible = progress == 1.0
+            }
+
+            download.setOnClickListener { callback.onDownloadClick(item) }
+            play.setOnClickListener { callback.onPlayClick(item) }
+            delete.setOnClickListener { callback.onDeleteClick(item) }
         }
     }
 
-    class DiffCallback : DiffUtil.ItemCallback<Link>() {
+    class DiffCallback : DiffUtil.ItemCallback<Item>() {
 
         override fun areItemsTheSame(
-            oldItem: Link,
-            newItem: Link,
+            oldItem: Item,
+            newItem: Item,
         ): Boolean {
-            return false
+            return newItem.entryId == oldItem.entryId && newItem.enclosure.href == oldItem.enclosure.href
         }
 
         override fun areContentsTheSame(
-            oldItem: Link,
-            newItem: Link,
+            oldItem: Item,
+            newItem: Item,
         ): Boolean {
-            return false
+            return newItem.enclosure == oldItem.enclosure
         }
     }
 }

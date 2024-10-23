@@ -1,22 +1,25 @@
 package entries
 
 import androidx.fragment.app.testing.launchFragmentInContainer
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import auth.AuthFragmentDirections
-import co.appreactor.news.R
+import conf.ConfRepo
+import db.db
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class EntriesFragmentTest {
 
     @Test
-    fun resumesWithoutCrashes() {
+    fun launch() {
+        val db = db(InstrumentationRegistry.getInstrumentation().targetContext)
+        val confRepo = ConfRepo(db)
+        confRepo.update { it.copy(backend = ConfRepo.BACKEND_STANDALONE) }
+
         val directions =
-            AuthFragmentDirections.actionAuthFragmentToEntriesFragment(EntriesFilter.NotBookmarked)
+            AuthFragmentDirections.actionAuthFragmentToNewsFragment(EntriesFilter.NotBookmarked)
 
         launchFragmentInContainer<EntriesFragment>(
-            themeResId = R.style.Theme_Material3_DynamicColors_DayNight,
+            themeResId = com.google.android.material.R.style.Theme_Material3_DynamicColors_DayNight,
             fragmentArgs = directions.arguments,
         )
     }

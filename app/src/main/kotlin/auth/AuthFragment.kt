@@ -1,28 +1,20 @@
 package auth
 
-import android.content.Intent
 import android.graphics.drawable.Animatable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.lifecycle.lifecycleScope
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import co.appreactor.news.R
 import co.appreactor.news.databinding.FragmentAuthBinding
-import common.AppFragment
-import common.ConfRepository
-import common.app
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
+import entries.EntriesFilter
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import java.util.concurrent.TimeUnit
 
-class AuthFragment : AppFragment(
-    showToolbar = false,
-) {
+class AuthFragment : Fragment() {
 
-    private val model: AuthViewModel by viewModel()
+    private val model: AuthModel by viewModel()
 
     private var _binding: FragmentAuthBinding? = null
     private val binding get() = _binding!!
@@ -31,25 +23,9 @@ class AuthFragment : AppFragment(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
-    ): View? {
-        val conf = runBlocking { model.selectConf().first() }
-
-        return if (conf.backend.isBlank()) {
-            _binding = FragmentAuthBinding.inflate(inflater, container, false)
-            binding.root
-        } else {
-            val intent = requireActivity().intent
-            val sharedFeedUrl = (intent?.dataString ?: intent?.getStringExtra(Intent.EXTRA_TEXT))?.trim()
-
-            if (sharedFeedUrl.isNullOrBlank()) {
-                findNavController().navigate(R.id.action_authFragment_to_entriesFragment)
-            } else {
-                val directions = AuthFragmentDirections.actionAuthFragmentToFeedsFragment(sharedFeedUrl)
-                findNavController().navigate(directions)
-            }
-
-            null
-        }
+    ): View {
+        _binding = FragmentAuthBinding.inflate(inflater, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -69,34 +45,19 @@ class AuthFragment : AppFragment(
 
     private fun FragmentAuthBinding.initButtons() {
         useStandaloneBackend.setOnClickListener {
-            lifecycleScope.launchWhenResumed {
-                model.upsertConf(
-                    model.selectConf().first().copy(
-                        backend = ConfRepository.BACKEND_STANDALONE,
-                        syncOnStartup = false,
-                        backgroundSyncIntervalMillis = TimeUnit.HOURS.toMillis(12),
-                        initialSyncCompleted = true,
-                    )
-                )
-
-                app().setupBackgroundSync(override = true)
-
-                binding.root.animate().alpha(0f).setDuration(150).withEndAction {
-                    findNavController().navigate(R.id.action_authFragment_to_entriesFragment)
-                }
+            // This animation hides layout shift caused by bottom nav visibility change
+            binding.root.animate().alpha(0f).withEndAction {
+                model.setStandaloneBackend()
+                findNavController().navigate(AuthFragmentDirections.actionAuthFragmentToNewsFragment(EntriesFilter.NotBookmarked))
             }
         }
 
         useMinifluxBackend.setOnClickListener {
-            binding.root.animate().alpha(0f).setDuration(150).withEndAction {
-                findNavController().navigate(R.id.action_authFragment_to_minifluxAuthFragment)
-            }
+            findNavController().navigate(R.id.action_authFragment_to_minifluxAuthFragment)
         }
 
         useNextcloudBackend.setOnClickListener {
-            binding.root.animate().alpha(0f).setDuration(150).withEndAction {
-                findNavController().navigate(R.id.action_authFragment_to_nextcloudAuthFragment)
-            }
+            findNavController().navigate(R.id.action_authFragment_to_nextcloudAuthFragment)
         }
     }
 }

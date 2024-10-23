@@ -1,16 +1,23 @@
-## News - Feed Reader 📰 and Podcast Player 🎧 for Android 🤖
+<h2 align="center"><b>News</b></h2>
+<h4 align="center">Feed Reader 📰 and Podcast Player 🎧 for Android 🤖</h4>
 
-<p>
+<p align="center">
   <a href="https://f-droid.org/packages/co.appreactor.news/">
-    <img src="graphics/get-it-on-fdroid.svg" alt="Get it on F-Droid" height="75">
+    <img src="graphics/get-it-on-fdroid.svg" alt="Get it on F-Droid" height="60">
   </a>
 </p>
 
+<p align="center">
+<a href="https://github.com/bubelov/news/releases" alt="GitHub release"><img src="https://img.shields.io/github/release/bubelov/news.svg" ></a>
+<a href="https://www.gnu.org/licenses/gpl-3.0" alt="License: GPLv3"><img src="https://img.shields.io/badge/License-GPL%20v3-blue.svg"></a>
+<a href="https://github.com/bubelov/news/actions" alt="Build Status"><img src="https://github.com/bubelov/news/workflows/CI/badge.svg?branch=master&event=push"></a>
+</p>
+
 <div>
-<img alt="" src="fastlane/metadata/android/en/images/phoneScreenshots/1.png" width="204">
-<img alt="" src="fastlane/metadata/android/en/images/phoneScreenshots/2.png" width="204">
-<img alt="" src="fastlane/metadata/android/en/images/phoneScreenshots/3.png" width="204">
-<img alt="" src="fastlane/metadata/android/en/images/phoneScreenshots/4.png" width="204">
+<img alt="" src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width="204">
+<img alt="" src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.jpg" width="204">
+<img alt="" src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width="204">
+<img alt="" src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width="204">
 </div>
 
 ## 🔌 Supported Backends
@@ -30,13 +37,7 @@
 - Both light and dark themes are supported
 - This is an open source app which respects your privacy
 
-## 🪙 Support News With Bitcoins
-
-bc1qng60mcufjnmz6330gze5yt4m6enzra7lywns2d
-
-<img src="https://github.com/bubelov/btcmap-android/raw/master/app/src/main/res/drawable-nodpi/btc_address.png" width="204">
-
-## 🌍 Help Us Translate
+## 🌍 Help with Translation
 
 - [Afrikaans](app/src/main/res/values-af/strings.xml)
 - [Arabic](/app/src/main/res/values-ar/strings.xml)
@@ -68,4 +69,4 @@ bc1qng60mcufjnmz6330gze5yt4m6enzra7lywns2d
 - [Ukrainian](/app/src/main/res/values-uk/strings.xml)
 - [Vietnamese](/app/src/main/res/values-vi/strings.xml)
 
-Feel free to open an issue if you can't find your language or regional dialect
+Feel free to open an issue if you can't find your language or regional dialect.

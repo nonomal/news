@@ -1,43 +1,31 @@
 package db
 
-import common.ConfRepository
+import conf.ConfRepo
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNull
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 
 class ConfQueriesTest {
 
     @Test
-    fun `insert or replace`() {
-        val db = database()
-        runBlocking { ConfRepository(db).upsert(ConfRepository.DEFAULT_CONF) }
-        val oldConf = db.confQueries.select().executeAsOne()
-        val newConf = oldConf.copy(backend = ConfRepository.BACKEND_STANDALONE)
-        runBlocking { ConfRepository(db).upsert(newConf) }
-        assertEquals(newConf, db.confQueries.select().executeAsOne())
+    fun insert() = runBlocking {
+        val db = testDb()
+        db.confQueries.insert(ConfRepo.DEFAULT_CONF)
+        assertEquals(ConfRepo.DEFAULT_CONF, db.confQueries.select().executeAsOne())
     }
 
     @Test
-    fun `insert default`() {
-        val db = database()
-        runBlocking { ConfRepository(db).upsert(ConfRepository.DEFAULT_CONF) }
-        val conf = db.confQueries.select().executeAsOne()
-        assertEquals(ConfRepository.DEFAULT_CONF, conf)
+    fun selectAll() {
+        val db = testDb()
+        db.confQueries.insert(ConfRepo.DEFAULT_CONF)
+        assertEquals(ConfRepo.DEFAULT_CONF, db.confQueries.select().executeAsOne())
     }
 
     @Test
-    fun select() {
-        val db = database()
-        runBlocking { ConfRepository(db).upsert(ConfRepository.DEFAULT_CONF) }
-        val conf = db.confQueries.select().executeAsOne()
-        assertEquals(conf, db.confQueries.select().executeAsOne())
-    }
-
-    @Test
-    fun `delete all`() {
-        val db = database()
-        runBlocking { ConfRepository(db).upsert(ConfRepository.DEFAULT_CONF) }
+    fun deleteAll() {
+        val db = testDb()
+        db.confQueries.insert(ConfRepo.DEFAULT_CONF)
         db.confQueries.delete()
         assertNull(db.confQueries.select().executeAsOneOrNull())
     }

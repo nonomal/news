@@ -2,27 +2,19 @@ package entries
 
 import androidx.recyclerview.widget.DiffUtil
 
-class EntriesAdapterDiffCallback : DiffUtil.ItemCallback<EntriesAdapterItem>() {
+class EntriesAdapterDiffCallback : DiffUtil.ItemCallback<EntriesAdapter.Item>() {
 
     override fun areItemsTheSame(
-        oldItem: EntriesAdapterItem,
-        newItem: EntriesAdapterItem,
+        oldItem: EntriesAdapter.Item,
+        newItem: EntriesAdapter.Item,
     ): Boolean {
         return oldItem.id == newItem.id
     }
 
     override fun areContentsTheSame(
-        oldItem: EntriesAdapterItem,
-        newItem: EntriesAdapterItem,
+        oldItem: EntriesAdapter.Item,
+        newItem: EntriesAdapter.Item,
     ): Boolean {
-        return oldItem.ogImageUrl == newItem.ogImageUrl
-                && oldItem.ogImageWidth == newItem.ogImageWidth
-                && oldItem.ogImageHeight == newItem.ogImageHeight
-                && oldItem.cropImage == newItem.cropImage
-                && oldItem.title == newItem.title
-                && oldItem.subtitle == newItem.subtitle
-                && oldItem.summary == newItem.summary
-                && oldItem.audioEnclosure == newItem.audioEnclosure
-                && oldItem.read == newItem.read
+        return oldItem == newItem
     }
 }

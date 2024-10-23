@@ -11,10 +11,10 @@ import androidx.core.content.getSystemService
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import co.appreactor.news.R
-import common.App
-import common.AppActivity
-import common.ConfRepository
-import entries.EntriesRepository
+import app.App
+import navigation.Activity
+import conf.ConfRepo
+import entries.EntriesRepo
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.get
@@ -25,20 +25,20 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
 
     private suspend fun doWorkAsync(): Result {
         val app = applicationContext as App
-        val conf = app.get<ConfRepository>().select().first()
-        val sync = app.get<NewsApiSync>()
-        val entriesRepository = app.get<EntriesRepository>()
+        val conf = app.get<ConfRepo>().conf.value
+        val sync = app.get<Sync>()
+        val entriesRepository = app.get<EntriesRepo>()
 
-        if (!conf.initialSyncCompleted) {
+        if (!conf.initial_sync_completed) {
             return Result.retry()
         }
 
-        when (val syncResult = sync.sync()) {
+        when (val syncResult = sync.run()) {
             is SyncResult.Success -> {
                 if (syncResult.newAndUpdatedEntries > 0) {
                     runCatching {
                         val unreadEntries = entriesRepository.selectByReadAndBookmarked(
-                            read = false,
+                            read = listOf(false),
                             bookmarked = false,
                         ).first().size
 
@@ -59,7 +59,7 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
     private fun showUnreadEntriesNotification(unreadEntries: Int, context: Context) {
         createNotificationChannel(context)
 
-        val intent = Intent(context, AppActivity::class.java).apply {
+        val intent = Intent(context, Activity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         }
 

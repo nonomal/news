@@ -1,21 +1,23 @@
 package auth
 
 import android.os.Bundle
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import co.appreactor.news.R
 import co.appreactor.news.databinding.FragmentNextcloudAuthBinding
-import common.AppFragment
-import common.ConfRepository
-import common.app
-import common.showDialog
+import dialog.showErrorDialog
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class NextcloudAuthFragment : AppFragment() {
+class NextcloudAuthFragment : Fragment() {
 
     private val model: NextcloudAuthModel by viewModel()
 
@@ -34,70 +36,81 @@ class NextcloudAuthFragment : AppFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        toolbar?.apply {
-            setupUpNavigation()
-            setTitle(R.string.nextcloud_login)
-        }
+        binding.apply {
+            toolbar.setNavigationOnClickListener { findNavController().popBackStack() }
 
-        binding.login.setOnClickListener {
-            if (binding.serverUrl.text.isNullOrEmpty()) {
-                binding.serverUrlLayout.error = getString(R.string.field_is_empty)
-            } else {
-                binding.serverUrlLayout.error = null
-            }
-
-            if (binding.username.text.isNullOrEmpty()) {
-                binding.usernameLayout.error = getString(R.string.field_is_empty)
-            } else {
-                binding.usernameLayout.error = null
-            }
-
-            if (binding.password.text.isNullOrEmpty()) {
-                binding.passwordLayout.error = getString(R.string.field_is_empty)
-            } else {
-                binding.passwordLayout.error = null
-            }
-
-            if (binding.serverUrlLayout.error != null
-                || binding.usernameLayout.error != null
-                || binding.passwordLayout.error != null
-            ) {
-                return@setOnClickListener
-            }
-
-            lifecycleScope.launchWhenResumed {
-                binding.progress.isVisible = true
-
-                runCatching {
-                    model.requestFeeds(
-                        serverUrl = binding.serverUrl.text.toString(),
-                        username = binding.username.text.toString(),
-                        password = binding.password.text.toString(),
-                        trustSelfSignedCerts = binding.trustSelfSignedCerts.isChecked,
-                    )
-                }.onSuccess {
-                    model.setServer(
-                        binding.serverUrl.text.toString(),
-                        binding.username.text.toString(),
-                        binding.password.text.toString(),
-                        binding.trustSelfSignedCerts.isChecked,
-                    )
-
-                    model.setBackend(ConfRepository.BACKEND_NEXTCLOUD)
-
-                    app().setupBackgroundSync(override = true)
-
-                    findNavController().navigate(R.id.action_nextcloudAuthFragment_to_entriesFragment)
-                }.onFailure {
-                    binding.progress.isVisible = false
-
-                    requireContext().showDialog(
-                        R.string.error,
-                        it.message ?: getString(R.string.direct_login_failed)
-                    )
+            password.setOnEditorActionListener { _, actionId, keyEvent ->
+                if (actionId == EditorInfo.IME_ACTION_DONE || keyEvent?.keyCode == KeyEvent.KEYCODE_ENTER) {
+                    connect()
+                    return@setOnEditorActionListener true
                 }
+
+                false
+            }
+
+            connect.setOnClickListener { connect() }
+        }
+    }
+
+    private fun connect() {
+        if (!binding.validate()) {
+            return
+        }
+
+        binding.progress.isVisible = true
+
+        val url = binding.url.text.toString().toHttpUrl()
+        val username = binding.username.text.toString()
+        val password = binding.password.text.toString()
+        val trustSelfSignedCerts = binding.trustSelfSignedCerts.isChecked
+
+        viewLifecycleOwner.lifecycleScope.launchWhenResumed {
+            runCatching {
+                model.testBackend(
+                    url = url,
+                    username = username,
+                    password = password,
+                    trustSelfSignedCerts = trustSelfSignedCerts,
+                )
+            }.onSuccess {
+                model.setBackend(
+                    url = url,
+                    username = username,
+                    password = password,
+                    trustSelfSignedCerts = trustSelfSignedCerts,
+                )
+
+                findNavController().navigate(R.id.action_nextcloudAuthFragment_to_newsFragment)
+            }.onFailure {
+                binding.progress.isVisible = false
+                showErrorDialog(it.message ?: getString(R.string.direct_login_failed))
             }
         }
+    }
+
+    private fun FragmentNextcloudAuthBinding.validate(): Boolean {
+        urlLayout.error = when (url.text.toString().length) {
+            0 -> getString(R.string.field_is_empty)
+            else -> null
+        }
+
+        urlLayout.error = when (binding.url.text.toString().toHttpUrlOrNull()) {
+            null -> getString(R.string.invalid_url)
+            else -> null
+        }
+
+        usernameLayout.error = when (username.text.toString().length) {
+            0 -> getString(R.string.field_is_empty)
+            else -> null
+        }
+
+        if (binding.password.text.isNullOrEmpty()) {
+            binding.passwordLayout.error = getString(R.string.field_is_empty)
+        } else {
+            binding.passwordLayout.error = null
+        }
+
+        return urlLayout.error == null && usernameLayout.error == null && passwordLayout.error == null
     }
 
     override fun onDestroyView() {

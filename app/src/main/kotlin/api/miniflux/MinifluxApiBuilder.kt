@@ -1,13 +1,12 @@
 package api.miniflux
 
-import co.appreactor.news.BuildConfig
 import com.google.gson.Gson
 import com.google.gson.JsonObject
-import common.trustSelfSignedCerts
-import okhttp3.Credentials
+import http.authInterceptor
+import http.trustSelfSignedCerts
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
+import okio.IOException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -20,60 +19,44 @@ class MinifluxApiBuilder {
         password: String,
         trustSelfSignedCerts: Boolean,
     ): MinifluxApi {
-        val authenticatingInterceptor = Interceptor {
-            val request = it.request()
-            val credential = Credentials.basic(username, password)
-            it.proceed(request.newBuilder().header("Authorization", credential).build())
-        }
-
-        val errorInterceptor = Interceptor {
-            val response = it.proceed(it.request())
-
-            if (!response.isSuccessful) {
-                val json = Gson().fromJson(response.body!!.string(), JsonObject::class.java)
-
-                val errorMessage = if (json != null && json.has("error_message")) {
-                    json["error_message"].asString
-                } else {
-                    "HTTP request ${it.request().url} failed with response code ${response.code}"
-                }
-
-                throw MinifluxApiException(errorMessage)
-            }
-
-            response
-        }
-
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) {
-                HttpLoggingInterceptor.Level.BASIC
-            } else {
-                HttpLoggingInterceptor.Level.NONE
-            }
-
-            redactHeader("Authorization")
-        }
-
-        val clientBuilder = OkHttpClient.Builder()
-            .addInterceptor(authenticatingInterceptor)
-            .addInterceptor(loggingInterceptor)
-            .addInterceptor(errorInterceptor)
+        val builder = OkHttpClient.Builder()
+            .addInterceptor(authInterceptor(username, password))
+            .addInterceptor(errorInterceptor())
             .connectTimeout(15, TimeUnit.SECONDS)
             .readTimeout(20, TimeUnit.SECONDS)
             .writeTimeout(20, TimeUnit.SECONDS)
 
         if (trustSelfSignedCerts) {
-            clientBuilder.trustSelfSignedCerts()
+            builder.trustSelfSignedCerts()
         }
 
-        val client = clientBuilder.build()
-
-        val retrofit = Retrofit.Builder()
+        return Retrofit.Builder()
             .baseUrl("$url/v1/")
             .addConverterFactory(GsonConverterFactory.create())
-            .client(client)
+            .client(builder.build())
             .build()
+            .create(MinifluxApi::class.java)
+    }
 
-        return retrofit.create(MinifluxApi::class.java)
+    private fun errorInterceptor(): Interceptor {
+        return Interceptor {
+            val response = it.proceed(it.request())
+
+            if (!response.isSuccessful && response.body != null) {
+                val json = runCatching {
+                    Gson().fromJson(response.body!!.string(), JsonObject::class.java)
+                }.getOrNull()
+
+                val errorMessage = if (json != null && json.has("error_message")) {
+                    json["error_message"].asString
+                } else {
+                    "Endpoint ${it.request().url} failed with response code ${response.code}"
+                }
+
+                throw IOException(errorMessage)
+            }
+
+            response
+        }
     }
 }

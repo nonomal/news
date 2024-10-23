@@ -1,151 +1,384 @@
 package entries
 
+import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.core.net.toUri
+import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
+import androidx.core.os.bundleOf
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.navigation.NavOptions
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.RecyclerView.OnScrollListener
+import anim.animateVisibilityChanges
+import anim.showSmooth
+import co.appreactor.feedk.AtomLinkRel
 import co.appreactor.news.R
 import co.appreactor.news.databinding.FragmentEntriesBinding
+import com.google.android.material.navigation.NavigationBarView.OnItemReselectedListener
 import com.google.android.material.snackbar.Snackbar
-import common.AppFragment
-import common.CardListAdapterDecoration
-import common.ConfRepository
-import common.Scrollable
-import common.hide
-import common.openCachedPodcast
-import common.openUrl
-import common.screenWidth
-import common.show
-import common.showErrorDialog
-import db.Link
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.onStart
+import conf.ConfRepo
+import dialog.showErrorDialog
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
+import navigation.openUrl
 import org.koin.androidx.viewmodel.ext.android.viewModel
 
-class EntriesFragment : AppFragment(), Scrollable {
+class EntriesFragment : Fragment(), OnItemReselectedListener {
 
-    private val args by lazy {
-        val args = requireArguments()
-
-        // Default filter
-        if (args["filter"] == null) {
-            args.putParcelable("filter", EntriesFilter.NotBookmarked)
-        }
-
-        EntriesFragmentArgs.fromBundle(requireArguments())
-    }
+    private val args by lazy { EntriesFragmentArgs.fromBundle(requireArguments()) }
 
     private val model: EntriesModel by viewModel()
 
     private var _binding: FragmentEntriesBinding? = null
     private val binding get() = _binding!!
 
-    private val seenEntries = mutableSetOf<EntriesAdapterItem>()
+    private val seenEntries = mutableSetOf<EntriesAdapter.Item>()
 
     private val snackbar by lazy {
-        Snackbar.make(
-            binding.root,
-            "",
-            Snackbar.LENGTH_SHORT
-        ).apply {
-            anchorView = requireActivity().findViewById(R.id.bottomNavigation)
+        Snackbar.make(binding.root, "", Snackbar.LENGTH_SHORT).apply {
+            anchorView = requireActivity().findViewById(R.id.bottomNav)
         }
     }
 
     private val adapter by lazy {
-        EntriesAdapter(
-            callback = object : EntriesAdapterCallback {
-                override fun onItemClick(item: EntriesAdapterItem) {
-                    lifecycleScope.launchWhenResumed {
-                        model.setRead(listOf(item.id), true)
+        EntriesAdapter(requireActivity()) { onListItemClick(it) }
+            .apply { scrollToTopOnInsert() }
+    }
 
-                        val entry = model.getEntry(item.id).first() ?: return@launchWhenResumed
-                        val entryLinks = model.getEntryLinks(entry.id).first()
-                        val feed = model.getFeed(entry.feedId).first() ?: return@launchWhenResumed
+    private val touchHelper: ItemTouchHelper? by lazy { createTouchHelper() }
 
-                        if (feed.openEntriesInBrowser) {
-                            openUrl(
-                                url = entryLinks.first { it.rel == "alternate" && it.type == "text/html" }.href.toString(),
-                                useBuiltInBrowser = model.getConf().first().useBuiltInBrowser,
-                            )
-                        } else {
-                            val action = EntriesFragmentDirections.actionEntriesFragmentToEntryFragment(item.id)
-                            findNavController().navigate(action)
-                        }
-                    }
-                }
+    private val trackingListener = createTrackingListener()
 
-                override fun onDownloadAudioEnclosureClick(link: Link) {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        runCatching {
-                            model.downloadAudioEnclosure(link)
-                        }.onFailure {
-                            showErrorDialog(it)
-                        }
-                    }
-                }
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
+        return if (model.hasBackend()) {
+            val intent = requireActivity().intent
+            val sharedFeedUrl = (intent?.dataString ?: intent?.getStringExtra(Intent.EXTRA_TEXT))?.trim() ?: ""
+            intent.removeExtra(Intent.EXTRA_TEXT)
 
-                override fun onPlayAudioEnclosureClick(link: Link) {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        runCatching {
-                            openCachedPodcast(
-                                cacheUri = link.extCacheUri?.toUri(),
-                                enclosureLinkType = link.type!!,
-                            )
-
-                            model.setRead(listOf(link.entryId!!), true)
-                        }.onFailure {
-                            showErrorDialog(it)
-                        }
-                    }
-
-//                    lifecycleScope.launch {
-//                        runCatching {
-//                            val entry = model.getEntry(item.id).first() ?: return@launch
-//                            val enclosureLink = entry.links.first { it.rel == "enclosure" }
-//                            model.setRead(listOf(entry.id), true)
-//
-//                            openCachedPodcast(
-//                                cacheUri = model.getCachedPodcastUri(entry.id),
-//                                enclosureLinkType = enclosureLink.type,
-//                            )
-//                        }.onFailure {
-//                            showErrorDialog(it)
-//                        }
-//                    }
-                }
+            if (sharedFeedUrl.isNotBlank()) {
+                findNavController().navigate(
+                    resId = R.id.feedsFragment,
+                    args = bundleOf(Pair("url", sharedFeedUrl)),
+                    navOptions = NavOptions.Builder().setPopUpTo(R.id.nav_graph, true).build(),
+                )
             }
-        ).apply {
-            screenWidth = screenWidth()
 
-            registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-                override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                    if (positionStart == 0) {
-                        (binding.list.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-                            0,
-                            0
-                        )
-                    }
-                }
-            })
+            if (!requireArguments().containsKey("filter")) {
+                requireArguments().putParcelable("filter", EntriesFilter.NotBookmarked)
+            }
+
+            _binding = FragmentEntriesBinding.inflate(inflater, container, false)
+            binding.root
+        } else {
+            val builder = NavOptions.Builder().setPopUpTo(R.id.nav_graph, true)
+            findNavController().navigate(R.id.authFragment, null, builder.build())
+            null
         }
     }
 
-    private val touchHelper: ItemTouchHelper? by lazy {
-        when (args.filter) {
-            EntriesFilter.NotBookmarked -> {
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        initSwipeRefresh()
+        initList()
+
+        model.args.update { args.filter!! }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                model.state.collect { binding.setState(it) }
+            }
+        }
+    }
+
+    override fun onStop() {
+        super.onStop()
+
+        val state = model.state.value
+
+        if (state is EntriesModel.State.ShowingCachedEntries && state.conf.mark_scrolled_entries_as_read) {
+            model.setRead(
+                entryIds = seenEntries.map { it.id },
+                read = true,
+            )
+
+            seenEntries.clear()
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+
+        _binding = null
+    }
+
+    override fun onNavigationItemReselected(item: MenuItem) {
+        scrollToTop()
+    }
+
+    private fun initSwipeRefresh() {
+        binding.swipeRefresh.apply {
+            when (args.filter) {
+                is EntriesFilter.NotBookmarked, is EntriesFilter.BelongToFeed -> {
+                    isEnabled = true
+                    setOnRefreshListener { model.onPullRefresh() }
+                }
+
+                else -> isEnabled = false
+            }
+        }
+    }
+
+    private fun initList() {
+        if (binding.list.adapter == null) {
+            binding.list.apply {
+                layoutManager = LinearLayoutManager(requireContext())
+                adapter = this@EntriesFragment.adapter
+
+                val listItemDecoration = CardListAdapterDecoration(
+                    resources.getDimensionPixelSize(R.dimen.entries_cards_gap)
+                )
+
+                addItemDecoration(listItemDecoration)
+            }
+
+            touchHelper?.attachToRecyclerView(binding.list)
+        }
+    }
+
+    private fun FragmentEntriesBinding.setState(state: EntriesModel.State) {
+        animateVisibilityChanges(
+            views = listOf(toolbar, progress, message, retry, swipeRefresh),
+            visibleViews = when (state) {
+                is EntriesModel.State.InitialSync -> listOf(toolbar, progress)
+                is EntriesModel.State.FailedToSync -> listOf(toolbar, retry)
+                is EntriesModel.State.LoadingCachedEntries -> listOf(toolbar, progress)
+                is EntriesModel.State.ShowingCachedEntries -> listOf(toolbar, swipeRefresh)
+            },
+        )
+
+        updateToolbar(state)
+
+        when (state) {
+            is EntriesModel.State.InitialSync -> {
+                if (state.message.isNotEmpty()) {
+                    message.showSmooth()
+                    message.text = state.message
+                }
+            }
+
+            is EntriesModel.State.FailedToSync -> {
+                retry.setOnClickListener { model.onRetry() }
+                showErrorDialog(state.cause)
+            }
+
+            EntriesModel.State.LoadingCachedEntries -> {}
+
+            is EntriesModel.State.ShowingCachedEntries -> {
+                swipeRefresh.isRefreshing = state.showBackgroundProgress
+
+                if (state.entries.isEmpty()) {
+                    message.showSmooth()
+                    message.text = getEmptyMessage()
+                }
+
+                seenEntries.clear()
+                adapter.submitList(state.entries) { if (state.scrollToTop) scrollToTop() }
+
+                if (
+                    state.conf.mark_scrolled_entries_as_read
+                    && (args.filter is EntriesFilter.NotBookmarked || args.filter is EntriesFilter.BelongToFeed)
+                ) {
+                    binding.list.addOnScrollListener(trackingListener)
+                } else {
+                    binding.list.removeOnScrollListener(trackingListener)
+                }
+            }
+        }
+    }
+
+    private fun updateToolbar(state: EntriesModel.State) {
+        binding.toolbar.apply {
+            when (args.filter!!) {
+                EntriesFilter.Bookmarked -> setTitle(R.string.bookmarks)
+                EntriesFilter.NotBookmarked -> setTitle(R.string.news)
+
+                is EntriesFilter.BelongToFeed -> {
+                    binding.toolbar.apply {
+                        navigationIcon = DrawerArrowDrawable(context).also { it.progress = 1f }
+                        setNavigationOnClickListener { findNavController().popBackStack() }
+                    }
+
+                    if (state is EntriesModel.State.ShowingCachedEntries) {
+                        title = state.feed?.title
+                    }
+                }
+            }
+
+            updateSearchButton()
+            updateShowReadEntriesButton(state)
+            updateSortOrderButton(state)
+            updateMarkAllAsReadButton()
+            updateSettingsButton()
+        }
+    }
+
+    private fun updateSearchButton() {
+        binding.toolbar.menu!!.findItem(R.id.search).setOnMenuItemClickListener {
+            findNavController().navigate(R.id.action_entriesFragment_to_searchFragment)
+            true
+        }
+    }
+
+    private fun updateShowReadEntriesButton(state: EntriesModel.State) {
+        val button = binding.toolbar.menu!!.findItem(R.id.showOpenedEntries)
+        button.isVisible = getShowReadEntriesButtonVisibility()
+
+        if (state !is EntriesModel.State.ShowingCachedEntries) {
+            button.isVisible = false
+            return
+        }
+
+        if (state.conf.show_read_entries) {
+            button.setIcon(R.drawable.ic_baseline_visibility_24)
+            button.title = getString(R.string.hide_read_news)
+            touchHelper?.attachToRecyclerView(null)
+        } else {
+            button.setIcon(R.drawable.ic_baseline_visibility_off_24)
+            button.title = getString(R.string.show_read_news)
+            touchHelper?.attachToRecyclerView(binding.list)
+        }
+
+        button.setOnMenuItemClickListener {
+            model.saveConf { it.copy(show_read_entries = !it.show_read_entries) }
+            true
+        }
+    }
+
+    private fun updateSortOrderButton(state: EntriesModel.State) {
+        val button = binding.toolbar.menu.findItem(R.id.sort)
+
+        if (state !is EntriesModel.State.ShowingCachedEntries) {
+            button.isVisible = false
+            return
+        } else {
+            button.isVisible = true
+        }
+
+        when (state.conf.sort_order) {
+            ConfRepo.SORT_ORDER_ASCENDING -> {
+                button.setIcon(R.drawable.ic_clock_forward)
+                button.title = getString(R.string.show_newest_first)
+            }
+
+            ConfRepo.SORT_ORDER_DESCENDING -> {
+                button.setIcon(R.drawable.ic_clock_back)
+                button.title = getString(R.string.show_oldest_first)
+            }
+        }
+
+        button.setOnMenuItemClickListener {
+            model.changeSortOrder()
+            scrollToTop()
+            true
+        }
+    }
+
+    private fun updateMarkAllAsReadButton() {
+        binding.toolbar.menu!!.findItem(R.id.markAllAsRead).setOnMenuItemClickListener {
+            model.markAllAsRead()
+            true
+        }
+    }
+
+    private fun updateSettingsButton() {
+        binding.toolbar.menu!!.findItem(R.id.settings).setOnMenuItemClickListener {
+            findNavController().navigate(EntriesFragmentDirections.actionEntriesFragmentToSettingsFragment())
+            true
+        }
+    }
+
+    private fun scrollToTop() {
+        binding.list.layoutManager?.scrollToPosition(0)
+    }
+
+    private fun getShowReadEntriesButtonVisibility(): Boolean {
+        return when (args.filter!!) {
+            EntriesFilter.NotBookmarked -> true
+            EntriesFilter.Bookmarked -> false
+            is EntriesFilter.BelongToFeed -> true
+        }
+    }
+
+    private fun getEmptyMessage(): String {
+        return when (args.filter) {
+            is EntriesFilter.Bookmarked -> getString(R.string.you_have_no_bookmarks)
+            else -> getString(R.string.news_list_is_empty)
+        }
+    }
+
+    private fun showSnackbar(
+        @StringRes actionText: Int,
+        action: (() -> Unit),
+        undoAction: (() -> Unit),
+    ) {
+        runCatching {
+            snackbar.apply {
+                setText(actionText)
+                setAction(R.string.undo) { undoAction.invoke() }
+            }.show()
+
+            model.apply { action.invoke() }
+        }.onFailure {
+            showErrorDialog(it)
+        }
+    }
+
+    private fun onListItemClick(item: EntriesAdapter.Item) {
+        model.setRead(
+            entryIds = listOf(item.id),
+            read = true,
+        )
+
+        if (item.openInBrowser) {
+            val alternateLinks = item.links.filter { it.rel is AtomLinkRel.Alternate }
+
+            if (alternateLinks.isEmpty()) {
+                showErrorDialog(R.string.this_entry_doesnt_have_any_external_links)
+                return
+            }
+
+            val alternateHtmlLink = alternateLinks.firstOrNull { it.type == "text/html" }
+            val linkToOpen = alternateHtmlLink ?: alternateLinks.first()
+
+            openUrl(
+                url = linkToOpen.href.toString(),
+                useBuiltInBrowser = item.useBuiltInBrowser,
+            )
+        } else {
+            val action = EntriesFragmentDirections.actionEntriesFragmentToEntryFragment(item.id)
+            findNavController().navigate(action)
+        }
+    }
+
+    private fun createTouchHelper(): ItemTouchHelper? {
+        return when (args.filter) {
+            EntriesFilter.NotBookmarked, is EntriesFilter.BelongToFeed -> {
                 ItemTouchHelper(object : SwipeHelper(
                     requireContext(),
                     R.drawable.ic_baseline_visibility_24,
@@ -159,7 +392,7 @@ class EntriesFragment : AppFragment(), Scrollable {
                                 showSnackbar(
                                     actionText = R.string.marked_as_read,
                                     action = { model.setRead(listOf(entry.id), true) },
-                                    undoAction = { model.setRead(listOf(entry.id), false) }
+                                    undoAction = { model.setRead(listOf(entry.id), false) },
                                 )
                             }
 
@@ -167,7 +400,7 @@ class EntriesFragment : AppFragment(), Scrollable {
                                 showSnackbar(
                                     actionText = R.string.bookmarked,
                                     action = { model.setBookmarked(entry.id, true) },
-                                    undoAction = { model.setBookmarked(entry.id, false) }
+                                    undoAction = { model.setBookmarked(entry.id, false) },
                                 )
                             }
                         }
@@ -209,327 +442,71 @@ class EntriesFragment : AppFragment(), Scrollable {
         }
     }
 
-    private val trackingListener = object : RecyclerView.OnScrollListener() {
-        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+    private fun createTrackingListener(): OnScrollListener {
+        return object : OnScrollListener() {
+            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
 
-        }
-
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            if (recyclerView.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
-                return
             }
 
-            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-
-            if (layoutManager.findFirstVisibleItemPosition() == RecyclerView.NO_POSITION) {
-                return
-            }
-
-            if (layoutManager.findLastVisibleItemPosition() == RecyclerView.NO_POSITION) {
-                return
-            }
-
-            val visibleEntries =
-                (layoutManager.findFirstVisibleItemPosition()..layoutManager.findLastVisibleItemPosition()).map {
-                    adapter.currentList[it]
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                if (recyclerView.scrollState == RecyclerView.SCROLL_STATE_IDLE) {
+                    return
                 }
 
-            seenEntries.addAll(visibleEntries)
-        }
-    }
+                val layoutManager = recyclerView.layoutManager as LinearLayoutManager
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = FragmentEntriesBinding.inflate(inflater, container, false)
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        initDrawer()
-        initToolbar()
-        initSwipeRefresh()
-        initList()
-
-        model.state
-            .onStart { model.filter.update { args.filter!! } }
-            .launchIn(viewLifecycleOwner.lifecycleScope)
-
-        model.state
-            .onEach { displayState(it) }
-            .launchIn(viewLifecycleOwner.lifecycleScope)
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-
-        if (runBlocking { model.getConf().first().markScrolledEntriesAsRead }) {
-            model.setRead(
-                entryIds = seenEntries.map { it.id },
-                value = true,
-            )
-
-            seenEntries.clear()
-        }
-    }
-
-    override fun scrollToTop() {
-        binding.list.layoutManager?.scrollToPosition(0)
-    }
-
-    private fun initDrawer() {
-        isDrawerLocked = args.filter is EntriesFilter.BelongToFeed
-    }
-
-    private fun initToolbar() = toolbar?.apply {
-        inflateMenu(R.menu.menu_entries)
-
-        when (val filter = args.filter!!) {
-            EntriesFilter.Bookmarked -> {
-                setTitle(R.string.bookmarks)
-            }
-
-            EntriesFilter.NotBookmarked -> {
-                setTitle(R.string.news)
-            }
-
-            is EntriesFilter.BelongToFeed -> {
-                setupUpNavigation()
-
-                lifecycleScope.launchWhenResumed {
-                    title = model.getFeed(filter.feedId).first()?.title
-                }
-            }
-        }
-
-        initSearchButton()
-        initShowReadEntriesButton()
-        initSortOrderButton()
-        initMarkAllAsReadButton()
-    }
-
-    private fun initSearchButton() {
-        val searchMenuItem = toolbar?.menu?.findItem(R.id.search)
-
-        searchMenuItem?.setOnMenuItemClickListener {
-            findNavController().navigate(
-                EntriesFragmentDirections.actionEntriesFragmentToSearchFragment(
-                    args.filter!!
-                )
-            )
-            true
-        }
-    }
-
-    private fun initShowReadEntriesButton() {
-        val showOpenedEntriesMenuItem = toolbar?.menu?.findItem(R.id.showOpenedEntries)
-        showOpenedEntriesMenuItem?.isVisible = getShowReadEntriesButtonVisibility()
-
-        lifecycleScope.launchWhenResumed {
-            val conf = model.getConf().first()
-
-            if (conf.showReadEntries) {
-                showOpenedEntriesMenuItem?.setIcon(R.drawable.ic_baseline_visibility_24)
-                showOpenedEntriesMenuItem?.title = getString(R.string.hide_read_news)
-                touchHelper?.attachToRecyclerView(null)
-            } else {
-                showOpenedEntriesMenuItem?.setIcon(R.drawable.ic_baseline_visibility_off_24)
-                showOpenedEntriesMenuItem?.title = getString(R.string.show_read_news)
-                touchHelper?.attachToRecyclerView(binding.list)
-            }
-        }
-
-        showOpenedEntriesMenuItem?.setOnMenuItemClickListener {
-            lifecycleScope.launchWhenResumed {
-                val conf = model.getConf().first()
-                model.saveConf(conf.copy(showReadEntries = !conf.showReadEntries))
-                initShowReadEntriesButton()
-            }
-
-            true
-        }
-    }
-
-    private fun initSortOrderButton() {
-        val sortOrderMenuItem = toolbar?.menu?.findItem(R.id.sort) ?: return
-
-        model.getConf().onEach { conf ->
-            when (conf.sortOrder) {
-                ConfRepository.SORT_ORDER_ASCENDING -> {
-                    sortOrderMenuItem.setIcon(R.drawable.ic_clock_forward)
-                    sortOrderMenuItem.title = getString(R.string.show_newest_first)
+                if (layoutManager.findFirstVisibleItemPosition() == RecyclerView.NO_POSITION) {
+                    return
                 }
 
-                ConfRepository.SORT_ORDER_DESCENDING -> {
-                    sortOrderMenuItem.setIcon(R.drawable.ic_clock_back)
-                    sortOrderMenuItem.title = getString(R.string.show_oldest_first)
+                if (layoutManager.findLastVisibleItemPosition() == RecyclerView.NO_POSITION) {
+                    return
                 }
-            }
 
-            sortOrderMenuItem.setOnMenuItemClickListener {
-                model.changeSortOrder()
-                true
-            }
-        }.launchIn(viewLifecycleOwner.lifecycleScope)
-    }
-
-    private fun initMarkAllAsReadButton() {
-        toolbar?.menu?.findItem(R.id.markAllAsRead)?.setOnMenuItemClickListener {
-            lifecycleScope.launchWhenResumed { model.markAllAsRead() }
-            true
-        }
-    }
-
-    private fun initSwipeRefresh() = binding.swipeRefresh.apply {
-        when (args.filter) {
-            is EntriesFilter.NotBookmarked -> {
-                isEnabled = true
-
-                setOnRefreshListener {
-                    lifecycleScope.launch {
-                        runCatching {
-                            model.onPullRefresh()
-                        }.onFailure {
-                            lifecycleScope.launchWhenResumed { showErrorDialog(it) }
-                        }
-
-                        binding.swipeRefresh.isRefreshing = false
+                val visibleEntries =
+                    (layoutManager.findFirstVisibleItemPosition()..layoutManager.findLastVisibleItemPosition()).map {
+                        adapter.currentList[it]
                     }
-                }
-            }
 
-            else -> {
-                binding.swipeRefresh.isEnabled = false
+                seenEntries.addAll(visibleEntries)
             }
         }
     }
 
-    private fun initList() {
-        binding.apply {
-            list.apply {
-                layoutManager = LinearLayoutManager(requireContext())
-                adapter = this@EntriesFragment.adapter
+    private fun EntriesAdapter.scrollToTopOnInsert() {
+        registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+                if (_binding == null) {
+                    return
+                }
 
-                val listItemDecoration = CardListAdapterDecoration(
-                    resources.getDimensionPixelSize(R.dimen.entries_cards_gap)
-                )
-
-                addItemDecoration(listItemDecoration)
+                if (positionStart == 0) {
+                    (binding.list.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
+                        0,
+                        0,
+                    )
+                }
             }
-        }
+        })
+    }
 
-        touchHelper?.attachToRecyclerView(binding.list)
+    private class CardListAdapterDecoration(private val gapInPixels: Int) : RecyclerView.ItemDecoration() {
 
-        model.getConf().onEach {
-            if (
-                it.markScrolledEntriesAsRead
-                && (args.filter is EntriesFilter.NotBookmarked || args.filter is EntriesFilter.BelongToFeed)
-            ) {
-                binding.list.addOnScrollListener(trackingListener)
+        override fun getItemOffsets(
+            outRect: Rect,
+            view: View,
+            parent: RecyclerView,
+            state: RecyclerView.State,
+        ) {
+            val position = parent.getChildAdapterPosition(view)
+
+            val bottomGap = if (position == (parent.adapter?.itemCount ?: 0) - 1) {
+                gapInPixels
             } else {
-                binding.list.removeOnScrollListener(trackingListener)
-            }
-        }.launchIn(viewLifecycleOwner.lifecycleScope)
-    }
-
-    private suspend fun displayState(state: EntriesModel.State?) = binding.apply {
-        when (state) {
-            null -> {
-                swipeRefresh.isRefreshing = false
-                list.hide()
-                progress.hide()
-                message.hide()
-                retry.hide()
+                0
             }
 
-            is EntriesModel.State.InitialSync -> {
-                swipeRefresh.isRefreshing = false
-                list.hide()
-                progress.show(animate = true)
-                message.show(animate = true)
-                message.text = state.message
-                retry.hide()
-            }
-
-            is EntriesModel.State.FailedToSync -> {
-                swipeRefresh.isRefreshing = false
-                list.hide()
-                progress.hide()
-                message.hide()
-                retry.show(animate = true)
-                retry.setOnClickListener {
-                    lifecycleScope.launchWhenResumed {
-                        model.onRetry()
-                    }
-                }
-                showErrorDialog(state.cause)
-            }
-
-            EntriesModel.State.LoadingCachedEntries -> {
-                swipeRefresh.isRefreshing = false
-                list.hide()
-                progress.show(animate = true)
-                message.hide()
-                retry.hide()
-            }
-
-            is EntriesModel.State.ShowingCachedEntries -> {
-                swipeRefresh.isRefreshing = state.showBackgroundProgress
-                list.show()
-                progress.hide()
-
-                if (state.entries.isEmpty()) {
-                    message.text = getEmptyMessage()
-                    message.show(animate = true)
-                } else {
-                    message.hide()
-                }
-
-                retry.hide()
-                seenEntries.clear()
-                adapter.submitList(state.entries) { if (state.scrollToTop) scrollToTop() }
-            }
-        }
-    }
-
-    private fun getShowReadEntriesButtonVisibility(): Boolean {
-        return when (args.filter!!) {
-            EntriesFilter.NotBookmarked -> true
-            EntriesFilter.Bookmarked -> false
-            is EntriesFilter.BelongToFeed -> true
-        }
-    }
-
-    private fun getEmptyMessage(): String {
-        return when (args.filter) {
-            is EntriesFilter.Bookmarked -> getString(R.string.you_have_no_bookmarks)
-            else -> getString(R.string.news_list_is_empty)
-        }
-    }
-
-    private fun showSnackbar(
-        @StringRes actionText: Int,
-        action: (() -> Unit),
-        undoAction: (() -> Unit),
-    ) {
-        runCatching {
-            snackbar.apply {
-                setText(actionText)
-                setAction(R.string.undo) {
-                    undoAction.invoke()
-                }
-            }.show()
-
-            model.apply {
-                action.invoke()
-            }
-        }.onFailure {
-            showErrorDialog(it)
+            outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
         }
     }
 }

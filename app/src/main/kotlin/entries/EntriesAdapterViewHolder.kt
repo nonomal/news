@@ -1,5 +1,6 @@
 package entries
 
+import android.text.Html
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.RecyclerView
 import co.appreactor.news.R
@@ -9,20 +10,11 @@ import com.squareup.picasso.Picasso
 
 class EntriesAdapterViewHolder(
     private val binding: ListItemEntryBinding,
-    private val screenWidth: Int,
     private val callback: EntriesAdapterCallback,
+    private val screenWidth: Int,
 ) : RecyclerView.ViewHolder(binding.root) {
 
-    private var setStrokeAlpha = false
-
-    fun bind(item: EntriesAdapterItem) = binding.apply {
-        if (!setStrokeAlpha) {
-            card.setStrokeColor(card.strokeColorStateList!!.withAlpha(32))
-            downloadPodcast.strokeColor = downloadPodcast.strokeColor.withAlpha(32)
-            playPodcast.strokeColor = playPodcast.strokeColor.withAlpha(32)
-            setStrokeAlpha = true
-        }
-
+    fun bind(item: EntriesAdapter.Item) = binding.apply {
         val cardMargin = root.resources.getDimensionPixelSize(R.dimen.card_horizontal_margin)
 
         val cardHeightMin = root.resources.getDimensionPixelSize(R.dimen.card_height_min)
@@ -32,12 +24,12 @@ class EntriesAdapterViewHolder(
         imageView.isVisible = false
         imageProgress.isVisible = false
 
-        if (item.ogImageUrl.isNotBlank()) {
+        if (item.showImage && item.imageUrl.isNotEmpty()) {
             imageView.isVisible = true
             imageProgress.isVisible = true
 
             val targetHeight =
-                ((screenWidth - cardMargin) * (item.ogImageHeight.toDouble() / item.ogImageWidth.toDouble()))
+                ((screenWidth - cardMargin) * (item.imageHeight.toDouble() / item.imageWidth.toDouble()))
 
             if (item.cropImage) {
                 var croppedHeight = targetHeight.toInt()
@@ -60,8 +52,8 @@ class EntriesAdapterViewHolder(
             }
 
             Picasso.get()
-                .load(item.ogImageUrl)
-                .resize(item.ogImageWidth.toInt(), 0)
+                .load(item.imageUrl)
+                .resize(item.imageWidth, 0)
                 .onlyScaleDown()
                 .into(imageView, object : Callback {
                     override fun onSuccess() {
@@ -76,48 +68,17 @@ class EntriesAdapterViewHolder(
                 })
         }
 
-        primaryText.text = item.title.trim()
+        primaryText.text = Html.fromHtml(item.title, Html.FROM_HTML_MODE_COMPACT).toString()
         primaryText.isVisible = primaryText.length() > 0
         secondaryText.text = item.subtitle
 
         supportingText.isVisible = item.summary.isNotBlank()
         supportingText.text = item.summary
 
-        podcastPanel.isVisible = false
-        podcastPanel.tag = item
-
-        if (item.audioEnclosure != null) {
-            podcastPanel.isVisible = true
-
-            if (item.audioEnclosure.extEnclosureDownloadProgress == null) {
-                downloadPodcast.isVisible = true
-                downloadingPodcast.isVisible = false
-                downloadPodcastProgress.isVisible = false
-                playPodcast.isVisible = false
-            } else {
-                val progress = item.audioEnclosure.extEnclosureDownloadProgress
-                downloadPodcast.isVisible = false
-                downloadingPodcast.isVisible = progress != 1.0
-                downloadPodcastProgress.isVisible = progress != 1.0
-                downloadPodcastProgress.progress = (progress * 100).toInt()
-                playPodcast.isVisible = progress == 1.0
-            }
-
-            downloadPodcast.setOnClickListener {
-                callback.onDownloadAudioEnclosureClick(item.audioEnclosure)
-            }
-
-            playPodcast.setOnClickListener {
-                callback.onPlayAudioEnclosureClick(item.audioEnclosure)
-            }
-        }
-
         primaryText.isEnabled = !item.read
         secondaryText.isEnabled = !item.read
         supportingText.isEnabled = !item.read
 
-        root.setOnClickListener {
-            callback.onItemClick(item)
-        }
+        root.setOnClickListener { callback.onItemClick(item) }
     }
 }

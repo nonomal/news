@@ -129,7 +129,8 @@ class EntriesFragment : AppFragment() {
 
         when (filter) {
             EntriesFilter.Unread -> {
-                binding.toolbar.setTitle(R.string.unread)
+                val unread = db().entry.selectUnread().size
+                binding.toolbar.setTitle(getString(R.string.unread_n, unread))
             }
 
             EntriesFilter.Bookmarked -> {

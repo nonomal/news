@@ -373,6 +373,10 @@ class FeedsFragment : AppFragment() {
                 withContext(Dispatchers.IO) {
                     db().feed.insertOrReplace(feed.copy(title = trimmedNewTitle))
                 }
+                val feeds = withContext(Dispatchers.IO) {
+                    db().feed.selectAll()
+                }
+                state.update { State.ShowingFeeds(feeds.map { it.toItem(db()) }) }
             }.onFailure { e -> showErrorDialog(e) }
         }
     }

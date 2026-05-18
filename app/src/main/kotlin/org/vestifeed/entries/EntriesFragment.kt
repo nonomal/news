@@ -198,8 +198,10 @@ class EntriesFragment : AppFragment() {
                     db().conf.select()
                 }
 
+                val db = db()
+
                 val listItems = withContext(Dispatchers.IO) {
-                    entries.map { it.toItem(conf, db()) }
+                    entries.map { it.toItem(conf, db) }
                 }
 
                 adapter.submitList(listItems)

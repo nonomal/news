@@ -9,7 +9,6 @@ import androidx.core.content.getSystemService
 import androidx.fragment.app.FragmentActivity
 import androidx.recyclerview.widget.ListAdapter
 import org.vestifeed.databinding.ListItemEntryBinding
-import org.vestifeed.db.table.Link
 
 class EntriesAdapter(
     private val activity: FragmentActivity,
@@ -70,6 +69,5 @@ class EntriesAdapter(
         var read: Boolean,
         val openInBrowser: Boolean,
         val useBuiltInBrowser: Boolean,
-        val links: List<Link>,
     )
 }

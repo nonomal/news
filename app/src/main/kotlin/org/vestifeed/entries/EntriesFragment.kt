@@ -34,7 +34,6 @@ import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryQueries
 import org.vestifeed.db.table.Feed
-import org.vestifeed.db.Database
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
 import org.vestifeed.navigation.AppFragment
@@ -199,10 +198,8 @@ class EntriesFragment : AppFragment() {
                     db().conf.select()
                 }
 
-                val db = db()
-
                 val listItems = withContext(Dispatchers.IO) {
-                    entries.map { it.toItem(conf, db) }
+                    entries.map { it.toItem(conf) }
                 }
 
                 adapter.submitList(listItems)
@@ -303,7 +300,7 @@ class EntriesFragment : AppFragment() {
         // todo
     }
 
-    private fun EntryQueries.EntriesAdapterRow.toItem(conf: Conf, database: Database): EntriesAdapter.Item {
+    private fun EntryQueries.EntriesAdapterRow.toItem(conf: Conf): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = id,
             showImage = extShowPreviewImages || conf.showPreviewImages,
@@ -317,7 +314,6 @@ class EntriesFragment : AppFragment() {
             read = extRead,
             openInBrowser = extOpenEntriesInBrowser,
             useBuiltInBrowser = conf.useBuiltInBrowser,
-            links = database.link.selectByEntryId(id),
         )
     }
 
@@ -580,7 +576,8 @@ class EntriesFragment : AppFragment() {
         )
 
         if (item.openInBrowser) {
-            val alternateLinks = item.links.filter { it.rel is AtomLinkRel.Alternate }
+            val links = db().link.selectByEntryId(item.id)
+            val alternateLinks = links.filter { it.rel is AtomLinkRel.Alternate }
 
             if (alternateLinks.isEmpty()) {
                 showErrorDialog(R.string.this_entry_doesnt_have_any_external_links)
@@ -591,7 +588,7 @@ class EntriesFragment : AppFragment() {
             val linkToOpen = alternateHtmlLink ?: alternateLinks.first()
 
             openUrl(
-                url = linkToOpen.href.toString(),
+                url = linkToOpen.href,
                 useBuiltInBrowser = item.useBuiltInBrowser,
             )
         } else {

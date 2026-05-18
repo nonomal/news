@@ -29,7 +29,6 @@ import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentSearchBinding
 import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.EntryQueries
-import org.vestifeed.db.Database
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesAdapter
 import org.vestifeed.entry.EntryFragment
@@ -82,7 +81,7 @@ class SearchFragment : AppFragment() {
                 _state.update { State.RunningQuery }
 
                 val rows = db().entry.selectByQuery(args.query)
-                val items = rows.map { it.toItem(conf, db()) }
+                val items = rows.map { it.toItem(conf) }
 
                 _state.update { State.ShowingQueryResults(items) }
             }
@@ -174,12 +173,13 @@ class SearchFragment : AppFragment() {
         markAsRead(item.id)
 
         if (item.openInBrowser) {
+            val links = db().link.selectByEntryId(item.id)
             val htmlLink =
-                item.links.firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
+                links.firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
 
             if (htmlLink != null) {
                 openUrl(
-                    url = htmlLink.href.toString(),
+                    url = htmlLink.href,
                     useBuiltInBrowser = item.useBuiltInBrowser,
                 )
             } else {
@@ -236,7 +236,7 @@ class SearchFragment : AppFragment() {
         data class ShowingQueryResults(val items: List<EntriesAdapter.Item>) : State()
     }
 
-    private fun EntryQueries.SelectByQuery.toItem(conf: Conf, database: Database): EntriesAdapter.Item {
+    private fun EntryQueries.SelectByQuery.toItem(conf: Conf): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = id,
             showImage = extShowPreviewImages || conf.showPreviewImages,
@@ -250,7 +250,6 @@ class SearchFragment : AppFragment() {
             read = extRead,
             openInBrowser = extOpenEntriesInBrowser,
             useBuiltInBrowser = conf.useBuiltInBrowser,
-            links = database.link.selectByEntryId(id),
         )
     }
 

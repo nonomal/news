@@ -102,6 +102,79 @@ class EntryQueriesTest {
         assertEquals(3, db.entry.selectByQuery("linux").size)
         assertEquals(1, db.entry.selectByQuery("call").size)
     }
+
+    @Test
+    fun selectUnread() {
+        val feed1 = createFeed(title = "Feed 1")
+        val feed2 = createFeed(title = "Feed 2")
+        db.feed.insertOrReplace(listOf(feed1, feed2))
+
+        val entries = listOf(
+            entry().copy(feedId = feed1.id, title = "Entry 1", extRead = false, extBookmarked = false),
+            entry().copy(feedId = feed1.id, title = "Entry 2", extRead = true, extBookmarked = false),
+            entry().copy(feedId = feed1.id, title = "Entry 3", extRead = false, extBookmarked = true),
+            entry().copy(feedId = feed2.id, title = "Entry 4", extRead = false, extBookmarked = false),
+            entry().copy(feedId = feed2.id, title = "Entry 5", extRead = true, extBookmarked = true),
+        )
+
+        db.entry.insertOrReplace(entries)
+
+        val unread = db.entry.selectUnread()
+
+        assertEquals(2, unread.size)
+        assertEquals("Entry 1", unread.find { it.id == entries[0].id }?.title)
+        assertEquals("Entry 4", unread.find { it.id == entries[3].id }?.title)
+        assertEquals(feed1.title, unread.find { it.id == entries[0].id }?.feedTitle)
+        assertEquals(feed2.title, unread.find { it.id == entries[3].id }?.feedTitle)
+    }
+
+    @Test
+    fun selectBookmarked() {
+        val feed1 = createFeed(title = "Feed 1")
+        val feed2 = createFeed(title = "Feed 2")
+        db.feed.insertOrReplace(listOf(feed1, feed2))
+
+        val entries = listOf(
+            entry().copy(feedId = feed1.id, title = "Entry 1", extBookmarked = true),
+            entry().copy(feedId = feed1.id, title = "Entry 2", extBookmarked = false),
+            entry().copy(feedId = feed2.id, title = "Entry 3", extBookmarked = true),
+            entry().copy(feedId = feed2.id, title = "Entry 4", extBookmarked = false),
+        )
+
+        db.entry.insertOrReplace(entries)
+
+        val bookmarked = db.entry.selectBookmarked()
+
+        assertEquals(2, bookmarked.size)
+        assertEquals("Entry 1", bookmarked.find { it.id == entries[0].id }?.title)
+        assertEquals("Entry 3", bookmarked.find { it.id == entries[2].id }?.title)
+        assertEquals(feed1.title, bookmarked.find { it.id == entries[0].id }?.feedTitle)
+        assertEquals(feed2.title, bookmarked.find { it.id == entries[2].id }?.feedTitle)
+    }
+
+    @Test
+    fun selectByFeedId() {
+        val feed1 = createFeed(title = "Feed 1")
+        val feed2 = createFeed(title = "Feed 2")
+        db.feed.insertOrReplace(listOf(feed1, feed2))
+
+        val entries = listOf(
+            entry().copy(feedId = feed1.id, title = "Entry 1", extRead = false),
+            entry().copy(feedId = feed1.id, title = "Entry 2", extRead = true),
+            entry().copy(feedId = feed2.id, title = "Entry 3", extRead = false),
+        )
+
+        db.entry.insertOrReplace(entries)
+
+        val feed1Entries = db.entry.selectByFeedId(feed1.id)
+        val feed2Entries = db.entry.selectByFeedId(feed2.id)
+
+        assertEquals(2, feed1Entries.size)
+        assertEquals(1, feed2Entries.size)
+        assertEquals("Entry 1", feed1Entries.find { it.id == entries[0].id }?.title)
+        assertEquals("Entry 2", feed1Entries.find { it.id == entries[1].id }?.title)
+        assertEquals("Entry 3", feed2Entries.find { it.id == entries[2].id }?.title)
+    }
 }
 
 fun EntryQueries.insertOrReplace(): Entry {

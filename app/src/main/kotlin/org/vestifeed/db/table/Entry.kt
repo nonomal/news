@@ -231,12 +231,15 @@ class EntryQueries(private val conn: SQLiteConnection) {
     fun selectByFeedId(feedId: String): List<EntriesAdapterRow> {
         conn.prepare(
             """
-            SELECT e.*, f.title as feed_title, f.ext_show_preview_images, f.ext_open_entries_in_browser
+            SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
+                   e.ext_og_image_width, e.ext_og_image_height, e.title,
+                   f.title as feed_title, f.ext_show_preview_images,
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.feed_id = ?
-            ORDER BY e.published DESC;   
-        """
+            ORDER BY e.published DESC;
+            """
         ).use { stmt ->
             stmt.bindText(1, feedId)
             return buildList {
@@ -250,7 +253,10 @@ class EntryQueries(private val conn: SQLiteConnection) {
     fun selectUnread(): List<EntriesAdapterRow> {
         conn.prepare(
             """
-            SELECT e.*, f.title as feed_title, f.ext_show_preview_images, f.ext_open_entries_in_browser
+            SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
+                   e.ext_og_image_width, e.ext_og_image_height, e.title,
+                   f.title as feed_title, f.ext_show_preview_images,
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.ext_read = 0 AND e.ext_bookmarked = 0
@@ -268,7 +274,10 @@ class EntryQueries(private val conn: SQLiteConnection) {
     fun selectBookmarked(): List<EntriesAdapterRow> {
         conn.prepare(
             """
-            SELECT e.*, f.title as feed_title, f.ext_show_preview_images, f.ext_open_entries_in_browser
+            SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
+                   e.ext_og_image_width, e.ext_og_image_height, e.title,
+                   f.title as feed_title, f.ext_show_preview_images,
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.ext_bookmarked = 1
@@ -601,29 +610,29 @@ class EntryQueries(private val conn: SQLiteConnection) {
             LIMIT 500
         """.trimIndent()
 
-        val res = mutableListOf<SelectByQuery>()
-        val stmt = conn.prepare(sql)
-        stmt.bindText(1, searchQuery)
-        stmt.bindText(2, searchQuery)
-        stmt.bindText(3, searchQuery)
-        while (stmt.step()) {
-            res.add(
-                SelectByQuery(
-                    id = stmt.getText(0),
-                    extShowPreviewImages = stmt.getInt(1) == 1,
-                    extOpenGraphImageUrl = stmt.getText(2),
-                    extOpenGraphImageWidth = stmt.getInt(3),
-                    extOpenGraphImageHeight = stmt.getInt(4),
-                    title = stmt.getText(5),
-                    feedTitle = stmt.getText(6),
-                    published = OffsetDateTime.parse(stmt.getText(7)),
-                    summary = stmt.getText(8),
-                    extRead = stmt.getInt(9) == 1,
-                    extOpenEntriesInBrowser = stmt.getInt(10) == 1,
-                )
-            )
+        return conn.prepare(sql).use { stmt ->
+            stmt.bindText(1, searchQuery)
+            stmt.bindText(2, searchQuery)
+            stmt.bindText(3, searchQuery)
+            buildList {
+                while (stmt.step()) {
+                    add(
+                        SelectByQuery(
+                            id = stmt.getText(0),
+                            extShowPreviewImages = stmt.getInt(1) == 1,
+                            extOpenGraphImageUrl = stmt.getText(2),
+                            extOpenGraphImageWidth = stmt.getInt(3),
+                            extOpenGraphImageHeight = stmt.getInt(4),
+                            title = stmt.getText(5),
+                            feedTitle = stmt.getText(6),
+                            published = OffsetDateTime.parse(stmt.getText(7)),
+                            summary = stmt.getText(8),
+                            extRead = stmt.getInt(9) == 1,
+                            extOpenEntriesInBrowser = stmt.getInt(10) == 1,
+                        )
+                    )
+                }
+            }
         }
-        stmt.close()
-        return res
     }
 }

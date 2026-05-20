@@ -10,6 +10,7 @@ import org.vestifeed.db.table.FEED_SCHEMA
 import org.vestifeed.db.table.FeedQueries
 import org.vestifeed.db.table.LINK_SCHEMA
 import org.vestifeed.db.table.LinkQueries
+import org.vestifeed.db.table.Log
 
 class Database(driver: SQLiteDriver, val path: String) {
 
@@ -33,6 +34,7 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL(EntrySchema.toString())
             conn.execSQL(LINK_SCHEMA)
             conn.execSQL(ConfSchema.toString())
+            conn.execSQL(Log.SCHEMA)
             conn.execSQL("PRAGMA user_version=1;")
         }
     }

@@ -11,8 +11,11 @@ import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 import org.vestifeed.R
 import org.vestifeed.app.App
+import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentAuthBinding
 import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.LogEntry
+import org.vestifeed.db.table.LogQueries
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.sync.BackgroundSyncScheduler
@@ -35,6 +38,13 @@ class AuthFragment : AppFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.initButtons()
+        db().log.insert(
+            LogQueries.InsertArgs(
+                level = "debug",
+                tag = "AuthFragment",
+                message = "onViewCreated",
+            )
+        )
     }
 
     override fun onResume() {
@@ -59,6 +69,14 @@ class AuthFragment : AppFragment() {
             val db = (requireContext().applicationContext as App).db
             val syncScheduler = BackgroundSyncScheduler(requireContext())
 
+            db().log.insert(
+                LogQueries.InsertArgs(
+                    level = "debug",
+                    tag = "AuthFragment",
+                    message = "Switching to embedded backend",
+                )
+            )
+
             db.conf.update {
                 it.copy(
                     backend = ConfSchema.BACKEND_STANDALONE,
@@ -66,7 +84,7 @@ class AuthFragment : AppFragment() {
                     backgroundSyncIntervalMillis = TimeUnit.HOURS.toMillis(12),
                 )
             }
-
+            
             syncScheduler.schedule()
 
             parentFragmentManager.commit {

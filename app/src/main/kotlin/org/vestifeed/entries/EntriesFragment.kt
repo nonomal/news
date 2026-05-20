@@ -34,6 +34,7 @@ import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryQueries
 import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.LogQueries
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
 import org.vestifeed.navigation.AppFragment
@@ -93,6 +94,14 @@ class EntriesFragment : AppFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        db().log.insert(
+            LogQueries.InsertArgs(
+                level = "debug",
+                tag = "EntriesFragment",
+                message = "onViewCreated",
+            )
+        )
 
         if (filter == null) {
             showErrorDialog(getString(R.string.required_argument_is_missing, "filter")) {

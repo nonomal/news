@@ -21,7 +21,7 @@ class App : Application() {
 
     val sync by lazy { Sync(scope, api, db) }
 
-    val ogFetcher by lazy { OpenGraphImageFetcher(this) }
+    val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
 
     val api by lazy { HotSwapApi(db) }
 

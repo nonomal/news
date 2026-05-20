@@ -1,28 +1,31 @@
 package org.vestifeed.og
 
-import android.content.Context
+import coil3.PlatformContext
 import coil3.imageLoader
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
-import org.vestifeed.app.db
-import org.vestifeed.app.sync
+import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.LogQueries
 import org.vestifeed.http.await
 import org.vestifeed.parser.AtomLinkRel
-import org.vestifeed.sync.Sync
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
-class OpenGraphImageFetcher(private val ctx: Context) {
+class OpenGraphImageFetcher(
+    private val db: Database,
+    private val imageContext: PlatformContext,
+) {
     val lastDownload = MutableStateFlow<EntryQueries.EntryWithoutContent?>(null)
 
     private val httpClient = OkHttpClient.Builder()
@@ -30,26 +33,16 @@ class OpenGraphImageFetcher(private val ctx: Context) {
         .build()
 
     suspend fun fetchAndWatch() {
-        fetchAll()
-
-        ctx.sync().state.collectLatest {
-            if (it is Sync.State.Idle) {
-                fetchAll()
-            }
-        }
-    }
-
-    private suspend fun fetchAll() {
         while (true) {
             val uncheckedEntries = withContext(Dispatchers.IO) {
-                ctx.db().entry.selectByOgImageChecked(
+                db.entry.selectByOgImageChecked(
                     extOgImageChecked = false,
                     limit = 1,
                 )
             }
 
             if (uncheckedEntries.isEmpty()) {
-                return
+                delay(1.seconds)
             } else {
                 if (fetchEntryImages(uncheckedEntries).isNotEmpty()) {
                     lastDownload.update { uncheckedEntries.first() }
@@ -75,15 +68,24 @@ class OpenGraphImageFetcher(private val ctx: Context) {
     }
 
     private suspend fun fetchEntryImage(entry: EntryQueries.EntryWithoutContent): Boolean {
+        withContext(Dispatchers.IO) {
+            db.log.insert(
+                LogQueries.InsertArgs(
+                    level = "debug",
+                    tag = "OpenGraphImageFetcher",
+                    message = "Trying to fetch an image for entry ${entry.id} (${entry.title})",
+                )
+            )
+        }
         val links = withContext(Dispatchers.IO) {
-            ctx.db().link.selectByEntryId(entry.id)
+            db.link.selectByEntryId(entry.id)
         }
         val htmlLink =
             links.firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
                 ?: links.firstOrNull { it.rel is AtomLinkRel.Alternate }
         if (htmlLink == null) {
             withContext(Dispatchers.IO) {
-                ctx.db().entry.updateOgImageChecked(true, entry.id)
+                db.entry.updateOgImageChecked(true, entry.id)
             }
             return false
         }
@@ -92,14 +94,14 @@ class OpenGraphImageFetcher(private val ctx: Context) {
             httpClient.newCall(Request.Builder().url(htmlLink.href).build()).await()
         } catch (_: Throwable) {
             withContext(Dispatchers.IO) {
-                ctx.db().entry.updateOgImageChecked(true, entry.id)
+                db.entry.updateOgImageChecked(true, entry.id)
             }
             return false
         }
 
         if (!htmlLinkResponse.isSuccessful) {
             withContext(Dispatchers.IO) {
-                ctx.db().entry.updateOgImageChecked(true, entry.id)
+                db.entry.updateOgImageChecked(true, entry.id)
             }
             return false
         }
@@ -108,7 +110,7 @@ class OpenGraphImageFetcher(private val ctx: Context) {
             htmlLinkResponse.body.string()
         } catch (_: Throwable) {
             withContext(Dispatchers.IO) {
-                ctx.db().entry.updateOgImageChecked(true, entry.id)
+                db.entry.updateOgImageChecked(true, entry.id)
             }
             return false
         }
@@ -118,30 +120,30 @@ class OpenGraphImageFetcher(private val ctx: Context) {
 
         if (imageUrl.isBlank()) {
             withContext(Dispatchers.IO) {
-                ctx.db().entry.updateOgImageChecked(true, entry.id)
+                db.entry.updateOgImageChecked(true, entry.id)
             }
             return false
         }
 
-        val imageRequest = ImageRequest.Builder(ctx)
+        val imageRequest = ImageRequest.Builder(imageContext)
             .data(imageUrl)
             .size(800)
             .build()
 
-        val bitmap = when (val imageResult = ctx.imageLoader.execute(imageRequest)) {
+        val bitmap = when (val imageResult = imageContext.imageLoader.execute(imageRequest)) {
             is SuccessResult -> {
                 imageResult.image.toBitmap()
             }
 
             is ErrorResult -> {
                 withContext(Dispatchers.IO) {
-                    ctx.db().entry.updateOgImageChecked(true, entry.id)
+                    db.entry.updateOgImageChecked(true, entry.id)
                 }
                 return false
             }
         }
 
-        ctx.db().entry.updateOgImage(
+        db.entry.updateOgImage(
             extOgImageUrl = imageUrl,
             extOgImageWidth = bitmap.width.toLong(),
             extOgImageHeight = bitmap.height.toLong(),

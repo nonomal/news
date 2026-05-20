@@ -63,11 +63,22 @@ class LogQueries(private val conn: SQLiteConnection) {
         }
     }
 
-    fun selectAll(): List<LogEntry> {
+    private val levelPriority = mapOf(
+        "trace" to 0,
+        "debug" to 1,
+        "info" to 2,
+        "warn" to 3,
+        "error" to 4,
+    )
+
+    fun selectByMinLevel(minLevel: String): List<LogEntry> {
+        val minPriority = levelPriority[minLevel] ?: 1
+        val allowedLevels = levelPriority.filter { it.value >= minPriority }.keys
         conn.prepare(
             """
             SELECT id, timestamp, level, tag, message, data
             FROM log
+            WHERE level IN (${allowedLevels.joinToString(",") { "'$it'" }})
             ORDER BY id DESC;
             """
         ).use { stmt ->

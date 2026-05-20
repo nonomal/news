@@ -26,6 +26,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.vestifeed.BuildConfig
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -37,6 +38,7 @@ import org.vestifeed.db.table.Feed
 import org.vestifeed.db.table.LogQueries
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
+import org.vestifeed.log.LogFragment
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.openUrl
 import org.vestifeed.search.SearchFragment
@@ -118,6 +120,24 @@ class EntriesFragment : AppFragment() {
 
         initSwipeRefresh()
         initList()
+
+        binding.toolbar.menu!!.findItem(R.id.settings).setOnMenuItemClickListener {
+            parentFragmentManager.commit {
+                replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
+                addToBackStack(null)
+            }
+            true
+        }
+
+        if (BuildConfig.DEBUG) {
+            binding.toolbar.menu!!.findItem(R.id.logs).setOnMenuItemClickListener {
+                parentFragmentManager.commit {
+                    replace(R.id.fragmentContainerView, LogFragment::class.java, null)
+                    addToBackStack(null)
+                }
+                true
+            }
+        }
 
 //        viewLifecycleOwner.lifecycleScope.launch {
 //            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
@@ -435,6 +455,7 @@ class EntriesFragment : AppFragment() {
             updateShowReadEntriesButton(state)
             updateSortOrderButton(state)
             updateMarkAllAsReadButton()
+            updateLogsButton()
             updateSettingsButton()
         }
     }
@@ -515,6 +536,11 @@ class EntriesFragment : AppFragment() {
             markAllAsRead()
             true
         }
+    }
+
+    private fun updateLogsButton() {
+        val button = binding.toolbar.menu!!.findItem(R.id.logs)
+        button.isVisible = BuildConfig.DEBUG
     }
 
     private fun updateSettingsButton() {

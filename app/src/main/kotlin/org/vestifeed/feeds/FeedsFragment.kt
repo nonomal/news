@@ -38,8 +38,8 @@ import org.vestifeed.app.api
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentFeedsBinding
-import org.vestifeed.db.table.Feed
 import org.vestifeed.db.Database
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
@@ -411,7 +411,7 @@ class FeedsFragment : AppFragment() {
         }
     }
 
-    private fun Feed.toItem(database: Database): FeedsAdapter.Item {
+    private fun FeedTable.Feed.toItem(database: Database): FeedsAdapter.Item {
         val links = database.link.selectByFeedId(id)
         val selfLink = links.firstOrNull { it.rel is AtomLinkRel.Self }?.href
             ?: links.firstOrNull()?.href

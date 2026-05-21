@@ -5,8 +5,7 @@ import androidx.sqlite.execSQL
 import org.vestifeed.db.table.ConfQueries
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.FEED_SCHEMA
-import org.vestifeed.db.table.FeedQueries
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LINK_SCHEMA
 import org.vestifeed.db.table.LinkQueries
 import org.vestifeed.db.table.LogTable
@@ -15,7 +14,7 @@ class Database(driver: SQLiteDriver, val path: String) {
 
     private val conn = driver.open(path)
 
-    val feed = FeedQueries(conn)
+    val feed = FeedTable(conn)
     val entry = EntryTable(conn)
     val conf = ConfQueries(conn)
     val link = LinkQueries(conn)
@@ -30,7 +29,7 @@ class Database(driver: SQLiteDriver, val path: String) {
         val version = if (stmt.step()) stmt.getInt(0) else 0
 
         if (version == 0) {
-            conn.execSQL(FEED_SCHEMA)
+            conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LINK_SCHEMA)
             conn.execSQL(ConfSchema.toString())

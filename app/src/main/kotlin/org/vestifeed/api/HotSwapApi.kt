@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.Link
 import java.time.OffsetDateTime
 
@@ -45,7 +45,7 @@ class HotSwapApi(private val db: Database) : Api {
         return api.addFeed(url)
     }
 
-    override suspend fun getFeeds(): List<Feed> {
+    override suspend fun getFeeds(): List<FeedTable.Feed> {
         updateApi()
         return api.getFeeds()
     }

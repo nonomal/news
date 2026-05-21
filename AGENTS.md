@@ -93,7 +93,8 @@ org.vestifeed.app/src/androidTest/kotlin/       # Instrumented tests
 
 ### Database
 - Raw SQL and built-in helpers only, no external deps or ORMs
-- Check schema.sql to see the full picture
+- Every table class has const val SCHEMA, check it before reasoning about the entities those tables represent
+- Feed and Entry table fields closely follow ATOM spec, extra/extenstion fields should be marked with an ext_ prefix
 
 ### Networking
 - Retrofit + OkHttp for API calls

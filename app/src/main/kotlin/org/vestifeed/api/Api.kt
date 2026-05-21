@@ -3,20 +3,20 @@ package org.vestifeed.api
 import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.Link
 import java.time.OffsetDateTime
 
 interface Api {
     data class AddFeedResult(
-        val feed: Feed,
+        val feed: FeedTable.Feed,
         val feedLinks: List<Link>,
         val entries: List<Pair<EntryTable.Entry, List<Link>>>,
     )
 
     suspend fun addFeed(url: HttpUrl): AddFeedResult
 
-    suspend fun getFeeds(): List<Feed>
+    suspend fun getFeeds(): List<FeedTable.Feed>
 
     suspend fun updateFeedTitle(
         feedId: String,

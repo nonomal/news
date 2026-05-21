@@ -21,7 +21,7 @@ class FeedTest {
 
     @Test
     fun feedSchema_createTableStatement() {
-        val statement = FEED_SCHEMA
+        val statement = FeedTable.SCHEMA
         assertTrue(statement.contains("CREATE TABLE feed"))
         assertTrue(statement.contains("id TEXT PRIMARY KEY NOT NULL"))
         assertTrue(statement.contains("title TEXT NOT NULL"))
@@ -121,7 +121,7 @@ class FeedTest {
 
     @Test
     fun feedQueries_nullBooleanFields_nullValues() {
-        val feed = Feed(
+        val feed = FeedTable.Feed(
             id = UUID.randomUUID().toString(),
             title = "Test",
             extOpenEntriesInBrowser = null,
@@ -137,7 +137,7 @@ class FeedTest {
 
     @Test
     fun feedQueries_nullBooleanFields_trueValues() {
-        val feed = Feed(
+        val feed = FeedTable.Feed(
             id = UUID.randomUUID().toString(),
             title = "Test",
             extOpenEntriesInBrowser = true,
@@ -153,7 +153,7 @@ class FeedTest {
 
     @Test
     fun feedQueries_nullBooleanFields_falseValues() {
-        val feed = Feed(
+        val feed = FeedTable.Feed(
             id = UUID.randomUUID().toString(),
             title = "Test",
             extOpenEntriesInBrowser = false,
@@ -173,7 +173,7 @@ class FeedTest {
         extOpenEntriesInBrowser: Boolean? = null,
         extBlockedWords: String = "",
         extShowPreviewImages: Boolean? = null,
-    ) = Feed(
+    ) = FeedTable.Feed(
         id = id,
         title = title,
         extOpenEntriesInBrowser = extOpenEntriesInBrowser,

@@ -13,7 +13,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.vestifeed.api.Api
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.Link
 import org.vestifeed.http.executeAsync
 import org.vestifeed.parser.AtomLinkRel
@@ -98,7 +98,7 @@ class MinifluxApi(
         }
     }
 
-    override suspend fun getFeeds(): List<Feed> {
+    override suspend fun getFeeds(): List<FeedTable.Feed> {
         // https://miniflux.app/docs/api.html#endpoint-get-feeds
         val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("feeds").build()).get()
             .build()
@@ -354,7 +354,7 @@ class MinifluxApi(
         )
     }
 
-    private fun MinifluxFeed.toVestiFeed(): Pair<Feed, List<Link>> {
+    private fun MinifluxFeed.toVestiFeed(): Pair<FeedTable.Feed, List<Link>> {
         val feedId = id.toString()
 
         val selfLink = Link(
@@ -383,7 +383,7 @@ class MinifluxApi(
             extEnclosureDownloadProgress = null,
             extCacheUri = null,
         )
-        val feed = Feed(
+        val feed = FeedTable.Feed(
             id = feedId,
             title = title,
             extOpenEntriesInBrowser = false,

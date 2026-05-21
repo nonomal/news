@@ -6,31 +6,31 @@ import org.vestifeed.db.bindBooleanOrNull
 import org.vestifeed.db.getBoolOrNull
 import kotlin.collections.forEach
 
-const val FEED_SCHEMA = """
-    CREATE TABLE feed (
-        id TEXT PRIMARY KEY NOT NULL,
-        title TEXT NOT NULL,
-        ext_open_entries_in_browser INTEGER,
-        ext_blocked_words TEXT,
-        ext_show_preview_images INTEGER
-    ) STRICT;
-  """
+class FeedTable(private val conn: SQLiteConnection) {
+    companion object {
+        const val SCHEMA = """
+            CREATE TABLE feed (
+                id TEXT PRIMARY KEY NOT NULL,
+                title TEXT NOT NULL,
+                ext_open_entries_in_browser INTEGER,
+                ext_blocked_words TEXT,
+                ext_show_preview_images INTEGER
+            ) STRICT;
+          """
+    }
 
-typealias Feed = FeedProjection
+    data class Feed(
+        val id: String,
+        val title: String,
+        val extOpenEntriesInBrowser: Boolean?,
+        val extBlockedWords: String,
+        val extShowPreviewImages: Boolean?,
+    )
 
-data class FeedProjection(
-    val id: String,
-    val title: String,
-    val extOpenEntriesInBrowser: Boolean?,
-    val extBlockedWords: String,
-    val extShowPreviewImages: Boolean?,
-)
-
-class FeedQueries(private val conn: SQLiteConnection) {
     fun insertOrReplace(feed: Feed) {
         insertOrReplace(listOf(feed))
     }
-    
+
     fun insertOrReplace(feeds: List<Feed>) {
         if (feeds.isEmpty()) {
             return
@@ -54,7 +54,7 @@ class FeedQueries(private val conn: SQLiteConnection) {
         }
     }
 
-    fun selectAll(): List<FeedProjection> {
+    fun selectAll(): List<Feed> {
         conn.prepare(
             """
             SELECT id, title, ext_open_entries_in_browser, ext_blocked_words, ext_show_preview_images
@@ -65,7 +65,7 @@ class FeedQueries(private val conn: SQLiteConnection) {
             return buildList {
                 while (stmt.step()) {
                     add(
-                        FeedProjection(
+                        Feed(
                             id = stmt.getText(0),
                             title = stmt.getText(1),
                             extOpenEntriesInBrowser = stmt.getBoolOrNull(2),
@@ -78,7 +78,7 @@ class FeedQueries(private val conn: SQLiteConnection) {
         }
     }
 
-    fun selectById(id: String): FeedProjection? {
+    fun selectById(id: String): Feed? {
         conn.prepare(
             """
             SELECT id, title, ext_open_entries_in_browser, ext_blocked_words, ext_show_preview_images
@@ -87,7 +87,7 @@ class FeedQueries(private val conn: SQLiteConnection) {
             """
         ).use { stmt ->
             stmt.bindText(1, id)
-            return if (stmt.step()) FeedProjection(
+            return if (stmt.step()) Feed(
                 id = stmt.getText(0),
                 title = stmt.getText(1),
                 extOpenEntriesInBrowser = stmt.getBoolOrNull(2),

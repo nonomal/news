@@ -33,7 +33,7 @@ import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
@@ -61,7 +61,7 @@ class EntriesFragment : AppFragment() {
         object LoadingCachedEntries : State()
 
         data class ShowingCachedEntries(
-            val feed: Feed?,
+            val feed: FeedTable.Feed?,
             val entries: List<EntriesAdapter.Item>,
         ) : State()
     }

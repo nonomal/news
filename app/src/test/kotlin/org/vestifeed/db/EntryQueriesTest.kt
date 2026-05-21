@@ -6,7 +6,7 @@ import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import kotlin.collections.sortedByDescending
 
 class EntryQueriesTest {
@@ -272,7 +272,7 @@ private fun createFeed(
     extOpenEntriesInBrowser: Boolean? = null,
     extBlockedWords: String = "",
     extShowPreviewImages: Boolean? = null,
-) = Feed(
+) = FeedTable.Feed(
     id = id,
     title = title,
     extOpenEntriesInBrowser = extOpenEntriesInBrowser,

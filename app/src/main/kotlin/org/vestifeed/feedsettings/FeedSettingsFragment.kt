@@ -22,7 +22,7 @@ import kotlinx.coroutines.withContext
 import org.vestifeed.R
 import org.vestifeed.app.App
 import org.vestifeed.databinding.FragmentFeedSettingsBinding
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.navigation.showKeyboard
 
@@ -222,6 +222,6 @@ class FeedSettingsFragment : AppFragment() {
 
     sealed class State {
         object LoadingFeed : State()
-        data class ShowingFeedSettings(val feed: Feed) : State()
+        data class ShowingFeedSettings(val feed: FeedTable.Feed) : State()
     }
 }

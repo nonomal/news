@@ -6,7 +6,7 @@ import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.UUID
 import org.junit.Test
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.Link
 
 class OpmlTest {
@@ -80,7 +80,7 @@ class OpmlTest {
                 extCacheUri = null,
             )
 
-            val feed = Feed(
+            val feed = FeedTable.Feed(
                 id = UUID.randomUUID().toString(),
                 title = it.text,
                 extOpenEntriesInBrowser = it.extOpenEntriesInBrowser!!,

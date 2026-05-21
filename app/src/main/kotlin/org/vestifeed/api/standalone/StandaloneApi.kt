@@ -23,7 +23,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.Link
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
@@ -118,7 +118,7 @@ class StandaloneNewsApi(
         }
     }
 
-    override suspend fun getFeeds(): List<Feed> {
+    override suspend fun getFeeds(): List<FeedTable.Feed> {
         return db.feed.selectAll()
     }
 
@@ -145,7 +145,7 @@ class StandaloneNewsApi(
         return fetchedEntries
     }
 
-    private suspend fun fetchEntries(feed: Feed): List<Pair<EntryTable.Entry, List<Link>>> {
+    private suspend fun fetchEntries(feed: FeedTable.Feed): List<Pair<EntryTable.Entry, List<Link>>> {
         val feedLinks = withContext(Dispatchers.IO) { db.link.selectByFeedId(feed.id) }
         val feedSelfLink = feedLinks.firstOrNull { it.rel is AtomLinkRel.Self }
             ?: throw Exception("self link is missing")
@@ -200,14 +200,14 @@ class StandaloneNewsApi(
 
     }
 
-    private fun ParsedFeed.toFeed(feedUrl: HttpUrl): Pair<Feed, List<Link>> {
+    private fun ParsedFeed.toFeed(feedUrl: HttpUrl): Pair<FeedTable.Feed, List<Link>> {
         return when (this) {
             is AtomFeed -> {
                 val selfLink = links.single { it.rel == AtomLinkRel.Self }
                 val links = links.map { it.toLink(feedId = selfLink.href, entryId = null) }
 
                 Pair(
-                    Feed(
+                    FeedTable.Feed(
                         id = selfLink.href,
                         title = title,
                         extOpenEntriesInBrowser = false,
@@ -247,7 +247,7 @@ class StandaloneNewsApi(
                 )
 
                 Pair(
-                    Feed(
+                    FeedTable.Feed(
                         id = channel.link,
                         title = channel.title,
                         extOpenEntriesInBrowser = false,

@@ -2,7 +2,6 @@ package org.vestifeed.entries
 
 import android.graphics.Rect
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -35,7 +34,7 @@ import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryQueries
 import org.vestifeed.db.table.Feed
-import org.vestifeed.db.table.LogQueries
+import org.vestifeed.db.table.Log
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
 import org.vestifeed.log.LogFragment
@@ -98,7 +97,7 @@ class EntriesFragment : AppFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         db().log.insert(
-            LogQueries.InsertArgs(
+            Log.InsertArgs(
                 level = "debug",
                 tag = "EntriesFragment",
                 message = "onViewCreated",
@@ -153,7 +152,7 @@ class EntriesFragment : AppFragment() {
     }
 
     private suspend fun onNewSyncState(syncState: Sync.State) {
-        Log.d("entries_fragment", "new sync state: $syncState")
+        //Log.d("entries_fragment", "new sync state: $syncState")
 
         when (filter) {
             EntriesFilter.Unread -> {
@@ -377,7 +376,7 @@ class EntriesFragment : AppFragment() {
     }
 
     private fun FragmentEntriesBinding.setState(state: State) {
-        Log.d("entries_fragment", state.toString())
+        //Log.d("entries_fragment", state.toString())
 
         updateToolbar(state)
 
@@ -397,7 +396,7 @@ class EntriesFragment : AppFragment() {
             }
 
             is State.ShowingCachedEntries -> {
-                Log.d("entries_fragment", "cached entries: ${state.entries.size}")
+                //Log.d("entries_fragment", "cached entries: ${state.entries.size}")
 
                 if (state.entries.isEmpty()) {
                     message.isVisible = true

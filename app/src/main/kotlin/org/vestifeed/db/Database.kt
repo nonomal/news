@@ -11,7 +11,6 @@ import org.vestifeed.db.table.FeedQueries
 import org.vestifeed.db.table.LINK_SCHEMA
 import org.vestifeed.db.table.LinkQueries
 import org.vestifeed.db.table.Log
-import org.vestifeed.db.table.LogQueries
 
 class Database(driver: SQLiteDriver, val path: String) {
 
@@ -21,7 +20,7 @@ class Database(driver: SQLiteDriver, val path: String) {
     val entry = EntryQueries(conn)
     val conf = ConfQueries(conn)
     val link = LinkQueries(conn)
-    val log = LogQueries(conn)
+    val log = Log(conn)
 
     init {
         migrate()

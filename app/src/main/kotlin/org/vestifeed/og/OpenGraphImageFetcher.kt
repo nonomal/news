@@ -16,7 +16,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryQueries
-import org.vestifeed.db.table.LogQueries
+import org.vestifeed.db.table.Log
 import org.vestifeed.http.await
 import org.vestifeed.parser.AtomLinkRel
 import java.util.concurrent.TimeUnit
@@ -70,7 +70,7 @@ class OpenGraphImageFetcher(
     private suspend fun fetchEntryImage(entry: EntryQueries.EntryWithoutContent): Boolean {
         withContext(Dispatchers.IO) {
             db.log.insert(
-                LogQueries.InsertArgs(
+                Log.InsertArgs(
                     level = "debug",
                     tag = "OpenGraphImageFetcher",
                     message = "Trying to fetch an image for entry ${entry.id} (${entry.title})",

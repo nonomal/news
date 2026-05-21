@@ -5,8 +5,9 @@ import androidx.sqlite.execSQL
 import com.google.gson.JsonObject
 import org.vestifeed.db.bindJsonObjectOrNull
 import org.vestifeed.db.getJsonObjectOrNull
+import kotlin.use
 
-class Log {
+class Log(private val conn: SQLiteConnection) {
     companion object {
         const val SCHEMA = """
             CREATE TABLE log (
@@ -19,18 +20,16 @@ class Log {
             ) STRICT;
         """
     }
-}
 
-data class LogEntry(
-    val id: Long,
-    val timestamp: String,
-    val level: String,
-    val tag: String,
-    val message: String,
-    val data: JsonObject?,
-)
+    data class Entry(
+        val id: Long,
+        val timestamp: String,
+        val level: String,
+        val tag: String,
+        val message: String,
+        val data: JsonObject?,
+    )
 
-class LogQueries(private val conn: SQLiteConnection) {
     data class InsertArgs(
         val level: String,
         val tag: String,
@@ -71,7 +70,7 @@ class LogQueries(private val conn: SQLiteConnection) {
         "error" to 4,
     )
 
-    fun selectByMinLevel(minLevel: String): List<LogEntry> {
+    fun selectByMinLevel(minLevel: String): List<Entry> {
         val minPriority = levelPriority[minLevel] ?: 1
         val allowedLevels = levelPriority.filter { it.value >= minPriority }.keys
         conn.prepare(
@@ -85,7 +84,7 @@ class LogQueries(private val conn: SQLiteConnection) {
             return buildList {
                 while (stmt.step()) {
                     add(
-                        LogEntry(
+                        Entry(
                             id = stmt.getLong(0),
                             timestamp = stmt.getText(1),
                             level = stmt.getText(2),

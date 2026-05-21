@@ -14,8 +14,7 @@ import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentAuthBinding
 import org.vestifeed.db.table.ConfSchema
-import org.vestifeed.db.table.LogEntry
-import org.vestifeed.db.table.LogQueries
+import org.vestifeed.db.table.Log
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.sync.BackgroundSyncScheduler
@@ -39,7 +38,7 @@ class AuthFragment : AppFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.initButtons()
         db().log.insert(
-            LogQueries.InsertArgs(
+            Log.InsertArgs(
                 level = "debug",
                 tag = "AuthFragment",
                 message = "onViewCreated",
@@ -70,7 +69,7 @@ class AuthFragment : AppFragment() {
             val syncScheduler = BackgroundSyncScheduler(requireContext())
 
             db().log.insert(
-                LogQueries.InsertArgs(
+                Log.InsertArgs(
                     level = "debug",
                     tag = "AuthFragment",
                     message = "Switching to embedded backend",
@@ -84,7 +83,7 @@ class AuthFragment : AppFragment() {
                     backgroundSyncIntervalMillis = TimeUnit.HOURS.toMillis(12),
                 )
             }
-            
+
             syncScheduler.schedule()
 
             parentFragmentManager.commit {

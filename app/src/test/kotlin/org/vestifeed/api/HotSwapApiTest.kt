@@ -5,7 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.vestifeed.db.db
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 
 class HotSwapApiTest {
 
@@ -14,7 +14,7 @@ class HotSwapApiTest {
         val db = db()
         val api = HotSwapApi(db)
 
-        db.conf.update { it.copy(backend = ConfSchema.BACKEND_STANDALONE) }
+        db.conf.update { it.copy(backend = ConfTable.BACKEND_STANDALONE) }
 
         var attempts = 0L
 

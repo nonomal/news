@@ -30,8 +30,7 @@ import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
-import org.vestifeed.db.table.Conf
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LogTable
@@ -264,15 +263,15 @@ class EntriesFragment : AppFragment() {
         sync().runInBackground()
     }
 
-    private fun saveConf(newConf: (Conf) -> Conf) {
+    private fun saveConf(newConf: (ConfTable.Conf) -> ConfTable.Conf) {
         db().conf.update(newConf)
     }
 
     private fun changeSortOrder() {
         db().conf.update {
             val newSortOrder = when (it.sortOrder) {
-                ConfSchema.SORT_ORDER_ASCENDING -> ConfSchema.SORT_ORDER_DESCENDING
-                ConfSchema.SORT_ORDER_DESCENDING -> ConfSchema.SORT_ORDER_ASCENDING
+                ConfTable.SORT_ORDER_ASCENDING -> ConfTable.SORT_ORDER_DESCENDING
+                ConfTable.SORT_ORDER_DESCENDING -> ConfTable.SORT_ORDER_ASCENDING
                 else -> throw Exception()
             }
 
@@ -328,7 +327,7 @@ class EntriesFragment : AppFragment() {
         // todo
     }
 
-    private fun EntryTable.EntriesAdapterRow.toItem(conf: Conf): EntriesAdapter.Item {
+    private fun EntryTable.EntriesAdapterRow.toItem(conf: ConfTable.Conf): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = id,
             showImage = extShowPreviewImages || conf.showPreviewImages,
@@ -513,12 +512,12 @@ class EntriesFragment : AppFragment() {
         val conf = db().conf.select()
 
         when (conf.sortOrder) {
-            ConfSchema.SORT_ORDER_ASCENDING -> {
+            ConfTable.SORT_ORDER_ASCENDING -> {
                 button.setIcon(R.drawable.ic_clock_forward)
                 button.title = getString(R.string.show_newest_first)
             }
 
-            ConfSchema.SORT_ORDER_DESCENDING -> {
+            ConfTable.SORT_ORDER_DESCENDING -> {
                 button.setIcon(R.drawable.ic_clock_back)
                 button.title = getString(R.string.show_oldest_first)
             }

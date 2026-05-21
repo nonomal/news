@@ -18,44 +18,16 @@ class ConfTest {
     }
 
     @Test
-    fun confSchema_tableName() {
-        assertEquals("conf", ConfSchema.TABLE_NAME)
-    }
-
-    @Test
-    fun confSchema_columns() {
-        val columns = ConfSchema.Columns.entries
-        assertEquals(17, columns.size)
-        assertEquals("backend", columns[0].sqlName)
-        assertEquals("miniflux_server_url", columns[1].sqlName)
-        assertEquals("miniflux_server_trust_self_signed_certs", columns[2].sqlName)
-        assertEquals("miniflux_server_token", columns[3].sqlName)
-        assertEquals("initial_sync_completed", columns[4].sqlName)
-        assertEquals("last_entries_sync_datetime", columns[5].sqlName)
-        assertEquals("show_read_entries", columns[6].sqlName)
-        assertEquals("sort_order", columns[7].sqlName)
-        assertEquals("show_preview_images", columns[8].sqlName)
-        assertEquals("crop_preview_images", columns[9].sqlName)
-        assertEquals("mark_scrolled_entries_as_read", columns[10].sqlName)
-        assertEquals("sync_on_startup", columns[11].sqlName)
-        assertEquals("sync_in_background", columns[12].sqlName)
-        assertEquals("background_sync_interval_millis", columns[13].sqlName)
-        assertEquals("use_built_in_browser", columns[14].sqlName)
-        assertEquals("show_preview_text", columns[15].sqlName)
-        assertEquals("synced_on_startup", columns[16].sqlName)
-    }
-
-    @Test
     fun confSchema_constants() {
-        assertEquals("standalone", ConfSchema.BACKEND_STANDALONE)
-        assertEquals("miniflux", ConfSchema.BACKEND_MINIFLUX)
-        assertEquals("ascending", ConfSchema.SORT_ORDER_ASCENDING)
-        assertEquals("descending", ConfSchema.SORT_ORDER_DESCENDING)
+        assertEquals("standalone", ConfTable.BACKEND_STANDALONE)
+        assertEquals("miniflux", ConfTable.BACKEND_MINIFLUX)
+        assertEquals("ascending", ConfTable.SORT_ORDER_ASCENDING)
+        assertEquals("descending", ConfTable.SORT_ORDER_DESCENDING)
     }
 
     @Test
     fun confSchema_createTableStatement() {
-        val statement = ConfSchema.toString()
+        val statement = ConfTable.SCHEMA
         assertTrue(statement.contains("CREATE TABLE conf"))
         assertTrue(statement.contains("backend TEXT NOT NULL"))
         assertTrue(statement.contains("miniflux_server_url TEXT NOT NULL"))
@@ -64,17 +36,8 @@ class ConfTest {
     }
 
     @Test
-    fun confSchema_columnsString() {
-        val columns = ConfSchema.columns
-        assertEquals(
-            "backend,miniflux_server_url,miniflux_server_trust_self_signed_certs,miniflux_server_token,initial_sync_completed,last_entries_sync_datetime,show_read_entries,sort_order,show_preview_images,crop_preview_images,mark_scrolled_entries_as_read,sync_on_startup,sync_in_background,background_sync_interval_millis,use_built_in_browser,show_preview_text,synced_on_startup",
-            columns
-        )
-    }
-
-    @Test
     fun confDefaults_values() {
-        val defaultConf = confDefault()
+        val defaultConf = ConfTable.confDefault()
         assertEquals("", defaultConf.backend)
         assertEquals("", defaultConf.minifluxServerUrl)
         assertFalse(defaultConf.minifluxServerTrustSelfSignedCerts)
@@ -82,7 +45,7 @@ class ConfTest {
         assertFalse(defaultConf.initialSyncCompleted)
         assertEquals("", defaultConf.lastEntriesSyncDatetime)
         assertFalse(defaultConf.showReadEntries)
-        assertEquals(ConfSchema.SORT_ORDER_DESCENDING, defaultConf.sortOrder)
+        assertEquals(ConfTable.SORT_ORDER_DESCENDING, defaultConf.sortOrder)
         assertTrue(defaultConf.showPreviewImages)
         assertTrue(defaultConf.cropPreviewImages)
         assertFalse(defaultConf.markScrolledEntriesAsRead)
@@ -97,7 +60,7 @@ class ConfTest {
     @Test
     fun confQueries_select_emptyReturnsDefault() {
         val result = db.conf.select()
-        val defaultConf = confDefault()
+        val defaultConf = ConfTable.confDefault()
         assertEquals(defaultConf.backend, result.backend)
         assertEquals(defaultConf.sortOrder, result.sortOrder)
         assertEquals(defaultConf.backgroundSyncIntervalMillis, result.backgroundSyncIntervalMillis)
@@ -130,30 +93,30 @@ class ConfTest {
 
     @Test
     fun confQueries_insert_replacesExisting() {
-        val conf1 = createConf(backend = ConfSchema.BACKEND_STANDALONE)
+        val conf1 = createConf(backend = ConfTable.BACKEND_STANDALONE)
         db.conf.insert(conf1)
 
         db.conf.delete()
 
-        val conf2 = createConf(backend = ConfSchema.BACKEND_MINIFLUX)
+        val conf2 = createConf(backend = ConfTable.BACKEND_MINIFLUX)
         db.conf.insert(conf2)
 
         val result = db.conf.select()
-        assertEquals(ConfSchema.BACKEND_MINIFLUX, result.backend)
+        assertEquals(ConfTable.BACKEND_MINIFLUX, result.backend)
     }
 
     @Test
     fun confQueries_update() {
         val initialConf = createConf(
-            backend = ConfSchema.BACKEND_STANDALONE,
+            backend = ConfTable.BACKEND_STANDALONE,
             showPreviewImages = false,
         )
         db.conf.insert(initialConf)
 
-        db.conf.update { it.copy(backend = ConfSchema.BACKEND_MINIFLUX, showPreviewImages = true) }
+        db.conf.update { it.copy(backend = ConfTable.BACKEND_MINIFLUX, showPreviewImages = true) }
 
         val result = db.conf.select()
-        assertEquals(ConfSchema.BACKEND_MINIFLUX, result.backend)
+        assertEquals(ConfTable.BACKEND_MINIFLUX, result.backend)
         assertTrue(result.showPreviewImages)
     }
 
@@ -164,30 +127,30 @@ class ConfTest {
         assertEquals(conf.backend, db.conf.select().backend)
 
         db.conf.delete()
-        val defaultConf = confDefault()
+        val defaultConf = ConfTable.confDefault()
         assertEquals(defaultConf.backend, db.conf.select().backend)
     }
 
     @Test
     fun confQueries_updatePartialFields() {
-        db.conf.insert(createConf(sortOrder = ConfSchema.SORT_ORDER_ASCENDING))
+        db.conf.insert(createConf(sortOrder = ConfTable.SORT_ORDER_ASCENDING))
 
         db.conf.update { it.copy(syncOnStartup = false) }
 
         val result = db.conf.select()
-        assertEquals(ConfSchema.SORT_ORDER_ASCENDING, result.sortOrder)
+        assertEquals(ConfTable.SORT_ORDER_ASCENDING, result.sortOrder)
         assertFalse(result.syncOnStartup)
     }
 
     private fun createConf(
-        backend: String = ConfSchema.BACKEND_STANDALONE,
+        backend: String = ConfTable.BACKEND_STANDALONE,
         minifluxServerUrl: String = "https://miniflux.example.com",
         minifluxServerTrustSelfSignedCerts: Boolean = false,
         minifluxServerToken: String = "miniflux-token",
         initialSyncCompleted: Boolean = true,
         lastEntriesSyncDatetime: String = "2024-01-01T00:00:00Z",
         showReadEntries: Boolean = true,
-        sortOrder: String = ConfSchema.SORT_ORDER_DESCENDING,
+        sortOrder: String = ConfTable.SORT_ORDER_DESCENDING,
         showPreviewImages: Boolean = true,
         cropPreviewImages: Boolean = false,
         markScrolledEntriesAsRead: Boolean = true,
@@ -197,7 +160,7 @@ class ConfTest {
         useBuiltInBrowser: Boolean = false,
         showPreviewText: Boolean = false,
         syncedOnStartup: Boolean = true,
-    ) = Conf(
+    ) = ConfTable.Conf(
         backend = backend,
         minifluxServerUrl = minifluxServerUrl,
         minifluxServerTrustSelfSignedCerts = minifluxServerTrustSelfSignedCerts,

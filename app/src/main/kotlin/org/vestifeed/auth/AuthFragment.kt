@@ -14,7 +14,7 @@ import org.vestifeed.R
 import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentAuthBinding
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
@@ -79,7 +79,7 @@ class AuthFragment : AppFragment() {
 
             db.conf.update {
                 it.copy(
-                    backend = ConfSchema.BACKEND_STANDALONE,
+                    backend = ConfTable.BACKEND_STANDALONE,
                     syncOnStartup = false,
                     backgroundSyncIntervalMillis = TimeUnit.HOURS.toMillis(12),
                 )

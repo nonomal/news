@@ -21,7 +21,7 @@ import org.vestifeed.api.miniflux.MinifluxApiBuilder
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentMinifluxAuthBinding
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
@@ -82,7 +82,7 @@ class MinifluxAuthFragment : AppFragment() {
 
                 db().conf.update {
                     it.copy(
-                        backend = ConfSchema.BACKEND_MINIFLUX,
+                        backend = ConfTable.BACKEND_MINIFLUX,
                         minifluxServerUrl = url.toString().trim('/'),
                         minifluxServerTrustSelfSignedCerts = false,
                         minifluxServerToken = token,

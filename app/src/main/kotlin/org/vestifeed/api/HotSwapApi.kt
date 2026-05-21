@@ -5,7 +5,7 @@ import org.vestifeed.api.standalone.StandaloneNewsApi
 import org.vestifeed.db.Database
 import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
@@ -22,11 +22,11 @@ class HotSwapApi(private val db: Database) : Api {
     private fun updateApi() {
         val conf = db.conf.select()
         api = when (conf.backend) {
-            ConfSchema.BACKEND_STANDALONE -> {
+            ConfTable.BACKEND_STANDALONE -> {
                 StandaloneNewsApi(db)
             }
 
-            ConfSchema.BACKEND_MINIFLUX -> {
+            ConfTable.BACKEND_MINIFLUX -> {
                 MinifluxApiBuilder().build(
                     url = conf.minifluxServerUrl,
                     token = conf.minifluxServerToken,

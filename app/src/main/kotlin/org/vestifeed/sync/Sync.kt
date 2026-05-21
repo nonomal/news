@@ -9,7 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.api.Api
 import org.vestifeed.db.Database
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -68,7 +68,7 @@ class Sync(
             return
         }
 
-        if (conf.backend != ConfSchema.BACKEND_STANDALONE && !conf.initialSyncCompleted) {
+        if (conf.backend != ConfTable.BACKEND_STANDALONE && !conf.initialSyncCompleted) {
             // make sure the database is empty
             try {
                 withContext(Dispatchers.IO) {

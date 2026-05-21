@@ -29,8 +29,7 @@ import org.vestifeed.R
 import org.vestifeed.app.App
 import org.vestifeed.auth.AuthFragment
 import org.vestifeed.databinding.FragmentSettingsBinding
-import org.vestifeed.db.table.Conf
-import org.vestifeed.db.table.ConfSchema
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.enclosures.EnclosuresFragment
 import org.vestifeed.log.LogFragment
@@ -90,7 +89,7 @@ class SettingsFragment : AppFragment() {
             val logOutSubtitle: String
 
             when (conf.backend) {
-                ConfSchema.BACKEND_STANDALONE -> {
+                ConfTable.BACKEND_STANDALONE -> {
                     logOutTitle = getString(R.string.delete_all_data)
                     logOutSubtitle = ""
                 }
@@ -165,10 +164,10 @@ class SettingsFragment : AppFragment() {
         }
     }
 
-    private fun Conf.accountName(): String {
+    private fun ConfTable.Conf.accountName(): String {
         return when (backend) {
-            ConfSchema.BACKEND_STANDALONE -> ""
-            ConfSchema.BACKEND_MINIFLUX -> {
+            ConfTable.BACKEND_STANDALONE -> ""
+            ConfTable.BACKEND_MINIFLUX -> {
                 minifluxServerUrl.extractDomain()
             }
 
@@ -325,7 +324,7 @@ class SettingsFragment : AppFragment() {
 
         logOut.setOnClickListener {
             when (state.conf.backend) {
-                ConfSchema.BACKEND_STANDALONE -> {
+                ConfTable.BACKEND_STANDALONE -> {
                     MaterialAlertDialogBuilder(requireContext())
                         .setMessage(R.string.delete_all_data_warning)
                         .setPositiveButton(R.string.delete) { _, _ -> doLogOut() }
@@ -359,7 +358,7 @@ class SettingsFragment : AppFragment() {
     sealed class State {
         object Loading : State()
         data class ShowingSettings(
-            val conf: Conf,
+            val conf: ConfTable.Conf,
             val logOutTitle: String,
             val logOutSubtitle: String,
         ) : State()

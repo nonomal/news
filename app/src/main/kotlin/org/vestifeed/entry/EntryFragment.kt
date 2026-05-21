@@ -39,7 +39,7 @@ import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntryBinding
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 import org.vestifeed.enclosures.EnclosuresRepo
 import org.vestifeed.feedsettings.FeedSettingsFragment
 import org.vestifeed.navigation.AppFragment
@@ -159,7 +159,7 @@ class EntryFragment : AppFragment() {
         }
     }
 
-    private fun showEntry(feedTitle: String, entry: EntryTable.Entry, entryLinks: List<Link>) {
+    private fun showEntry(feedTitle: String, entry: EntryTable.Entry, entryLinks: List<LinkTable.Link>) {
         val menu = binding.toolbar.menu
 
         menu.findItem(R.id.toggleBookmarked)?.isVisible = true
@@ -230,7 +230,7 @@ class EntryFragment : AppFragment() {
     private fun onMenuItemClick(
         menuItem: MenuItem?,
         entry: EntryTable.Entry,
-        entryLinks: List<Link>
+        entryLinks: List<LinkTable.Link>
     ): Boolean {
         when (menuItem?.itemId) {
             R.id.toggleBookmarked -> {
@@ -293,7 +293,7 @@ class EntryFragment : AppFragment() {
         }
     }
 
-    fun downloadAudioEnclosure(enclosure: Link) {
+    fun downloadAudioEnclosure(enclosure: LinkTable.Link) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 EnclosuresRepo(requireContext(), db()).downloadAudioEnclosure(enclosure)
@@ -324,7 +324,7 @@ class EntryFragment : AppFragment() {
         )
     }
 
-    fun playAudioEnclosure(enclosure: Link) {
+    fun playAudioEnclosure(enclosure: LinkTable.Link) {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.setDataAndType(enclosure.extCacheUri!!.toUri(), enclosure.type)
 
@@ -339,7 +339,7 @@ class EntryFragment : AppFragment() {
         }
     }
 
-    private fun deleteEnclosure(enclosure: Link) {
+    private fun deleteEnclosure(enclosure: LinkTable.Link) {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 EnclosuresRepo(requireContext(), db()).deleteFromCache(enclosure)

@@ -6,43 +6,45 @@ import org.vestifeed.db.bindTextOrNull
 import org.vestifeed.db.getTextOrNull
 import org.vestifeed.parser.AtomLinkRel
 
-const val LINK_SCHEMA = """
-    CREATE TABLE link (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        href TEXT NOT NULL,
-        rel TEXT,
-        type TEXT,
-        hreflang TEXT,
-        title TEXT,
-        length TEXT,
-        feed_id TEXT REFERENCES feed(id),
-        entry_id TEXT REFERENCES entry(id),
-        ext_enclosure_download_progress REAL,
-        ext_cache_uri TEXT,
-        UNIQUE(feed_id, href, rel),
-        UNIQUE(entry_id, href, rel),
-        CHECK ((feed_id IS NULL) <> (entry_id IS NULL))
-    ) STRICT;
-"""
+class LinkTable(private val conn: SQLiteConnection) {
+    companion object {
+        const val SCHEMA = """
+            CREATE TABLE link (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                href TEXT NOT NULL,
+                rel TEXT,
+                type TEXT,
+                hreflang TEXT,
+                title TEXT,
+                length TEXT,
+                feed_id TEXT REFERENCES feed(id),
+                entry_id TEXT REFERENCES entry(id),
+                ext_enclosure_download_progress REAL,
+                ext_cache_uri TEXT,
+                UNIQUE(feed_id, href, rel),
+                UNIQUE(entry_id, href, rel),
+                CHECK ((feed_id IS NULL) <> (entry_id IS NULL))
+            ) STRICT;
+        """
+    }
 
-data class Link(
-    // meta
-    val id: Long?,
-    val feedId: String?,
-    val entryId: String?,
-    // core rfc fields
-    val href: String,
-    val rel: AtomLinkRel?,
-    val type: String?,
-    val hreflang: String?,
-    val title: String?,
-    val length: Long?,
-    // extensions
-    val extEnclosureDownloadProgress: Double?,
-    val extCacheUri: String?,
-)
+    data class Link(
+        // meta
+        val id: Long?,
+        val feedId: String?,
+        val entryId: String?,
+        // core rfc fields
+        val href: String,
+        val rel: AtomLinkRel?,
+        val type: String?,
+        val hreflang: String?,
+        val title: String?,
+        val length: Long?,
+        // extensions
+        val extEnclosureDownloadProgress: Double?,
+        val extCacheUri: String?,
+    )
 
-class LinkQueries(private val conn: SQLiteConnection) {
     fun insertForFeed(feedId: String, links: List<Link>) {
         conn.prepare(
             """

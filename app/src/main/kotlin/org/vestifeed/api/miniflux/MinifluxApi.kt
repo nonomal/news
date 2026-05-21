@@ -14,7 +14,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.vestifeed.api.Api
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 import org.vestifeed.http.executeAsync
 import org.vestifeed.parser.AtomLinkRel
 import java.io.IOException
@@ -139,7 +139,7 @@ class MinifluxApi(
         }
     }
 
-    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<Link>>>> =
+    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<LinkTable.Link>>>> =
         flow {
             val currentBatch = mutableSetOf<EntryJson>()
             val batchSize = 10L
@@ -197,7 +197,7 @@ class MinifluxApi(
         maxEntryId: String?,
         maxEntryUpdated: OffsetDateTime?,
         lastSync: OffsetDateTime?,
-    ): List<Pair<EntryTable.Entry, List<Link>>> {
+    ): List<Pair<EntryTable.Entry, List<LinkTable.Link>>> {
         val changedAfter = lastSync?.toEpochSecond() ?: 0L
         val urlBuilder = baseUrl.newBuilder().addPathSegment("entries")
         urlBuilder.addQueryParameter("order", "id")
@@ -244,11 +244,11 @@ class MinifluxApi(
         }
     }
 
-    private fun EntryJson.toEntry(): Pair<EntryTable.Entry, List<Link>> {
-        val links = mutableListOf<Link>()
+    private fun EntryJson.toEntry(): Pair<EntryTable.Entry, List<LinkTable.Link>> {
+        val links = mutableListOf<LinkTable.Link>()
 
         if (url.isNotBlank()) {
-            links += Link(
+            links += LinkTable.Link(
                 id = null,
                 feedId = null,
                 entryId = id.toString(),
@@ -264,7 +264,7 @@ class MinifluxApi(
         }
 
         enclosures?.forEach { enclosure ->
-            links += Link(
+            links += LinkTable.Link(
                 id = null,
                 feedId = null,
                 entryId = id.toString(),
@@ -354,10 +354,10 @@ class MinifluxApi(
         )
     }
 
-    private fun MinifluxFeed.toVestiFeed(): Pair<FeedTable.Feed, List<Link>> {
+    private fun MinifluxFeed.toVestiFeed(): Pair<FeedTable.Feed, List<LinkTable.Link>> {
         val feedId = id.toString()
 
-        val selfLink = Link(
+        val selfLink = LinkTable.Link(
             id = null,
             feedId = feedId,
             entryId = null,
@@ -370,7 +370,7 @@ class MinifluxApi(
             extEnclosureDownloadProgress = null,
             extCacheUri = null,
         )
-        val alternateLink = Link(
+        val alternateLink = LinkTable.Link(
             id = null,
             feedId = feedId,
             entryId = null,

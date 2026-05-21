@@ -25,7 +25,7 @@ import org.vestifeed.R
 import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentEnclosuresBinding
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 import org.vestifeed.dialog.showErrorDialog
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -121,14 +121,14 @@ class EnclosuresFragment : AppFragment() {
         _binding = null
     }
 
-    fun downloadAudioEnclosure(enclosure: Link) {
+    fun downloadAudioEnclosure(enclosure: LinkTable.Link) {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { enclosuresRepo.downloadAudioEnclosure(enclosure) }
                 .onFailure { showErrorDialog(it) }
         }
     }
 
-    fun playAudioEnclosure(enclosure: Link) {
+    fun playAudioEnclosure(enclosure: LinkTable.Link) {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.setDataAndType(enclosure.extCacheUri!!.toUri(), enclosure.type)
 
@@ -143,7 +143,7 @@ class EnclosuresFragment : AppFragment() {
         }
     }
 
-    private fun deleteEnclosure(enclosure: Link) {
+    private fun deleteEnclosure(enclosure: LinkTable.Link) {
         viewLifecycleOwner.lifecycleScope.launch {
             runCatching { enclosuresRepo.deleteFromCache(enclosure) }
                 .onFailure { showErrorDialog(it) }

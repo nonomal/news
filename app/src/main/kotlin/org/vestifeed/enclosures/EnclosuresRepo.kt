@@ -17,7 +17,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okio.buffer
 import okio.sink
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 import java.util.UUID
 import java.util.concurrent.TimeUnit
 
@@ -28,7 +28,7 @@ class EnclosuresRepo(
 
     private val httpClient = OkHttpClient()
 
-    suspend fun downloadAudioEnclosure(enclosure: Link) {
+    suspend fun downloadAudioEnclosure(enclosure: LinkTable.Link) {
         if (enclosure.rel !is AtomLinkRel.Enclosure) {
             throw Exception("Invalid link rel: ${enclosure.rel}")
         }
@@ -172,7 +172,7 @@ class EnclosuresRepo(
         partialDownloads.forEach { enclosure -> deleteFromCache(enclosure) }
     }
 
-    suspend fun deleteFromCache(enclosure: Link) {
+    suspend fun deleteFromCache(enclosure: LinkTable.Link) {
         if (enclosure.extCacheUri == null) {
             updateEnclosureProgress(enclosure.copy(extEnclosureDownloadProgress = null))
             return
@@ -200,7 +200,7 @@ class EnclosuresRepo(
         )
     }
 
-    private suspend fun updateEnclosureProgress(link: Link) {
+    private suspend fun updateEnclosureProgress(link: LinkTable.Link) {
         withContext(Dispatchers.IO) {
             val existingLink = db.link.selectByEntryIdAndHref(link.entryId!!, link.href)
             if (existingLink != null && existingLink.id != null) {

@@ -6,8 +6,7 @@ import org.vestifeed.db.table.ConfQueries
 import org.vestifeed.db.table.ConfSchema
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
-import org.vestifeed.db.table.LINK_SCHEMA
-import org.vestifeed.db.table.LinkQueries
+import org.vestifeed.db.table.LinkTable
 import org.vestifeed.db.table.LogTable
 
 class Database(driver: SQLiteDriver, val path: String) {
@@ -17,7 +16,7 @@ class Database(driver: SQLiteDriver, val path: String) {
     val feed = FeedTable(conn)
     val entry = EntryTable(conn)
     val conf = ConfQueries(conn)
-    val link = LinkQueries(conn)
+    val link = LinkTable(conn)
     val log = LogTable(conn)
 
     init {
@@ -31,7 +30,7 @@ class Database(driver: SQLiteDriver, val path: String) {
         if (version == 0) {
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LINK_SCHEMA)
+            conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(ConfSchema.toString())
             conn.execSQL(LogTable.SCHEMA)
             conn.execSQL("PRAGMA user_version=1;")

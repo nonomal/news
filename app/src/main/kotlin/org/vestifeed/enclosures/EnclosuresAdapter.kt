@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.databinding.ListItemEnclosureBinding
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 
 class EnclosuresAdapter(
     private val callback: Callback,
@@ -38,7 +38,7 @@ class EnclosuresAdapter(
 
     data class Item(
         val entryId: String,
-        val enclosure: Link,
+        val enclosure: LinkTable.Link,
         val primaryText: String,
         val secondaryText: String,
     )

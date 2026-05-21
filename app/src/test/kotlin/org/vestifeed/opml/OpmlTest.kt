@@ -7,7 +7,7 @@ import java.nio.charset.Charset
 import java.util.UUID
 import org.junit.Test
 import org.vestifeed.db.table.FeedTable
-import org.vestifeed.db.table.Link
+import org.vestifeed.db.table.LinkTable
 
 class OpmlTest {
 
@@ -52,7 +52,7 @@ class OpmlTest {
         val feeds = sampleElements.map {
             val feedId = UUID.randomUUID().toString()
 
-            val selfLink = Link(
+            val selfLink = LinkTable.Link(
                 id = null,
                 feedId = feedId,
                 entryId = null,
@@ -66,7 +66,7 @@ class OpmlTest {
                 extCacheUri = null,
             )
 
-            val alternateLink = Link(
+            val alternateLink = LinkTable.Link(
                 id = null,
                 feedId = feedId,
                 entryId = null,

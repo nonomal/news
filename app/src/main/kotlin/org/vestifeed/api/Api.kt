@@ -2,8 +2,7 @@ package org.vestifeed.api
 
 import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
-import org.vestifeed.db.table.Entry
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
 import org.vestifeed.db.table.Link
 import java.time.OffsetDateTime
@@ -12,7 +11,7 @@ interface Api {
     data class AddFeedResult(
         val feed: Feed,
         val feedLinks: List<Link>,
-        val entries: List<Pair<Entry, List<Link>>>,
+        val entries: List<Pair<EntryTable.Entry, List<Link>>>,
     )
 
     suspend fun addFeed(url: HttpUrl): AddFeedResult
@@ -26,13 +25,13 @@ interface Api {
 
     suspend fun deleteFeed(feedId: String): Result<Unit>
 
-    suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<Entry, List<Link>>>>
+    suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<Link>>>>
 
     suspend fun getNewAndUpdatedEntries(
         maxEntryId: String?,
         maxEntryUpdated: OffsetDateTime?,
         lastSync: OffsetDateTime?,
-    ): List<Pair<Entry, List<Link>>>
+    ): List<Pair<EntryTable.Entry, List<Link>>>
 
     suspend fun markEntriesAsRead(
         entriesIds: List<String>,
@@ -40,7 +39,7 @@ interface Api {
     )
 
     suspend fun markEntriesAsBookmarked(
-        entries: List<EntryQueries.EntryWithoutContent>,
+        entries: List<EntryTable.EntryWithoutContent>,
         bookmarked: Boolean,
     )
 }

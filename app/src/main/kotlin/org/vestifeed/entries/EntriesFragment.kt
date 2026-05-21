@@ -32,9 +32,9 @@ import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.db.table.Conf
 import org.vestifeed.db.table.ConfSchema
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
-import org.vestifeed.db.table.Log
+import org.vestifeed.db.table.LogTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
 import org.vestifeed.log.LogFragment
@@ -97,7 +97,7 @@ class EntriesFragment : AppFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         db().log.insert(
-            Log.InsertArgs(
+            LogTable.InsertArgs(
                 level = "debug",
                 tag = "EntriesFragment",
                 message = "onViewCreated",
@@ -328,7 +328,7 @@ class EntriesFragment : AppFragment() {
         // todo
     }
 
-    private fun EntryQueries.EntriesAdapterRow.toItem(conf: Conf): EntriesAdapter.Item {
+    private fun EntryTable.EntriesAdapterRow.toItem(conf: Conf): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = id,
             showImage = extShowPreviewImages || conf.showPreviewImages,

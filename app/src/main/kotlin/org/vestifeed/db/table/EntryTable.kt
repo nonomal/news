@@ -4,145 +4,108 @@ import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
 import org.vestifeed.db.bindTextOrNull
-import org.vestifeed.db.getTextOrNull
 import java.time.OffsetDateTime
+import kotlin.use
 
-object EntrySchema {
-    const val TABLE_NAME = "entry"
-
-    override fun toString(): String {
-        return """
-            CREATE TABLE $TABLE_NAME (
-                ${Columns.ContentType} TEXT,
-                ${Columns.ContentSrc} TEXT,
-                ${Columns.ContentText} TEXT,
-                ${Columns.Summary} TEXT,
-                ${Columns.Id} TEXT PRIMARY KEY NOT NULL,
-                ${Columns.FeedId} TEXT NOT NULL,
-                ${Columns.Title} TEXT NOT NULL,
-                ${Columns.Published} TEXT NOT NULL,
-                ${Columns.Updated} TEXT NOT NULL,
-                ${Columns.AuthorName} TEXT NOT NULL,
-                ${Columns.ExtRead} INTEGER NOT NULL,
-                ${Columns.ExtReadSynced} INTEGER NOT NULL,
-                ${Columns.ExtBookmarked} INTEGER NOT NULL,
-                ${Columns.ExtBookmarkedSynced} INTEGER NOT NULL,
-                ${Columns.ExtCommentsUrl} TEXT NOT NULL,
-                ${Columns.ExtOgImageChecked} INTEGER NOT NULL,
-                ${Columns.ExtOgImageUrl} TEXT NOT NULL,
-                ${Columns.ExtOgImageWidth} INTEGER NOT NULL,
-                ${Columns.ExtOgImageHeight} INTEGER NOT NULL
+class EntryTable(private val conn: SQLiteConnection) {
+    companion object {
+        const val SCHEMA = """
+            CREATE TABLE entry (
+                content_type TEXT,
+                content_src TEXT,
+                content_text TEXT,
+                summary TEXT,
+                id TEXT PRIMARY KEY NOT NULL,
+                feed_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                published TEXT NOT NULL,
+                updated TEXT NOT NULL,
+                author_name TEXT NOT NULL,
+                ext_read INTEGER NOT NULL,
+                ext_read_synced INTEGER NOT NULL,
+                ext_bookmarked INTEGER NOT NULL,
+                ext_bookmarked_synced INTEGER NOT NULL,
+                ext_comments_url TEXT NOT NULL,
+                ext_og_image_checked INTEGER NOT NULL,
+                ext_og_image_url TEXT NOT NULL,
+                ext_og_image_width INTEGER NOT NULL,
+                ext_og_image_height INTEGER NOT NULL
             ) STRICT;
         """
     }
 
-    enum class Columns(val sqlName: String) {
-        ContentType("content_type"),
-        ContentSrc("content_src"),
-        ContentText("content_text"),
-        Summary("summary"),
-        Id("id"),
-        FeedId("feed_id"),
-        Title("title"),
-        Published("published"),
-        Updated("updated"),
-        AuthorName("author_name"),
-        ExtRead("ext_read"),
-        ExtReadSynced("ext_read_synced"),
-        ExtBookmarked("ext_bookmarked"),
-        ExtBookmarkedSynced("ext_bookmarked_synced"),
-        ExtCommentsUrl("ext_comments_url"),
-        ExtOgImageChecked("ext_og_image_checked"),
-        ExtOgImageUrl("ext_og_image_url"),
-        ExtOgImageWidth("ext_og_image_width"),
-        ExtOgImageHeight("ext_og_image_height");
-
-        override fun toString() = sqlName
-    }
-}
-
-typealias Entry = EntryProjection
-
-data class EntryProjection(
-    val contentType: String?,
-    val contentSrc: String?,
-    val contentText: String?,
-    val summary: String?,
-    val id: String,
-    val feedId: String,
-    val title: String,
-    val published: OffsetDateTime,
-    val updated: OffsetDateTime,
-    val authorName: String,
-    val extRead: Boolean,
-    val extReadSynced: Boolean,
-    val extBookmarked: Boolean,
-    val extBookmarkedSynced: Boolean,
-    val extCommentsUrl: String,
-    val extOpenGraphImageChecked: Boolean,
-    val extOpenGraphImageUrl: String,
-    val extOpenGraphImageWidth: Int,
-    val extOpenGraphImageHeight: Int,
-) {
-    companion object {
-        val columns: String
-            get() {
-                return EntrySchema.Columns.entries.joinToString(",") { it.sqlName }
-            }
-
-        fun fromStatement(stmt: SQLiteStatement): EntryProjection {
-            return EntryProjection(
-                contentType = stmt.getTextOrNull(0),
-                contentSrc = stmt.getTextOrNull(1),
-                contentText = stmt.getTextOrNull(2),
-                summary = stmt.getTextOrNull(3),
-                id = stmt.getText(4),
-                feedId = stmt.getText(5),
-                title = stmt.getText(6),
-                published = OffsetDateTime.parse(stmt.getText(7)),
-                updated = OffsetDateTime.parse(stmt.getText(8)),
-                authorName = stmt.getText(9),
-                extRead = stmt.getInt(10) == 1,
-                extReadSynced = stmt.getInt(11) == 1,
-                extBookmarked = stmt.getInt(12) == 1,
-                extBookmarkedSynced = stmt.getInt(13) == 1,
-                extCommentsUrl = stmt.getText(14),
-                extOpenGraphImageChecked = stmt.getInt(15) == 1,
-                extOpenGraphImageUrl = stmt.getText(16),
-                extOpenGraphImageWidth = stmt.getInt(17),
-                extOpenGraphImageHeight = stmt.getInt(18)
-            )
-        }
-    }
-}
-
-fun Entry.withoutContent(): EntryQueries.EntryWithoutContent {
-    return EntryQueries.EntryWithoutContent(
-        summary = summary,
-        id = id,
-        feedId = feedId,
-        title = title,
-        published = published,
-        updated = updated,
-        authorName = authorName,
-        extRead = extRead,
-        extReadSynced = extReadSynced,
-        extBookmarked = extBookmarked,
-        extBookmarkedSynced = extBookmarkedSynced,
-        extCommentsUrl = extCommentsUrl,
-        extOpenGraphImageChecked = extOpenGraphImageChecked,
-        extOpenGraphImageUrl = extOpenGraphImageUrl,
-        extOpenGraphImageWidth = extOpenGraphImageWidth,
-        extOpenGraphImageHeight = extOpenGraphImageHeight,
+    data class Entry(
+        val contentType: String?,
+        val contentSrc: String?,
+        val contentText: String?,
+        val summary: String?,
+        val id: String,
+        val feedId: String,
+        val title: String,
+        val published: OffsetDateTime,
+        val updated: OffsetDateTime,
+        val authorName: String,
+        val extRead: Boolean,
+        val extReadSynced: Boolean,
+        val extBookmarked: Boolean,
+        val extBookmarkedSynced: Boolean,
+        val extCommentsUrl: String,
+        val extOpenGraphImageChecked: Boolean,
+        val extOpenGraphImageUrl: String,
+        val extOpenGraphImageWidth: Int,
+        val extOpenGraphImageHeight: Int,
     )
-}
 
-class EntryQueries(private val conn: SQLiteConnection) {
+    private fun SQLiteStatement.toEntry(): Entry {
+        return Entry(
+            contentType = this.getTextOrNull(0),
+            contentSrc = this.getTextOrNull(1),
+            contentText = this.getTextOrNull(2),
+            summary = this.getTextOrNull(3),
+            id = this.getText(4),
+            feedId = this.getText(5),
+            title = this.getText(6),
+            published = OffsetDateTime.parse(this.getText(7)),
+            updated = OffsetDateTime.parse(this.getText(8)),
+            authorName = this.getText(9),
+            extRead = this.getInt(10) == 1,
+            extReadSynced = this.getInt(11) == 1,
+            extBookmarked = this.getInt(12) == 1,
+            extBookmarkedSynced = this.getInt(13) == 1,
+            extCommentsUrl = this.getText(14),
+            extOpenGraphImageChecked = this.getInt(15) == 1,
+            extOpenGraphImageUrl = this.getText(16),
+            extOpenGraphImageWidth = this.getInt(17),
+            extOpenGraphImageHeight = this.getInt(18)
+        )
+    }
+
+    fun Entry.withoutContent(): EntryWithoutContent {
+        return EntryWithoutContent(
+            summary = summary,
+            id = id,
+            feedId = feedId,
+            title = title,
+            published = published,
+            updated = updated,
+            authorName = authorName,
+            extRead = extRead,
+            extReadSynced = extReadSynced,
+            extBookmarked = extBookmarked,
+            extBookmarkedSynced = extBookmarkedSynced,
+            extCommentsUrl = extCommentsUrl,
+            extOpenGraphImageChecked = extOpenGraphImageChecked,
+            extOpenGraphImageUrl = extOpenGraphImageUrl,
+            extOpenGraphImageWidth = extOpenGraphImageWidth,
+            extOpenGraphImageHeight = extOpenGraphImageHeight,
+        )
+    }
+
     fun insertOrReplace(entries: List<Entry>) {
         conn.prepare(
             """
             INSERT OR REPLACE INTO
-            ${EntrySchema.TABLE_NAME} (${EntryProjection.columns})
+            entry (content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
@@ -180,9 +143,9 @@ class EntryQueries(private val conn: SQLiteConnection) {
     fun selectAllPublishedAndTitle(): List<ShortEntry> {
         conn.prepare(
             """
-            SELECT ${EntrySchema.Columns.Published}, ${EntrySchema.Columns.Title} 
-            FROM ${EntrySchema.TABLE_NAME} 
-            ORDER BY ${EntrySchema.Columns.Published} DESC;
+            SELECT published, title 
+            FROM entry 
+            ORDER BY published DESC;
             """
         ).use { stmt ->
             return buildList {
@@ -202,13 +165,13 @@ class EntryQueries(private val conn: SQLiteConnection) {
     fun selectById(entryId: String): Entry? {
         conn.prepare(
             """
-            SELECT ${EntryProjection.columns}
-            FROM ${EntrySchema.TABLE_NAME}
-            WHERE ${EntrySchema.Columns.Id} = ?;
+            SELECT content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height
+            FROM entry
+            WHERE id = ?;
             """
         ).use { stmt ->
             stmt.bindText(1, entryId)
-            return if (stmt.step()) EntryProjection.fromStatement(stmt) else null
+            return if (stmt.step()) stmt.toEntry() else null
         }
     }
 

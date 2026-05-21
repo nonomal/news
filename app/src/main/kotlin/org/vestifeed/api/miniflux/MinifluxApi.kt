@@ -12,8 +12,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.vestifeed.api.Api
-import org.vestifeed.db.table.Entry
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
 import org.vestifeed.db.table.Link
 import org.vestifeed.http.executeAsync
@@ -140,7 +139,7 @@ class MinifluxApi(
         }
     }
 
-    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<Entry, List<Link>>>> =
+    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<Link>>>> =
         flow {
             val currentBatch = mutableSetOf<EntryJson>()
             val batchSize = 10L
@@ -198,7 +197,7 @@ class MinifluxApi(
         maxEntryId: String?,
         maxEntryUpdated: OffsetDateTime?,
         lastSync: OffsetDateTime?,
-    ): List<Pair<Entry, List<Link>>> {
+    ): List<Pair<EntryTable.Entry, List<Link>>> {
         val changedAfter = lastSync?.toEpochSecond() ?: 0L
         val urlBuilder = baseUrl.newBuilder().addPathSegment("entries")
         urlBuilder.addQueryParameter("order", "id")
@@ -230,7 +229,7 @@ class MinifluxApi(
     }
 
     override suspend fun markEntriesAsBookmarked(
-        entries: List<EntryQueries.EntryWithoutContent>,
+        entries: List<EntryTable.EntryWithoutContent>,
         bookmarked: Boolean,
     ) {
         entries.forEach { entry ->
@@ -245,7 +244,7 @@ class MinifluxApi(
         }
     }
 
-    private fun EntryJson.toEntry(): Pair<Entry, List<Link>> {
+    private fun EntryJson.toEntry(): Pair<EntryTable.Entry, List<Link>> {
         val links = mutableListOf<Link>()
 
         if (url.isNotBlank()) {
@@ -281,7 +280,7 @@ class MinifluxApi(
         }
 
         return Pair(
-            Entry(
+            EntryTable.Entry(
                 contentType = "html",
                 contentSrc = "",
                 contentText = content,

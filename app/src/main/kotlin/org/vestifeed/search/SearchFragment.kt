@@ -28,7 +28,7 @@ import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentSearchBinding
 import org.vestifeed.db.table.Conf
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesAdapter
 import org.vestifeed.entry.EntryFragment
@@ -236,7 +236,7 @@ class SearchFragment : AppFragment() {
         data class ShowingQueryResults(val items: List<EntriesAdapter.Item>) : State()
     }
 
-    private fun EntryQueries.SelectByQuery.toItem(conf: Conf): EntriesAdapter.Item {
+    private fun EntryTable.SelectByQuery.toItem(conf: Conf): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = id,
             showImage = extShowPreviewImages || conf.showPreviewImages,

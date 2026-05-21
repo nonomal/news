@@ -7,7 +7,7 @@ import org.vestifeed.db.bindJsonObjectOrNull
 import org.vestifeed.db.getJsonObjectOrNull
 import kotlin.use
 
-class Log(private val conn: SQLiteConnection) {
+class LogTable(private val conn: SQLiteConnection) {
     companion object {
         const val SCHEMA = """
             CREATE TABLE log (

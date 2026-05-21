@@ -15,8 +15,8 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
 import org.vestifeed.db.Database
-import org.vestifeed.db.table.EntryQueries
-import org.vestifeed.db.table.Log
+import org.vestifeed.db.table.EntryTable
+import org.vestifeed.db.table.LogTable
 import org.vestifeed.http.await
 import org.vestifeed.parser.AtomLinkRel
 import java.util.concurrent.TimeUnit
@@ -26,7 +26,7 @@ class OpenGraphImageFetcher(
     private val db: Database,
     private val imageContext: PlatformContext,
 ) {
-    val lastDownload = MutableStateFlow<EntryQueries.EntryWithoutContent?>(null)
+    val lastDownload = MutableStateFlow<EntryTable.EntryWithoutContent?>(null)
 
     private val httpClient = OkHttpClient.Builder()
         .callTimeout(10, TimeUnit.SECONDS)
@@ -51,12 +51,12 @@ class OpenGraphImageFetcher(
         }
     }
 
-    private suspend fun fetchEntryImages(entries: List<EntryQueries.EntryWithoutContent>): List<EntryQueries.EntryWithoutContent> {
+    private suspend fun fetchEntryImages(entries: List<EntryTable.EntryWithoutContent>): List<EntryTable.EntryWithoutContent> {
         if (entries.isEmpty()) {
             return emptyList()
         }
 
-        val successfulEntries = mutableListOf<EntryQueries.EntryWithoutContent>()
+        val successfulEntries = mutableListOf<EntryTable.EntryWithoutContent>()
 
         for (entry in entries) {
             if (fetchEntryImage(entry)) {
@@ -67,10 +67,10 @@ class OpenGraphImageFetcher(
         return successfulEntries
     }
 
-    private suspend fun fetchEntryImage(entry: EntryQueries.EntryWithoutContent): Boolean {
+    private suspend fun fetchEntryImage(entry: EntryTable.EntryWithoutContent): Boolean {
         withContext(Dispatchers.IO) {
             db.log.insert(
-                Log.InsertArgs(
+                LogTable.InsertArgs(
                     level = "debug",
                     tag = "OpenGraphImageFetcher",
                     message = "Trying to fetch an image for entry ${entry.id} (${entry.title})",

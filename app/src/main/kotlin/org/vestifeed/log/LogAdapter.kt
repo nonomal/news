@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.databinding.ListItemLogBinding
-import org.vestifeed.db.table.Log
+import org.vestifeed.db.table.LogTable
 
 class LogAdapter : ListAdapter<LogAdapter.Item, LogAdapter.ViewHolder>(DiffCallback()) {
 
@@ -28,7 +28,7 @@ class LogAdapter : ListAdapter<LogAdapter.Item, LogAdapter.ViewHolder>(DiffCallb
     }
 
     data class Item(
-        val entry: Log.Entry,
+        val entry: LogTable.Entry,
     )
 
     class ViewHolder(

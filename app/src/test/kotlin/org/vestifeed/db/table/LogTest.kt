@@ -20,7 +20,7 @@ class LogTest {
 
     @Test
     fun logSchema_createTableStatement() {
-        val statement = Log.SCHEMA
+        val statement = LogTable.SCHEMA
         assertTrue(statement.contains("CREATE TABLE log"))
         assertTrue(statement.contains("id INTEGER PRIMARY KEY AUTOINCREMENT"))
         assertTrue(statement.contains("level TEXT NOT NULL"))
@@ -105,7 +105,7 @@ class LogTest {
         tag: String = "TestTag",
         message: String = "Test message",
         data: JsonObject? = null,
-    ) = Log.InsertArgs(
+    ) = LogTable.InsertArgs(
         level = level,
         tag = tag,
         message = message,

@@ -38,7 +38,7 @@ import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntryBinding
-import org.vestifeed.db.table.Entry
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Link
 import org.vestifeed.enclosures.EnclosuresRepo
 import org.vestifeed.feedsettings.FeedSettingsFragment
@@ -159,7 +159,7 @@ class EntryFragment : AppFragment() {
         }
     }
 
-    private fun showEntry(feedTitle: String, entry: Entry, entryLinks: List<Link>) {
+    private fun showEntry(feedTitle: String, entry: EntryTable.Entry, entryLinks: List<Link>) {
         val menu = binding.toolbar.menu
 
         menu.findItem(R.id.toggleBookmarked)?.isVisible = true
@@ -229,7 +229,7 @@ class EntryFragment : AppFragment() {
 
     private fun onMenuItemClick(
         menuItem: MenuItem?,
-        entry: Entry,
+        entry: EntryTable.Entry,
         entryLinks: List<Link>
     ): Boolean {
         when (menuItem?.itemId) {

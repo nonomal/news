@@ -22,8 +22,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.jsoup.Jsoup
-import org.vestifeed.db.table.Entry
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
 import org.vestifeed.db.table.Link
 import java.security.MessageDigest
@@ -131,7 +130,7 @@ class StandaloneNewsApi(
         return Result.success(Unit)
     }
 
-    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<Entry, List<Link>>>> {
+    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<Link>>>> {
         return flowOf(emptyList())
     }
 
@@ -139,14 +138,14 @@ class StandaloneNewsApi(
         maxEntryId: String?,
         maxEntryUpdated: OffsetDateTime?,
         lastSync: OffsetDateTime?,
-    ): List<Pair<Entry, List<Link>>> {
-        val fetchedEntries = mutableListOf<Pair<Entry, List<Link>>>()
+    ): List<Pair<EntryTable.Entry, List<Link>>> {
+        val fetchedEntries = mutableListOf<Pair<EntryTable.Entry, List<Link>>>()
         val feeds = withContext(Dispatchers.IO) { db.feed.selectAll() }
         feeds.forEach { fetchedEntries += fetchEntries(it) }
         return fetchedEntries
     }
 
-    private suspend fun fetchEntries(feed: Feed): List<Pair<Entry, List<Link>>> {
+    private suspend fun fetchEntries(feed: Feed): List<Pair<EntryTable.Entry, List<Link>>> {
         val feedLinks = withContext(Dispatchers.IO) { db.link.selectByFeedId(feed.id) }
         val feedSelfLink = feedLinks.firstOrNull { it.rel is AtomLinkRel.Self }
             ?: throw Exception("self link is missing")
@@ -195,7 +194,7 @@ class StandaloneNewsApi(
     }
 
     override suspend fun markEntriesAsBookmarked(
-        entries: List<EntryQueries.EntryWithoutContent>,
+        entries: List<EntryTable.EntryWithoutContent>,
         bookmarked: Boolean
     ) {
 
@@ -279,9 +278,9 @@ class StandaloneNewsApi(
         )
     }
 
-    private fun AtomEntry.toEntry(feedId: String): Pair<Entry, List<Link>> {
+    private fun AtomEntry.toEntry(feedId: String): Pair<EntryTable.Entry, List<Link>> {
         return Pair(
-            Entry(
+            EntryTable.Entry(
                 contentType = content.type.toString(),
                 contentSrc = content.src,
                 contentText = content.text,
@@ -319,7 +318,7 @@ class StandaloneNewsApi(
         )
     }
 
-    private fun RssItem.toEntry(feedId: String): Pair<Entry, List<Link>> {
+    private fun RssItem.toEntry(feedId: String): Pair<EntryTable.Entry, List<Link>> {
         val id = when (val guid = guid) {
             is RssItemGuid.StringGuid -> "guid:${guid.value}"
             is RssItemGuid.UrlGuid -> "guid:${guid.value}"
@@ -369,7 +368,7 @@ class StandaloneNewsApi(
         val summary = rawDescription.stripHtml().take(400)
 
         return Pair(
-            Entry(
+            EntryTable.Entry(
                 contentType = "html",
                 contentSrc = "",
                 contentText = rawDescription,
@@ -408,7 +407,7 @@ class StandaloneNewsApi(
 
     private fun Date.toIsoString(): String = ISO.format(this)
 
-    private fun ParsedFeed.getEntries(feedId: String): List<Pair<Entry, List<Link>>> {
+    private fun ParsedFeed.getEntries(feedId: String): List<Pair<EntryTable.Entry, List<Link>>> {
         return when (this) {
             is RssFeed -> {
                 this.channel.items

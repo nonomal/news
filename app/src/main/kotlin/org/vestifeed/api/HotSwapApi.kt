@@ -6,8 +6,7 @@ import org.vestifeed.db.Database
 import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
 import org.vestifeed.db.table.ConfSchema
-import org.vestifeed.db.table.Entry
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
 import org.vestifeed.db.table.Link
 import java.time.OffsetDateTime
@@ -61,7 +60,7 @@ class HotSwapApi(private val db: Database) : Api {
         return api.deleteFeed(feedId)
     }
 
-    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<Entry, List<Link>>>> {
+    override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<Link>>>> {
         updateApi()
         return api.getEntries(includeReadEntries)
     }
@@ -70,7 +69,7 @@ class HotSwapApi(private val db: Database) : Api {
         maxEntryId: String?,
         maxEntryUpdated: OffsetDateTime?,
         lastSync: OffsetDateTime?,
-    ): List<Pair<Entry, List<Link>>> {
+    ): List<Pair<EntryTable.Entry, List<Link>>> {
         updateApi()
         return api.getNewAndUpdatedEntries(maxEntryId, maxEntryUpdated, lastSync)
     }
@@ -81,7 +80,7 @@ class HotSwapApi(private val db: Database) : Api {
     }
 
     override suspend fun markEntriesAsBookmarked(
-        entries: List<EntryQueries.EntryWithoutContent>,
+        entries: List<EntryTable.EntryWithoutContent>,
         bookmarked: Boolean,
     ) {
         updateApi()

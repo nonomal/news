@@ -185,7 +185,7 @@ class FeedTest {
         feedId: String,
         extRead: Boolean = false,
         extBookmarked: Boolean = false,
-    ) = Entry(
+    ) = EntryTable.Entry(
         contentType = "",
         contentSrc = "",
         contentText = "",

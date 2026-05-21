@@ -4,23 +4,22 @@ import androidx.sqlite.SQLiteDriver
 import androidx.sqlite.execSQL
 import org.vestifeed.db.table.ConfQueries
 import org.vestifeed.db.table.ConfSchema
-import org.vestifeed.db.table.EntryQueries
-import org.vestifeed.db.table.EntrySchema
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FEED_SCHEMA
 import org.vestifeed.db.table.FeedQueries
 import org.vestifeed.db.table.LINK_SCHEMA
 import org.vestifeed.db.table.LinkQueries
-import org.vestifeed.db.table.Log
+import org.vestifeed.db.table.LogTable
 
 class Database(driver: SQLiteDriver, val path: String) {
 
     private val conn = driver.open(path)
 
     val feed = FeedQueries(conn)
-    val entry = EntryQueries(conn)
+    val entry = EntryTable(conn)
     val conf = ConfQueries(conn)
     val link = LinkQueries(conn)
-    val log = Log(conn)
+    val log = LogTable(conn)
 
     init {
         migrate()
@@ -32,10 +31,10 @@ class Database(driver: SQLiteDriver, val path: String) {
 
         if (version == 0) {
             conn.execSQL(FEED_SCHEMA)
-            conn.execSQL(EntrySchema.toString())
+            conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LINK_SCHEMA)
             conn.execSQL(ConfSchema.toString())
-            conn.execSQL(Log.SCHEMA)
+            conn.execSQL(LogTable.SCHEMA)
             conn.execSQL("PRAGMA user_version=1;")
         }
     }

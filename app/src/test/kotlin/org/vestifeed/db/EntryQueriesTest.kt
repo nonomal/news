@@ -5,8 +5,7 @@ import java.util.UUID
 import org.junit.Test
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.vestifeed.db.table.Entry
-import org.vestifeed.db.table.EntryQueries
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.Feed
 import kotlin.collections.sortedByDescending
 
@@ -177,13 +176,13 @@ class EntryQueriesTest {
     }
 }
 
-fun EntryQueries.insertOrReplace(): Entry {
+fun EntryTable.insertOrReplace(): EntryTable.Entry {
     val entry = entry()
     insertOrReplace(listOf(entry))
     return entry
 }
 
-fun entry() = Entry(
+fun entry() = EntryTable.Entry(
     contentType = "",
     contentSrc = "",
     contentText = "",
@@ -205,7 +204,7 @@ fun entry() = Entry(
     extOpenGraphImageHeight = 0,
 )
 
-fun entryWithoutContent() = EntryQueries.EntryWithoutContent(
+fun entryWithoutContent() = EntryTable.EntryWithoutContent(
     summary = "",
     id = UUID.randomUUID().toString(),
     feedId = "",
@@ -224,7 +223,7 @@ fun entryWithoutContent() = EntryQueries.EntryWithoutContent(
     extOpenGraphImageHeight = 0,
 )
 
-fun Entry.withoutContent() = EntryQueries.EntryWithoutContent(
+fun EntryTable.Entry.withoutContent() = EntryTable.EntryWithoutContent(
     summary = summary,
     id = id,
     feedId = feedId,
@@ -243,8 +242,8 @@ fun Entry.withoutContent() = EntryQueries.EntryWithoutContent(
     extOpenGraphImageHeight = extOpenGraphImageHeight,
 )
 
-fun EntryQueries.EntryWithoutContent.toEntry(): Entry {
-    return Entry(
+fun EntryTable.EntryWithoutContent.toEntry(): EntryTable.Entry {
+    return EntryTable.Entry(
         contentType = "",
         contentSrc = "",
         contentText = "",

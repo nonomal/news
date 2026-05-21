@@ -2,6 +2,7 @@ package org.vestifeed.auth
 
 import android.graphics.drawable.Animatable
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,7 +15,7 @@ import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentAuthBinding
 import org.vestifeed.db.table.ConfSchema
-import org.vestifeed.db.table.Log
+import org.vestifeed.db.table.LogTable
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.sync.BackgroundSyncScheduler
@@ -38,7 +39,7 @@ class AuthFragment : AppFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.initButtons()
         db().log.insert(
-            Log.InsertArgs(
+            LogTable.InsertArgs(
                 level = "debug",
                 tag = "AuthFragment",
                 message = "onViewCreated",
@@ -69,7 +70,7 @@ class AuthFragment : AppFragment() {
             val syncScheduler = BackgroundSyncScheduler(requireContext())
 
             db().log.insert(
-                Log.InsertArgs(
+                LogTable.InsertArgs(
                     level = "debug",
                     tag = "AuthFragment",
                     message = "Switching to embedded backend",

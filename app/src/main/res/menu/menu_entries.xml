@@ -15,11 +15,6 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/sort"
-        android:title="@string/show_oldest_first"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/markAllAsRead"
         android:title="@string/mark_all_as_read"
         app:showAsAction="never" />

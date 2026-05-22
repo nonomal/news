@@ -15,7 +15,6 @@ class ConfTable(private val conn: SQLiteConnection) {
                 initial_sync_completed INTEGER NOT NULL,
                 last_entries_sync_datetime TEXT NOT NULL,
                 show_read_entries INTEGER NOT NULL,
-                sort_order TEXT NOT NULL,
                 show_preview_images INTEGER NOT NULL,
                 crop_preview_images INTEGER NOT NULL,
                 mark_scrolled_entries_as_read INTEGER NOT NULL,
@@ -28,17 +27,13 @@ class ConfTable(private val conn: SQLiteConnection) {
             ) STRICT;
         """
 
-        const val SORT_ORDER_ASCENDING = "ascending"
-        const val SORT_ORDER_DESCENDING = "descending"
-
-        fun confDefault(): Conf = Conf(
+        fun defaultConf(): Conf = Conf(
             backend = null,
             minifluxServerUrl = "",
             minifluxServerToken = "",
             initialSyncCompleted = false,
             lastEntriesSyncDatetime = "",
             showReadEntries = false,
-            sortOrder = SORT_ORDER_DESCENDING,
             showPreviewImages = true,
             cropPreviewImages = true,
             markScrolledEntriesAsRead = false,
@@ -63,7 +58,6 @@ class ConfTable(private val conn: SQLiteConnection) {
         val initialSyncCompleted: Boolean,
         val lastEntriesSyncDatetime: String,
         val showReadEntries: Boolean,
-        val sortOrder: String,
         val showPreviewImages: Boolean,
         val cropPreviewImages: Boolean,
         val markScrolledEntriesAsRead: Boolean,
@@ -82,23 +76,22 @@ class ConfTable(private val conn: SQLiteConnection) {
         initialSyncCompleted = getInt(3) == 1,
         lastEntriesSyncDatetime = getText(4),
         showReadEntries = getInt(5) == 1,
-        sortOrder = getText(6),
-        showPreviewImages = getInt(7) == 1,
-        cropPreviewImages = getInt(8) == 1,
-        markScrolledEntriesAsRead = getInt(9) == 1,
-        syncOnStartup = getInt(10) == 1,
-        syncInBackground = getInt(11) == 1,
-        backgroundSyncIntervalMillis = getLong(12),
-        useBuiltInBrowser = getInt(13) == 1,
-        showPreviewText = getInt(14) == 1,
-        syncedOnStartup = getInt(15) == 1,
+        showPreviewImages = getInt(6) == 1,
+        cropPreviewImages = getInt(7) == 1,
+        markScrolledEntriesAsRead = getInt(8) == 1,
+        syncOnStartup = getInt(9) == 1,
+        syncInBackground = getInt(10) == 1,
+        backgroundSyncIntervalMillis = getLong(11),
+        useBuiltInBrowser = getInt(12) == 1,
+        showPreviewText = getInt(13) == 1,
+        syncedOnStartup = getInt(14) == 1,
     )
 
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend, miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO conf (backend, miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             if (conf.backend == null) {
@@ -111,16 +104,15 @@ class ConfTable(private val conn: SQLiteConnection) {
             stmt.bindInt(4, if (conf.initialSyncCompleted) 1 else 0)
             stmt.bindText(5, conf.lastEntriesSyncDatetime)
             stmt.bindInt(6, if (conf.showReadEntries) 1 else 0)
-            stmt.bindText(7, conf.sortOrder)
-            stmt.bindInt(8, if (conf.showPreviewImages) 1 else 0)
-            stmt.bindInt(9, if (conf.cropPreviewImages) 1 else 0)
-            stmt.bindInt(10, if (conf.markScrolledEntriesAsRead) 1 else 0)
-            stmt.bindInt(11, if (conf.syncOnStartup) 1 else 0)
-            stmt.bindInt(12, if (conf.syncInBackground) 1 else 0)
-            stmt.bindLong(13, conf.backgroundSyncIntervalMillis)
-            stmt.bindInt(14, if (conf.useBuiltInBrowser) 1 else 0)
-            stmt.bindInt(15, if (conf.showPreviewText) 1 else 0)
-            stmt.bindInt(16, if (conf.syncedOnStartup) 1 else 0)
+            stmt.bindInt(7, if (conf.showPreviewImages) 1 else 0)
+            stmt.bindInt(8, if (conf.cropPreviewImages) 1 else 0)
+            stmt.bindInt(9, if (conf.markScrolledEntriesAsRead) 1 else 0)
+            stmt.bindInt(10, if (conf.syncOnStartup) 1 else 0)
+            stmt.bindInt(11, if (conf.syncInBackground) 1 else 0)
+            stmt.bindLong(12, conf.backgroundSyncIntervalMillis)
+            stmt.bindInt(13, if (conf.useBuiltInBrowser) 1 else 0)
+            stmt.bindInt(14, if (conf.showPreviewText) 1 else 0)
+            stmt.bindInt(15, if (conf.syncedOnStartup) 1 else 0)
             stmt.step()
         }
     }
@@ -128,14 +120,14 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend,miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
+            SELECT backend,miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
             FROM conf
             """
         ).use { stmt ->
             return if (stmt.step()) {
                 stmt.toConf()
             } else {
-                confDefault()
+                defaultConf()
             }
         }
     }

@@ -21,8 +21,6 @@ class ConfTest {
     fun confSchema_constants() {
         assertEquals("embedded", ConfTable.Backend.Embedded.name.lowercase())
         assertEquals("miniflux", ConfTable.Backend.Miniflux.name.lowercase())
-        assertEquals("ascending", ConfTable.SORT_ORDER_ASCENDING)
-        assertEquals("descending", ConfTable.SORT_ORDER_DESCENDING)
     }
 
     @Test
@@ -36,14 +34,13 @@ class ConfTest {
 
     @Test
     fun confDefaults_values() {
-        val defaultConf = ConfTable.confDefault()
+        val defaultConf = ConfTable.defaultConf()
         assertEquals(null, defaultConf.backend)
         assertEquals("", defaultConf.minifluxServerUrl)
         assertEquals("", defaultConf.minifluxServerToken)
         assertFalse(defaultConf.initialSyncCompleted)
         assertEquals("", defaultConf.lastEntriesSyncDatetime)
         assertFalse(defaultConf.showReadEntries)
-        assertEquals(ConfTable.SORT_ORDER_DESCENDING, defaultConf.sortOrder)
         assertTrue(defaultConf.showPreviewImages)
         assertTrue(defaultConf.cropPreviewImages)
         assertFalse(defaultConf.markScrolledEntriesAsRead)
@@ -58,9 +55,8 @@ class ConfTest {
     @Test
     fun confQueries_select_emptyReturnsDefault() {
         val result = db.conf.select()
-        val defaultConf = ConfTable.confDefault()
+        val defaultConf = ConfTable.defaultConf()
         assertEquals(defaultConf.backend, result.backend)
-        assertEquals(defaultConf.sortOrder, result.sortOrder)
         assertEquals(defaultConf.backgroundSyncIntervalMillis, result.backgroundSyncIntervalMillis)
     }
 
@@ -76,7 +72,6 @@ class ConfTest {
         assertEquals(conf.initialSyncCompleted, result.initialSyncCompleted)
         assertEquals(conf.lastEntriesSyncDatetime, result.lastEntriesSyncDatetime)
         assertEquals(conf.showReadEntries, result.showReadEntries)
-        assertEquals(conf.sortOrder, result.sortOrder)
         assertEquals(conf.showPreviewImages, result.showPreviewImages)
         assertEquals(conf.cropPreviewImages, result.cropPreviewImages)
         assertEquals(conf.markScrolledEntriesAsRead, result.markScrolledEntriesAsRead)
@@ -124,18 +119,16 @@ class ConfTest {
         assertEquals(conf.backend, db.conf.select().backend)
 
         db.conf.delete()
-        val defaultConf = ConfTable.confDefault()
+        val defaultConf = ConfTable.defaultConf()
         assertEquals(defaultConf.backend, db.conf.select().backend)
     }
 
     @Test
     fun confQueries_updatePartialFields() {
-        db.conf.insert(createConf(sortOrder = ConfTable.SORT_ORDER_ASCENDING))
-
+        db.conf.insert(createConf(showPreviewImages = false))
         db.conf.update { it.copy(syncOnStartup = false) }
-
         val result = db.conf.select()
-        assertEquals(ConfTable.SORT_ORDER_ASCENDING, result.sortOrder)
+        assertEquals(false, result.showPreviewImages)
         assertFalse(result.syncOnStartup)
     }
 
@@ -146,7 +139,6 @@ class ConfTest {
         initialSyncCompleted: Boolean = true,
         lastEntriesSyncDatetime: String = "2024-01-01T00:00:00Z",
         showReadEntries: Boolean = true,
-        sortOrder: String = ConfTable.SORT_ORDER_DESCENDING,
         showPreviewImages: Boolean = true,
         cropPreviewImages: Boolean = false,
         markScrolledEntriesAsRead: Boolean = true,
@@ -163,7 +155,6 @@ class ConfTest {
         initialSyncCompleted = initialSyncCompleted,
         lastEntriesSyncDatetime = lastEntriesSyncDatetime,
         showReadEntries = showReadEntries,
-        sortOrder = sortOrder,
         showPreviewImages = showPreviewImages,
         cropPreviewImages = cropPreviewImages,
         markScrolledEntriesAsRead = markScrolledEntriesAsRead,

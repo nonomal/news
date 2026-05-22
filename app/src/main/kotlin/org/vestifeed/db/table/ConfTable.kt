@@ -9,7 +9,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     companion object {
         const val SCHEMA = """
             CREATE TABLE conf (
-                backend TEXT NOT NULL,
+                backend TEXT,
                 miniflux_server_url TEXT NOT NULL,
                 miniflux_server_token TEXT NOT NULL,
                 initial_sync_completed INTEGER NOT NULL,
@@ -28,14 +28,11 @@ class ConfTable(private val conn: SQLiteConnection) {
             ) STRICT;
         """
 
-        const val BACKEND_STANDALONE = "standalone"
-        const val BACKEND_MINIFLUX = "miniflux"
-
         const val SORT_ORDER_ASCENDING = "ascending"
         const val SORT_ORDER_DESCENDING = "descending"
 
         fun confDefault(): Conf = Conf(
-            backend = "",
+            backend = null,
             minifluxServerUrl = "",
             minifluxServerToken = "",
             initialSyncCompleted = false,
@@ -54,8 +51,13 @@ class ConfTable(private val conn: SQLiteConnection) {
         )
     }
 
+    enum class Backend {
+        Miniflux,
+        Embedded,
+    }
+
     data class Conf(
-        val backend: String,
+        val backend: Backend?,
         val minifluxServerUrl: String,
         val minifluxServerToken: String,
         val initialSyncCompleted: Boolean,
@@ -74,7 +76,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     )
 
     fun SQLiteStatement.toConf(): Conf = Conf(
-        backend = getText(0),
+        backend = getBackendOrNull(0),
         minifluxServerUrl = getText(1),
         minifluxServerToken = getText(2),
         initialSyncCompleted = getInt(3) == 1,
@@ -99,7 +101,11 @@ class ConfTable(private val conn: SQLiteConnection) {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
-            stmt.bindText(1, conf.backend)
+            if (conf.backend == null) {
+                stmt.bindNull(1)
+            } else {
+                stmt.bindText(1, conf.backend.name.lowercase())
+            }
             stmt.bindText(2, conf.minifluxServerUrl)
             stmt.bindText(3, conf.minifluxServerToken)
             stmt.bindInt(4, if (conf.initialSyncCompleted) 1 else 0)
@@ -151,4 +157,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun delete() {
         conn.execSQL("DELETE FROM conf")
     }
+
+    fun SQLiteStatement.getBackendOrNull(index: Int): Backend? =
+        if (isNull(index)) null else Backend.entries.single { it.name.lowercase() == getText(index) }
 }

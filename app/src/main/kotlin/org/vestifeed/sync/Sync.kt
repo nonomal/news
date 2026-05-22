@@ -63,12 +63,12 @@ class Sync(
 
         val conf = withContext(Dispatchers.IO) { db.conf.select() }
 
-        if (conf.backend.isBlank()) {
+        if (conf.backend == null) {
             _state.update { State.Idle(IllegalStateException("backend is not set")) }
             return
         }
 
-        if (conf.backend != ConfTable.BACKEND_STANDALONE && !conf.initialSyncCompleted) {
+        if (conf.backend != ConfTable.Backend.Embedded && !conf.initialSyncCompleted) {
             // make sure the database is empty
             try {
                 withContext(Dispatchers.IO) {

@@ -22,18 +22,18 @@ class HotSwapApi(private val db: Database) : Api {
     private fun updateApi() {
         val conf = db.conf.select()
         api = when (conf.backend) {
-            ConfTable.BACKEND_STANDALONE -> {
+            ConfTable.Backend.Embedded -> {
                 StandaloneNewsApi(db)
             }
 
-            ConfTable.BACKEND_MINIFLUX -> {
+            ConfTable.Backend.Miniflux -> {
                 MinifluxApiBuilder().build(
                     url = conf.minifluxServerUrl,
                     token = conf.minifluxServerToken,
                 )
             }
 
-            else -> {
+            null -> {
                 StandaloneNewsApi(db)
             }
         }

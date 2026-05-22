@@ -89,15 +89,17 @@ class SettingsFragment : AppFragment() {
             val logOutSubtitle: String
 
             when (conf.backend) {
-                ConfTable.BACKEND_STANDALONE -> {
+                ConfTable.Backend.Embedded -> {
                     logOutTitle = getString(R.string.delete_all_data)
                     logOutSubtitle = ""
                 }
 
-                else -> {
+                ConfTable.Backend.Miniflux -> {
                     logOutTitle = getString(R.string.log_out)
                     logOutSubtitle = conf.accountName()
                 }
+
+                null -> throw IllegalStateException()
             }
 
             State.ShowingSettings(
@@ -166,12 +168,12 @@ class SettingsFragment : AppFragment() {
 
     private fun ConfTable.Conf.accountName(): String {
         return when (backend) {
-            ConfTable.BACKEND_STANDALONE -> ""
-            ConfTable.BACKEND_MINIFLUX -> {
+            ConfTable.Backend.Embedded -> ""
+            ConfTable.Backend.Miniflux -> {
                 minifluxServerUrl.extractDomain()
             }
 
-            else -> ""
+            else -> throw IllegalStateException()
         }
     }
 
@@ -324,7 +326,7 @@ class SettingsFragment : AppFragment() {
 
         logOut.setOnClickListener {
             when (state.conf.backend) {
-                ConfTable.BACKEND_STANDALONE -> {
+                ConfTable.Backend.Embedded -> {
                     MaterialAlertDialogBuilder(requireContext())
                         .setMessage(R.string.delete_all_data_warning)
                         .setPositiveButton(R.string.delete) { _, _ -> doLogOut() }
@@ -332,13 +334,15 @@ class SettingsFragment : AppFragment() {
                         .show()
                 }
 
-                else -> {
+                ConfTable.Backend.Miniflux -> {
                     MaterialAlertDialogBuilder(requireContext())
                         .setMessage(R.string.log_out_warning)
                         .setPositiveButton(R.string.log_out) { _, _ -> doLogOut() }
                         .setNegativeButton(R.string.cancel, null)
                         .show()
                 }
+
+                else -> throw IllegalStateException()
             }
         }
     }

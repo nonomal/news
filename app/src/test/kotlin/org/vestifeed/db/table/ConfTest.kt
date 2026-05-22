@@ -19,8 +19,8 @@ class ConfTest {
 
     @Test
     fun confSchema_constants() {
-        assertEquals("standalone", ConfTable.BACKEND_STANDALONE)
-        assertEquals("miniflux", ConfTable.BACKEND_MINIFLUX)
+        assertEquals("embedded", ConfTable.Backend.Embedded.name.lowercase())
+        assertEquals("miniflux", ConfTable.Backend.Miniflux.name.lowercase())
         assertEquals("ascending", ConfTable.SORT_ORDER_ASCENDING)
         assertEquals("descending", ConfTable.SORT_ORDER_DESCENDING)
     }
@@ -29,7 +29,7 @@ class ConfTest {
     fun confSchema_createTableStatement() {
         val statement = ConfTable.SCHEMA
         assertTrue(statement.contains("CREATE TABLE conf"))
-        assertTrue(statement.contains("backend TEXT NOT NULL"))
+        assertTrue(statement.contains("backend TEXT"))
         assertTrue(statement.contains("miniflux_server_url TEXT NOT NULL"))
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
     }
@@ -37,7 +37,7 @@ class ConfTest {
     @Test
     fun confDefaults_values() {
         val defaultConf = ConfTable.confDefault()
-        assertEquals("", defaultConf.backend)
+        assertEquals(null, defaultConf.backend)
         assertEquals("", defaultConf.minifluxServerUrl)
         assertEquals("", defaultConf.minifluxServerToken)
         assertFalse(defaultConf.initialSyncCompleted)
@@ -90,30 +90,30 @@ class ConfTest {
 
     @Test
     fun confQueries_insert_replacesExisting() {
-        val conf1 = createConf(backend = ConfTable.BACKEND_STANDALONE)
+        val conf1 = createConf(backend = ConfTable.Backend.Embedded)
         db.conf.insert(conf1)
 
         db.conf.delete()
 
-        val conf2 = createConf(backend = ConfTable.BACKEND_MINIFLUX)
+        val conf2 = createConf(backend = ConfTable.Backend.Miniflux)
         db.conf.insert(conf2)
 
         val result = db.conf.select()
-        assertEquals(ConfTable.BACKEND_MINIFLUX, result.backend)
+        assertEquals(ConfTable.Backend.Miniflux, result.backend)
     }
 
     @Test
     fun confQueries_update() {
         val initialConf = createConf(
-            backend = ConfTable.BACKEND_STANDALONE,
+            backend = ConfTable.Backend.Embedded,
             showPreviewImages = false,
         )
         db.conf.insert(initialConf)
 
-        db.conf.update { it.copy(backend = ConfTable.BACKEND_MINIFLUX, showPreviewImages = true) }
+        db.conf.update { it.copy(backend = ConfTable.Backend.Miniflux, showPreviewImages = true) }
 
         val result = db.conf.select()
-        assertEquals(ConfTable.BACKEND_MINIFLUX, result.backend)
+        assertEquals(ConfTable.Backend.Miniflux, result.backend)
         assertTrue(result.showPreviewImages)
     }
 
@@ -140,7 +140,7 @@ class ConfTest {
     }
 
     private fun createConf(
-        backend: String = ConfTable.BACKEND_STANDALONE,
+        backend: ConfTable.Backend = ConfTable.Backend.Embedded,
         minifluxServerUrl: String = "https://miniflux.example.com",
         minifluxServerToken: String = "miniflux-token",
         initialSyncCompleted: Boolean = true,

@@ -51,7 +51,7 @@ class Activity : AppCompatActivity() {
         lifecycleScope.launch {
             val conf = db().conf.select()
 
-            if (conf.backend.isNotBlank() && conf.syncOnStartup) {
+            if (conf.backend != null && conf.syncOnStartup) {
                 Log.d("activity", "sync on startup start")
                 sync().runInBackground()
                 Log.d("activity", "sync on startup end")
@@ -61,7 +61,7 @@ class Activity : AppCompatActivity() {
         lifecycleScope.launch {
             val conf = db().conf.select()
 
-            if (conf.backend.isNotBlank()) {
+            if (conf.backend != null) {
                 supportFragmentManager.commit {
                     replace(
                         R.id.fragmentContainerView,

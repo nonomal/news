@@ -14,7 +14,7 @@ class HotSwapApiTest {
         val db = db()
         val api = HotSwapApi(db)
 
-        db.conf.update { it.copy(backend = ConfTable.BACKEND_STANDALONE) }
+        db.conf.update { it.copy(backend = ConfTable.Backend.Embedded) }
 
         var attempts = 0L
 

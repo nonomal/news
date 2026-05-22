@@ -81,7 +81,7 @@ class MinifluxAuthFragment : AppFragment() {
 
                 db().conf.update {
                     it.copy(
-                        backend = ConfTable.BACKEND_MINIFLUX,
+                        backend = ConfTable.Backend.Miniflux,
                         minifluxServerUrl = url.toString().trim('/'),
                         minifluxServerToken = token,
                     )

@@ -2,7 +2,6 @@ package org.vestifeed.auth
 
 import android.graphics.drawable.Animatable
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -79,7 +78,7 @@ class AuthFragment : AppFragment() {
 
             db.conf.update {
                 it.copy(
-                    backend = ConfTable.BACKEND_STANDALONE,
+                    backend = ConfTable.Backend.Embedded,
                     syncOnStartup = false,
                     backgroundSyncIntervalMillis = TimeUnit.HOURS.toMillis(12),
                 )

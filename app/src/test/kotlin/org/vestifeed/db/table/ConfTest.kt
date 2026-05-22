@@ -31,7 +31,6 @@ class ConfTest {
         assertTrue(statement.contains("CREATE TABLE conf"))
         assertTrue(statement.contains("backend TEXT NOT NULL"))
         assertTrue(statement.contains("miniflux_server_url TEXT NOT NULL"))
-        assertTrue(statement.contains("miniflux_server_trust_self_signed_certs INTEGER NOT NULL"))
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
     }
 
@@ -40,7 +39,6 @@ class ConfTest {
         val defaultConf = ConfTable.confDefault()
         assertEquals("", defaultConf.backend)
         assertEquals("", defaultConf.minifluxServerUrl)
-        assertFalse(defaultConf.minifluxServerTrustSelfSignedCerts)
         assertEquals("", defaultConf.minifluxServerToken)
         assertFalse(defaultConf.initialSyncCompleted)
         assertEquals("", defaultConf.lastEntriesSyncDatetime)
@@ -74,7 +72,6 @@ class ConfTest {
         val result = db.conf.select()
         assertEquals(conf.backend, result.backend)
         assertEquals(conf.minifluxServerUrl, result.minifluxServerUrl)
-        assertEquals(conf.minifluxServerTrustSelfSignedCerts, result.minifluxServerTrustSelfSignedCerts)
         assertEquals(conf.minifluxServerToken, result.minifluxServerToken)
         assertEquals(conf.initialSyncCompleted, result.initialSyncCompleted)
         assertEquals(conf.lastEntriesSyncDatetime, result.lastEntriesSyncDatetime)
@@ -145,7 +142,6 @@ class ConfTest {
     private fun createConf(
         backend: String = ConfTable.BACKEND_STANDALONE,
         minifluxServerUrl: String = "https://miniflux.example.com",
-        minifluxServerTrustSelfSignedCerts: Boolean = false,
         minifluxServerToken: String = "miniflux-token",
         initialSyncCompleted: Boolean = true,
         lastEntriesSyncDatetime: String = "2024-01-01T00:00:00Z",
@@ -163,7 +159,6 @@ class ConfTest {
     ) = ConfTable.Conf(
         backend = backend,
         minifluxServerUrl = minifluxServerUrl,
-        minifluxServerTrustSelfSignedCerts = minifluxServerTrustSelfSignedCerts,
         minifluxServerToken = minifluxServerToken,
         initialSyncCompleted = initialSyncCompleted,
         lastEntriesSyncDatetime = lastEntriesSyncDatetime,

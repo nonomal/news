@@ -5,7 +5,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.logging.HttpLoggingInterceptor
 import org.vestifeed.BuildConfig
 import org.vestifeed.http.tokenAuthInterceptor
-import org.vestifeed.http.trustSelfSignedCerts
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
@@ -15,7 +14,6 @@ class MinifluxApiBuilder {
     fun build(
         url: String,
         token: String,
-        trustSelfSignedCerts: Boolean,
     ): MinifluxApi {
         val builder = OkHttpClient.Builder()
             .addInterceptor(tokenAuthInterceptor(token))
@@ -29,10 +27,6 @@ class MinifluxApiBuilder {
                 level = HttpLoggingInterceptor.Level.BODY
             }
             builder.addInterceptor(loggingInterceptor)
-        }
-
-        if (trustSelfSignedCerts) {
-            builder.trustSelfSignedCerts()
         }
 
         return MinifluxApi(

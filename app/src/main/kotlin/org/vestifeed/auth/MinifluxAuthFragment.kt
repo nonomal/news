@@ -75,7 +75,6 @@ class MinifluxAuthFragment : AppFragment() {
                 val api = MinifluxApiBuilder().build(
                     url = url.toString().trim('/'),
                     token = token,
-                    trustSelfSignedCerts = false,
                 )
 
                 api.getFeeds()
@@ -84,7 +83,6 @@ class MinifluxAuthFragment : AppFragment() {
                     it.copy(
                         backend = ConfTable.BACKEND_MINIFLUX,
                         minifluxServerUrl = url.toString().trim('/'),
-                        minifluxServerTrustSelfSignedCerts = false,
                         minifluxServerToken = token,
                     )
                 }
@@ -95,7 +93,7 @@ class MinifluxAuthFragment : AppFragment() {
                 sync().runInBackground()
 
                 withResumed {
-                    parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE);
+                    parentFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
 
                     parentFragmentManager.commit {
                         replace(

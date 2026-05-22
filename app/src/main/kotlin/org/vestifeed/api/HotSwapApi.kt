@@ -30,7 +30,6 @@ class HotSwapApi(private val db: Database) : Api {
                 MinifluxApiBuilder().build(
                     url = conf.minifluxServerUrl,
                     token = conf.minifluxServerToken,
-                    trustSelfSignedCerts = conf.minifluxServerTrustSelfSignedCerts,
                 )
             }
 

@@ -11,7 +11,6 @@ class ConfTable(private val conn: SQLiteConnection) {
             CREATE TABLE conf (
                 backend TEXT NOT NULL,
                 miniflux_server_url TEXT NOT NULL,
-                miniflux_server_trust_self_signed_certs INTEGER NOT NULL,
                 miniflux_server_token TEXT NOT NULL,
                 initial_sync_completed INTEGER NOT NULL,
                 last_entries_sync_datetime TEXT NOT NULL,
@@ -38,7 +37,6 @@ class ConfTable(private val conn: SQLiteConnection) {
         fun confDefault(): Conf = Conf(
             backend = "",
             minifluxServerUrl = "",
-            minifluxServerTrustSelfSignedCerts = false,
             minifluxServerToken = "",
             initialSyncCompleted = false,
             lastEntriesSyncDatetime = "",
@@ -59,7 +57,6 @@ class ConfTable(private val conn: SQLiteConnection) {
     data class Conf(
         val backend: String,
         val minifluxServerUrl: String,
-        val minifluxServerTrustSelfSignedCerts: Boolean,
         val minifluxServerToken: String,
         val initialSyncCompleted: Boolean,
         val lastEntriesSyncDatetime: String,
@@ -79,47 +76,45 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun SQLiteStatement.toConf(): Conf = Conf(
         backend = getText(0),
         minifluxServerUrl = getText(1),
-        minifluxServerTrustSelfSignedCerts = getInt(2) == 1,
-        minifluxServerToken = getText(3),
-        initialSyncCompleted = getInt(4) == 1,
-        lastEntriesSyncDatetime = getText(5),
-        showReadEntries = getInt(6) == 1,
-        sortOrder = getText(7),
-        showPreviewImages = getInt(8) == 1,
-        cropPreviewImages = getInt(9) == 1,
-        markScrolledEntriesAsRead = getInt(10) == 1,
-        syncOnStartup = getInt(11) == 1,
-        syncInBackground = getInt(12) == 1,
-        backgroundSyncIntervalMillis = getLong(13),
-        useBuiltInBrowser = getInt(14) == 1,
-        showPreviewText = getInt(15) == 1,
-        syncedOnStartup = getInt(16) == 1,
+        minifluxServerToken = getText(2),
+        initialSyncCompleted = getInt(3) == 1,
+        lastEntriesSyncDatetime = getText(4),
+        showReadEntries = getInt(5) == 1,
+        sortOrder = getText(6),
+        showPreviewImages = getInt(7) == 1,
+        cropPreviewImages = getInt(8) == 1,
+        markScrolledEntriesAsRead = getInt(9) == 1,
+        syncOnStartup = getInt(10) == 1,
+        syncInBackground = getInt(11) == 1,
+        backgroundSyncIntervalMillis = getLong(12),
+        useBuiltInBrowser = getInt(13) == 1,
+        showPreviewText = getInt(14) == 1,
+        syncedOnStartup = getInt(15) == 1,
     )
 
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend,miniflux_server_url, miniflux_server_trust_self_signed_certs, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO conf (backend, miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             stmt.bindText(1, conf.backend)
             stmt.bindText(2, conf.minifluxServerUrl)
-            stmt.bindInt(3, if (conf.minifluxServerTrustSelfSignedCerts) 1 else 0)
-            stmt.bindText(4, conf.minifluxServerToken)
-            stmt.bindInt(5, if (conf.initialSyncCompleted) 1 else 0)
-            stmt.bindText(6, conf.lastEntriesSyncDatetime)
-            stmt.bindInt(7, if (conf.showReadEntries) 1 else 0)
-            stmt.bindText(8, conf.sortOrder)
-            stmt.bindInt(9, if (conf.showPreviewImages) 1 else 0)
-            stmt.bindInt(10, if (conf.cropPreviewImages) 1 else 0)
-            stmt.bindInt(11, if (conf.markScrolledEntriesAsRead) 1 else 0)
-            stmt.bindInt(12, if (conf.syncOnStartup) 1 else 0)
-            stmt.bindInt(13, if (conf.syncInBackground) 1 else 0)
-            stmt.bindLong(14, conf.backgroundSyncIntervalMillis)
-            stmt.bindInt(15, if (conf.useBuiltInBrowser) 1 else 0)
-            stmt.bindInt(16, if (conf.showPreviewText) 1 else 0)
-            stmt.bindInt(17, if (conf.syncedOnStartup) 1 else 0)
+            stmt.bindText(3, conf.minifluxServerToken)
+            stmt.bindInt(4, if (conf.initialSyncCompleted) 1 else 0)
+            stmt.bindText(5, conf.lastEntriesSyncDatetime)
+            stmt.bindInt(6, if (conf.showReadEntries) 1 else 0)
+            stmt.bindText(7, conf.sortOrder)
+            stmt.bindInt(8, if (conf.showPreviewImages) 1 else 0)
+            stmt.bindInt(9, if (conf.cropPreviewImages) 1 else 0)
+            stmt.bindInt(10, if (conf.markScrolledEntriesAsRead) 1 else 0)
+            stmt.bindInt(11, if (conf.syncOnStartup) 1 else 0)
+            stmt.bindInt(12, if (conf.syncInBackground) 1 else 0)
+            stmt.bindLong(13, conf.backgroundSyncIntervalMillis)
+            stmt.bindInt(14, if (conf.useBuiltInBrowser) 1 else 0)
+            stmt.bindInt(15, if (conf.showPreviewText) 1 else 0)
+            stmt.bindInt(16, if (conf.syncedOnStartup) 1 else 0)
             stmt.step()
         }
     }
@@ -127,7 +122,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend,miniflux_server_url, miniflux_server_trust_self_signed_certs, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
+            SELECT backend,miniflux_server_url, miniflux_server_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, sort_order, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
             FROM conf
             """
         ).use { stmt ->

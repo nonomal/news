@@ -36,23 +36,23 @@ class ConfTable(private val conn: SQLiteConnection) {
         const val SORT_ORDER_DESCENDING = "descending"
 
         fun confDefault(): Conf = Conf(
-            backend = ConfDefaults.backend,
-            minifluxServerUrl = ConfDefaults.minifluxServerUrl,
-            minifluxServerTrustSelfSignedCerts = ConfDefaults.minifluxServerTrustSelfSignedCerts,
-            minifluxServerToken = ConfDefaults.minifluxServerToken,
-            initialSyncCompleted = ConfDefaults.initialSyncCompleted,
-            lastEntriesSyncDatetime = ConfDefaults.lastEntriesSyncDatetime,
-            showReadEntries = ConfDefaults.showReadEntries,
-            sortOrder = ConfDefaults.sortOrder,
-            showPreviewImages = ConfDefaults.showPreviewImages,
-            cropPreviewImages = ConfDefaults.cropPreviewImages,
-            markScrolledEntriesAsRead = ConfDefaults.markScrolledEntriesAsRead,
-            syncOnStartup = ConfDefaults.syncOnStartup,
-            syncInBackground = ConfDefaults.syncInBackground,
-            backgroundSyncIntervalMillis = ConfDefaults.backgroundSyncIntervalMillis,
-            useBuiltInBrowser = ConfDefaults.useBuiltInBrowser,
-            showPreviewText = ConfDefaults.showPreviewText,
-            syncedOnStartup = ConfDefaults.syncedOnStartup,
+            backend = "",
+            minifluxServerUrl = "",
+            minifluxServerTrustSelfSignedCerts = false,
+            minifluxServerToken = "",
+            initialSyncCompleted = false,
+            lastEntriesSyncDatetime = "",
+            showReadEntries = false,
+            sortOrder = SORT_ORDER_DESCENDING,
+            showPreviewImages = true,
+            cropPreviewImages = true,
+            markScrolledEntriesAsRead = false,
+            syncOnStartup = true,
+            syncInBackground = true,
+            backgroundSyncIntervalMillis = 10800000L,
+            useBuiltInBrowser = true,
+            showPreviewText = true,
+            syncedOnStartup = false,
         )
     }
 
@@ -75,26 +75,6 @@ class ConfTable(private val conn: SQLiteConnection) {
         val showPreviewText: Boolean,
         val syncedOnStartup: Boolean,
     )
-
-    object ConfDefaults {
-        val backend = ""
-        val minifluxServerUrl = ""
-        val minifluxServerTrustSelfSignedCerts = false
-        val minifluxServerToken = ""
-        val initialSyncCompleted = false
-        val lastEntriesSyncDatetime = ""
-        val showReadEntries = false
-        val sortOrder = SORT_ORDER_DESCENDING
-        val showPreviewImages = true
-        val cropPreviewImages = true
-        val markScrolledEntriesAsRead = false
-        val syncOnStartup = true
-        val syncInBackground = true
-        val backgroundSyncIntervalMillis = 10800000L
-        val useBuiltInBrowser = true
-        val showPreviewText = true
-        val syncedOnStartup = false
-    }
 
     fun SQLiteStatement.toConf(): Conf = Conf(
         backend = getText(0),

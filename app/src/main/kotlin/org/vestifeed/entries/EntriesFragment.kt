@@ -267,20 +267,6 @@ class EntriesFragment : AppFragment() {
         db().conf.update(newConf)
     }
 
-    private fun changeSortOrder() {
-        db().conf.update {
-            val newSortOrder = when (it.sortOrder) {
-                ConfTable.SORT_ORDER_ASCENDING -> ConfTable.SORT_ORDER_DESCENDING
-                ConfTable.SORT_ORDER_DESCENDING -> ConfTable.SORT_ORDER_ASCENDING
-                else -> throw Exception()
-            }
-
-            it.copy(sortOrder = newSortOrder)
-        }
-
-//        refresh()
-    }
-
     private fun setRead(entryIds: Collection<String>, read: Boolean) {
         viewLifecycleOwner.lifecycleScope.launch {
             withContext(Dispatchers.IO) {
@@ -451,7 +437,6 @@ class EntriesFragment : AppFragment() {
 
             updateSearchButton()
             updateShowReadEntriesButton(state)
-            updateSortOrderButton(state)
             updateMarkAllAsReadButton()
             updateLogsButton()
             updateSettingsButton()
@@ -495,36 +480,6 @@ class EntriesFragment : AppFragment() {
 
         button.setOnMenuItemClickListener {
             saveConf { it.copy(showReadEntries = !it.showReadEntries) }
-            true
-        }
-    }
-
-    private fun updateSortOrderButton(state: State) {
-        val button = binding.toolbar.menu.findItem(R.id.sort)
-
-        if (state !is State.ShowingCachedEntries) {
-            button.isVisible = false
-            return
-        } else {
-            button.isVisible = true
-        }
-
-        val conf = db().conf.select()
-
-        when (conf.sortOrder) {
-            ConfTable.SORT_ORDER_ASCENDING -> {
-                button.setIcon(R.drawable.ic_clock_forward)
-                button.title = getString(R.string.show_newest_first)
-            }
-
-            ConfTable.SORT_ORDER_DESCENDING -> {
-                button.setIcon(R.drawable.ic_clock_back)
-                button.title = getString(R.string.show_oldest_first)
-            }
-        }
-
-        button.setOnMenuItemClickListener {
-            changeSortOrder()
             true
         }
     }

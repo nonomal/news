@@ -28,8 +28,8 @@ class HotSwapApi(private val db: Database) : Api {
 
             ConfTable.Backend.Miniflux -> {
                 MinifluxApiBuilder().build(
-                    url = conf.minifluxServerUrl,
-                    token = conf.minifluxServerToken,
+                    url = conf.minifluxUrl!!,
+                    token = conf.minifluxToken!!,
                 )
             }
 

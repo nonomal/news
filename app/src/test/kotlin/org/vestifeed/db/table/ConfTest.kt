@@ -28,7 +28,7 @@ class ConfTest {
         val statement = ConfTable.SCHEMA
         assertTrue(statement.contains("CREATE TABLE conf"))
         assertTrue(statement.contains("backend TEXT"))
-        assertTrue(statement.contains("miniflux_server_url TEXT NOT NULL"))
+        assertTrue(statement.contains("miniflux_url TEXT"))
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
     }
 
@@ -36,8 +36,8 @@ class ConfTest {
     fun confDefaults_values() {
         val defaultConf = ConfTable.defaultConf()
         assertEquals(null, defaultConf.backend)
-        assertEquals("", defaultConf.minifluxServerUrl)
-        assertEquals("", defaultConf.minifluxServerToken)
+        assertEquals(null, defaultConf.minifluxUrl)
+        assertEquals(null, defaultConf.minifluxToken)
         assertFalse(defaultConf.initialSyncCompleted)
         assertEquals("", defaultConf.lastEntriesSyncDatetime)
         assertFalse(defaultConf.showReadEntries)
@@ -67,8 +67,8 @@ class ConfTest {
 
         val result = db.conf.select()
         assertEquals(conf.backend, result.backend)
-        assertEquals(conf.minifluxServerUrl, result.minifluxServerUrl)
-        assertEquals(conf.minifluxServerToken, result.minifluxServerToken)
+        assertEquals(conf.minifluxUrl, result.minifluxUrl)
+        assertEquals(conf.minifluxToken, result.minifluxToken)
         assertEquals(conf.initialSyncCompleted, result.initialSyncCompleted)
         assertEquals(conf.lastEntriesSyncDatetime, result.lastEntriesSyncDatetime)
         assertEquals(conf.showReadEntries, result.showReadEntries)
@@ -134,8 +134,8 @@ class ConfTest {
 
     private fun createConf(
         backend: ConfTable.Backend = ConfTable.Backend.Embedded,
-        minifluxServerUrl: String = "https://miniflux.example.com",
-        minifluxServerToken: String = "miniflux-token",
+        minifluxUrl: String = "https://miniflux.example.com",
+        minifluxToken: String = "miniflux-token",
         initialSyncCompleted: Boolean = true,
         lastEntriesSyncDatetime: String = "2024-01-01T00:00:00Z",
         showReadEntries: Boolean = true,
@@ -150,8 +150,8 @@ class ConfTest {
         syncedOnStartup: Boolean = true,
     ) = ConfTable.Conf(
         backend = backend,
-        minifluxServerUrl = minifluxServerUrl,
-        minifluxServerToken = minifluxServerToken,
+        minifluxUrl = minifluxUrl,
+        minifluxToken = minifluxToken,
         initialSyncCompleted = initialSyncCompleted,
         lastEntriesSyncDatetime = lastEntriesSyncDatetime,
         showReadEntries = showReadEntries,

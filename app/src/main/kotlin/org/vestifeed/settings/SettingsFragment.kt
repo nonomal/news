@@ -170,7 +170,7 @@ class SettingsFragment : AppFragment() {
         return when (backend) {
             ConfTable.Backend.Embedded -> ""
             ConfTable.Backend.Miniflux -> {
-                minifluxServerUrl.extractDomain()
+                minifluxUrl!!.extractDomain()
             }
 
             else -> throw IllegalStateException()

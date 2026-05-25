@@ -9,5 +9,5 @@ interface Miniflux {
     )
 
     // https://miniflux.app/docs/api.html#endpoint-get-feeds
-    fun getFeeds(): List<Feed>
+    suspend fun getFeeds(): List<Feed>
 }

@@ -16,21 +16,30 @@ class MinifluxSyncTest {
 
     @Test
     fun syncFeeds() {
-        val apiFeeds = listOf(
-            Miniflux.Feed(
-                id = 1,
-                title = "feed 1",
-                feedUrl = "https://bubelov.com/index.xml",
-                siteUrl = "https://bubelov.com/",
-            )
+        val apiFeed1 = Miniflux.Feed(
+            id = 1,
+            title = "feed 1",
+            feedUrl = "https://bubelov.com/index.xml",
+            siteUrl = "https://bubelov.com/",
         )
+        val apiFeeds = listOf(apiFeed1)
         val api = object: Miniflux {
-            override fun getFeeds() = apiFeeds
+            override suspend fun getFeeds() = apiFeeds
         }
         val sync = MinifluxSync(db, api)
         runBlocking { sync.syncFeeds() }
         val cacheFeeds = db.feed.selectAll()
-        assert(cacheFeeds.single().id == apiFeeds.single().id.toString())
-        assert(cacheFeeds.single().title == apiFeeds.single().title)
+        val cacheFeed1 = cacheFeeds.first()
+        assert(cacheFeed1.id == apiFeed1.id.toString())
+        assert(cacheFeed1.title == apiFeed1.title)
+        val cacheFeed1Links = db.link.selectByFeedId(apiFeed1.id.toString())
+        assert(cacheFeed1Links.size == 2)
+        assert(cacheFeed1Links.singleOrNull { it.href == apiFeed1.feedUrl } != null)
+        assert(cacheFeed1Links.singleOrNull { it.href == apiFeed1.siteUrl } != null)
+        runBlocking { sync.syncFeeds() }
+        val cacheFeed1Links2 = db.link.selectByFeedId(apiFeed1.id.toString())
+        assert(cacheFeed1Links2.size == 2)
+        assert(cacheFeed1Links2.singleOrNull { it.href == apiFeed1.feedUrl } != null)
+        assert(cacheFeed1Links2.singleOrNull { it.href == apiFeed1.siteUrl } != null)
     }
 }

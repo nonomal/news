@@ -48,7 +48,7 @@ class LinkTable(private val conn: SQLiteConnection) {
     fun insertForFeed(feedId: String, links: List<Link>) {
         conn.prepare(
             """
-            INSERT OR IGNORE INTO link (
+            INSERT OR REPLACE INTO link (
                 feed_id,
                 href,
                 rel,
@@ -240,6 +240,14 @@ class LinkTable(private val conn: SQLiteConnection) {
             stmt.bindLong(3, linkId)
             stmt.step()
         }
+    }
+
+    fun deleteById(id: Long) {
+        conn.prepare("DELETE FROM link WHERE id = ?;")
+            .use { stmt ->
+                stmt.bindLong(1, id)
+                stmt.step()
+            }
     }
 
     fun deleteByFeedId(feedId: String) {

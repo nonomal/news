@@ -5,6 +5,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Before
 import org.junit.Test
 import org.vestifeed.db.Database
+import java.time.OffsetDateTime
 
 class MinifluxSyncTest {
     private lateinit var db: Database
@@ -23,8 +24,12 @@ class MinifluxSyncTest {
             siteUrl = "https://bubelov.com/",
         )
         val apiFeeds = listOf(apiFeed1)
-        val api = object: Miniflux {
+        val api = object : Miniflux {
             override suspend fun getFeeds() = apiFeeds
+            override suspend fun getUnreadEntries() = emptyList<Miniflux.Entry>()
+            override suspend fun getStarredEntries() = emptyList<Miniflux.Entry>()
+            override suspend fun getEntriesChangedAfter(changedAfter: OffsetDateTime, limit: Long) =
+                emptyList<Miniflux.Entry>()
         }
         val sync = MinifluxSync(db, api)
         runBlocking { sync.syncFeeds() }

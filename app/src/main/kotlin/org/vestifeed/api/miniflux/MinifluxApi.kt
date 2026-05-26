@@ -21,8 +21,8 @@ import java.io.IOException
 import java.time.OffsetDateTime
 
 class MinifluxApi(
-    private val client: OkHttpClient,
-    private val baseUrl: HttpUrl,
+    val client: OkHttpClient,
+    val baseUrl: HttpUrl,
 ) : Api {
     companion object {
         val JSON = "application/json".toMediaType()
@@ -139,6 +139,7 @@ class MinifluxApi(
         }
     }
 
+    // miniflux.app/docs/api.html#endpoint-get-entries
     override suspend fun getEntries(includeReadEntries: Boolean): Flow<List<Pair<EntryTable.Entry, List<LinkTable.Link>>>> =
         flow {
             val currentBatch = mutableSetOf<EntryJson>()
@@ -172,24 +173,6 @@ class MinifluxApi(
                     oldestEntryId = currentBatch.minOfOrNull { it.id } ?: 0L
                     currentBatch.clear()
                 }
-            }
-
-            val starredUrlBuilder = baseUrl.newBuilder().addPathSegment("entries")
-            starredUrlBuilder.addQueryParameter("starred", "1")
-            starredUrlBuilder.addQueryParameter("limit", "0")
-            val starredReq = Request.Builder().url(starredUrlBuilder.build()).get().build()
-            val starredRes = client.newCall(starredReq).executeAsync()
-            if (starredRes.isSuccessful) {
-                val starredBody = starredRes.body.string()
-                val starredPayload =
-                    JsonParser.parseString(starredBody).asJsonObject.toEntriesPayload()
-                if (starredPayload.entries.isNotEmpty()) {
-                    currentBatch += starredPayload.entries
-                    val mappedCurrentBatch = currentBatch.map { it.toEntry() }
-                    emit(mappedCurrentBatch)
-                }
-            } else {
-                throw IOException("http request failed with response code ${starredRes.code}")
             }
         }
 

@@ -13,7 +13,7 @@ import java.time.OffsetDateTime
 
 class HotSwapApi(private val db: Database) : Api {
 
-    private lateinit var api: Api
+    lateinit var api: Api
 
     init {
         updateApi()

@@ -8,6 +8,11 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.api.Api
+import org.vestifeed.api.HotSwapApi
+import org.vestifeed.api.miniflux.Miniflux
+import org.vestifeed.api.miniflux.MinifluxApi
+import org.vestifeed.api.miniflux.MinifluxImpl
+import org.vestifeed.api.miniflux.MinifluxSync
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.ConfTable
 import java.time.Instant
@@ -68,27 +73,15 @@ class Sync(
             return
         }
 
-        if (conf.backend != ConfTable.Backend.Embedded && !conf.initialSyncCompleted) {
-            // make sure the database is empty
-            try {
-                withContext(Dispatchers.IO) {
-                    db.transaction {
-                        db.feed.deleteAll()
-                        db.entry.deleteAll()
-                    }
-                }
-            } catch (e: Throwable) {
-                _state.update { State.Idle(e) }
-                return
-            }
-
+        if (conf.backend == ConfTable.Backend.Miniflux && !conf.initialSyncCompleted) {
             // feeds should be fetched first
+            val hotSwapApi = api as HotSwapApi
+            val minifluxApi = hotSwapApi.api as MinifluxApi
+            val miniflux = MinifluxImpl(minifluxApi.client, minifluxApi.baseUrl)
+            val minifluxSync = MinifluxSync(db, miniflux)
             try {
                 _state.update { State.InitialSync(InitialSyncStage.SyncingFeeds) }
-                val feeds = api.getFeeds()
-                withContext(Dispatchers.IO) {
-                    db.transaction { db.feed.insertOrReplace(feeds) }
-                }
+                minifluxSync.syncFeeds()
             } catch (e: Throwable) {
                 _state.update { State.Idle(e) }
                 return
@@ -96,21 +89,8 @@ class Sync(
 
             // entries are fetched in batches
             try {
-                var entriesFetched = 0L
-                _state.update { State.InitialSync(InitialSyncStage.SyncingEntries(entriesFetched)) }
-
-                api.getEntries(includeReadEntries = false).collect { batch ->
-                    entriesFetched += batch.size
-                    _state.update { State.InitialSync(InitialSyncStage.SyncingEntries(entriesFetched)) }
-                    withContext(Dispatchers.IO) {
-                        db.transaction {
-                            batch.forEach { (entry, links) ->
-                                db.entry.insertOrReplace(listOf(entry))
-                                db.link.insertForEntry(entry.id, links)
-                            }
-                        }
-                    }
-                }
+                minifluxSync.syncUnreadEntries()
+                minifluxSync.syncStarredEntries()
             } catch (e: Throwable) {
                 _state.update { State.Idle(e) }
                 return
@@ -210,31 +190,11 @@ class Sync(
             }
 
             try {
-                val newSnapshot = api.getFeeds()
-                val cachedSnapshot = withContext(Dispatchers.IO) { db.feed.selectAll() }
-
-                val insertQueue = withContext(Dispatchers.IO) {
-                    newSnapshot.map {
-                        val cachedFeed = cachedSnapshot.find { cached -> cached.id == it.id }
-
-                        if (cachedFeed == null) {
-                            it
-                        } else {
-                            it.copy(
-                                extOpenEntriesInBrowser = cachedFeed.extOpenEntriesInBrowser,
-                                extBlockedWords = cachedFeed.extBlockedWords,
-                                extShowPreviewImages = cachedFeed.extShowPreviewImages,
-                            )
-                        }
-                    }
-                }
-
-                withContext(Dispatchers.IO) {
-                    db.transaction {
-                        db.feed.deleteAll()
-                        db.feed.insertOrReplace(insertQueue)
-                    }
-                }
+                val hotSwapApi = api as HotSwapApi
+                val minifluxApi = hotSwapApi.api as MinifluxApi
+                val miniflux = MinifluxImpl(minifluxApi.client, minifluxApi.baseUrl)
+                val minifluxSync = MinifluxSync(db, miniflux)
+                minifluxSync.syncFeeds()
             } catch (e: Throwable) {
                 _state.update { State.Idle(e) }
                 return
@@ -247,42 +207,11 @@ class Sync(
             }
 
             try {
-                val freshConf = withContext(Dispatchers.IO) { db.conf.select() }
-
-                val lastSyncInstant = if (freshConf.lastEntriesSyncDatetime.isNotBlank()) {
-                    OffsetDateTime.parse(freshConf.lastEntriesSyncDatetime)
-                } else {
-                    null
-                }
-
-                val maxUpdated = withContext(Dispatchers.IO) { db.entry.selectMaxUpdated() }
-
-                val maxUpdatedInstant = if (maxUpdated != null) {
-                    OffsetDateTime.parse(maxUpdated)
-                } else {
-                    null
-                }
-
-                val entries = api.getNewAndUpdatedEntries(
-                    lastSync = lastSyncInstant,
-                    maxEntryId = db.entry.selectMaxId(),
-                    maxEntryUpdated = maxUpdatedInstant,
-                )
-
-                withContext(Dispatchers.IO) {
-                    db.transaction {
-                        entries.forEach { (entry, links) ->
-                            db.entry.insertOrReplace(listOf(entry))
-                            db.link.insertForEntry(entry.id, links)
-                        }
-                    }
-                }
-
-                db.conf.update {
-                    it.copy(
-                        lastEntriesSyncDatetime = Instant.now().toString()
-                    )
-                }
+                val hotSwapApi = api as HotSwapApi
+                val minifluxApi = hotSwapApi.api as MinifluxApi
+                val miniflux = MinifluxImpl(minifluxApi.client, minifluxApi.baseUrl)
+                val minifluxSync = MinifluxSync(db, miniflux)
+                minifluxSync.syncChangedEntries()
             } catch (e: Throwable) {
                 _state.update { State.Idle(e) }
                 return

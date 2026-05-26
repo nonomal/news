@@ -3,9 +3,13 @@ package org.vestifeed.api.miniflux
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.vestifeed.db.Database
+import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
+import org.vestifeed.db.table.LogTable
 import org.vestifeed.parser.AtomLinkRel
+import java.time.Instant
+import java.time.OffsetDateTime
 
 class MinifluxSync(val db: Database, val api: Miniflux) {
     suspend fun syncFeeds() {
@@ -35,14 +39,19 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                     cachedLinks.filter { c -> freshLinks.none { f -> c.href == f.href && c.type == f.type } }
                 linksDeletedOnServer.forEach { db.link.deleteById(it.id!!) }
                 for (freshLink in freshLinks) {
-                    val cachedLink = cachedLinks.find { it.href == freshLink.href && it.type == freshLink.type }
+                    val cachedLink =
+                        cachedLinks.find { it.href == freshLink.href && it.type == freshLink.type }
                     if (cachedLink == null) {
                         db.link.insertForFeed(feed.id, listOf(freshLink))
                     } else {
-                        db.link.insertForFeed(feed.id, listOf(freshLink.copy(
-                            extEnclosureDownloadProgress = cachedLink.extEnclosureDownloadProgress,
-                            extCacheUri = cachedLink.extCacheUri,
-                        )))
+                        db.link.insertForFeed(
+                            feed.id, listOf(
+                                freshLink.copy(
+                                    extEnclosureDownloadProgress = cachedLink.extEnclosureDownloadProgress,
+                                    extCacheUri = cachedLink.extCacheUri,
+                                )
+                            )
+                        )
                     }
                 }
             } else {
@@ -89,5 +98,154 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
             extShowPreviewImages = null,
         )
         return Pair(feed, listOf(selfLink, alternateLink))
+    }
+
+    suspend fun syncUnreadEntries() {
+        val freshMinifluxEntries = api.getUnreadEntries()
+        val maxChangedAt = freshMinifluxEntries.maxOfOrNull { it.changed_at }
+        val freshVestiEntries = freshMinifluxEntries.map { it.toVestiEntry() }
+        db.transaction {
+            freshVestiEntries.forEach {
+                db.entry.insertOrReplace(listOf(it.first))
+                db.link.insertForEntry(it.first.id, it.second)
+            }
+            db.conf.update {
+                it.copy(
+                    lastEntriesSyncDatetime = maxChangedAt ?: Instant.now().toString(),
+                )
+            }
+        }
+    }
+
+    suspend fun syncStarredEntries() {
+        val freshEntries = api.getStarredEntries().map { it.toVestiEntry() }
+        db.transaction {
+            freshEntries.forEach {
+                db.entry.insertOrReplace(listOf(it.first))
+                db.link.insertForEntry(it.first.id, it.second)
+            }
+        }
+    }
+
+    suspend fun syncChangedEntries() {
+        db.log.insert(
+            LogTable.InsertArgs(
+                level = "info",
+                tag = "miniflux_sync",
+                message = "Syncing changed entries",
+            )
+        )
+        val changedAfterRaw = db.conf.select().lastEntriesSyncDatetime.ifBlank { null }
+        var changedAfter = if (changedAfterRaw == null) {
+            OffsetDateTime.now()
+        } else {
+            OffsetDateTime.parse(changedAfterRaw)
+        }
+        db.log.insert(
+            LogTable.InsertArgs(
+                level = "info",
+                tag = "miniflux_sync",
+                message = "changedAfter = $changedAfter",
+            )
+        )
+        val batchSize = 100L
+        while (true) {
+            val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
+            db.log.insert(
+                LogTable.InsertArgs(
+                    level = "info",
+                    tag = "miniflux_sync",
+                    message = "Got ${currentBatch.size} changed entries",
+                )
+            )
+            if (currentBatch.isEmpty()) {
+                break
+            } else {
+                val newChangedAfter = currentBatch.maxOf { it.changed_at }
+                val typedCurrentBatch = currentBatch.map { it.toVestiEntry() }
+                db.transaction {
+                    typedCurrentBatch.forEach {
+                        db.entry.insertOrReplace(listOf(it.first))
+                        db.link.insertForEntry(it.first.id, it.second)
+                    }
+                    db.log.insert(
+                        LogTable.InsertArgs(
+                            level = "info",
+                            tag = "miniflux_sync",
+                            message = "Bumping lastEntriesSyncDatetime to $newChangedAfter",
+                        )
+                    )
+                    db.conf.update {
+                        it.copy(
+                            lastEntriesSyncDatetime = newChangedAfter,
+                        )
+                    }
+                    changedAfter = OffsetDateTime.parse(newChangedAfter)
+                }
+                if (currentBatch.size < batchSize) {
+                    break
+                }
+            }
+        }
+    }
+
+    private fun Miniflux.Entry.toVestiEntry(): Pair<EntryTable.Entry, List<LinkTable.Link>> {
+        val links = mutableListOf<LinkTable.Link>()
+
+        if (url.isNotBlank()) {
+            links += LinkTable.Link(
+                id = null,
+                feedId = null,
+                entryId = id.toString(),
+                href = url,
+                rel = AtomLinkRel.Alternate,
+                type = "text/html",
+                hreflang = null,
+                title = null,
+                length = null,
+                extEnclosureDownloadProgress = null,
+                extCacheUri = null,
+            )
+        }
+
+        enclosures?.forEach { enclosure ->
+            links += LinkTable.Link(
+                id = null,
+                feedId = null,
+                entryId = id.toString(),
+                href = enclosure.url,
+                rel = AtomLinkRel.Enclosure,
+                type = enclosure.mime_type,
+                hreflang = null,
+                title = null,
+                length = enclosure.size,
+                extEnclosureDownloadProgress = null,
+                extCacheUri = null,
+            )
+        }
+
+        return Pair(
+            EntryTable.Entry(
+                contentType = "html",
+                contentSrc = "",
+                contentText = content,
+                summary = null,
+                id = id.toString(),
+                feedId = feed_id.toString(),
+                title = title,
+                published = OffsetDateTime.parse(published_at),
+                updated = OffsetDateTime.parse(changed_at),
+                authorName = author,
+                extRead = status == "read",
+                extReadSynced = true,
+                extBookmarked = starred,
+                extBookmarkedSynced = true,
+                extCommentsUrl = comments_url,
+                extOpenGraphImageChecked = false,
+                extOpenGraphImageUrl = "",
+                extOpenGraphImageWidth = 0,
+                extOpenGraphImageHeight = 0,
+            ), links
+        )
     }
 }

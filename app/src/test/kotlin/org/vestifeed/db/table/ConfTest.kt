@@ -38,8 +38,8 @@ class ConfTest {
         assertEquals(null, defaultConf.backend)
         assertEquals(null, defaultConf.minifluxUrl)
         assertEquals(null, defaultConf.minifluxToken)
-        assertFalse(defaultConf.initialSyncCompleted)
-        assertEquals("", defaultConf.lastEntriesSyncDatetime)
+        assertFalse(defaultConf.minifluxInitialSyncCompleted)
+        assertEquals(null, defaultConf.minifluxIncrementalSyncTimestamp)
         assertFalse(defaultConf.showReadEntries)
         assertTrue(defaultConf.showPreviewImages)
         assertTrue(defaultConf.cropPreviewImages)
@@ -69,8 +69,8 @@ class ConfTest {
         assertEquals(conf.backend, result.backend)
         assertEquals(conf.minifluxUrl, result.minifluxUrl)
         assertEquals(conf.minifluxToken, result.minifluxToken)
-        assertEquals(conf.initialSyncCompleted, result.initialSyncCompleted)
-        assertEquals(conf.lastEntriesSyncDatetime, result.lastEntriesSyncDatetime)
+        assertEquals(conf.minifluxInitialSyncCompleted, result.minifluxInitialSyncCompleted)
+        assertEquals(conf.minifluxIncrementalSyncTimestamp, result.minifluxIncrementalSyncTimestamp)
         assertEquals(conf.showReadEntries, result.showReadEntries)
         assertEquals(conf.showPreviewImages, result.showPreviewImages)
         assertEquals(conf.cropPreviewImages, result.cropPreviewImages)
@@ -136,8 +136,8 @@ class ConfTest {
         backend: ConfTable.Backend = ConfTable.Backend.Embedded,
         minifluxUrl: String = "https://miniflux.example.com",
         minifluxToken: String = "miniflux-token",
-        initialSyncCompleted: Boolean = true,
-        lastEntriesSyncDatetime: String = "2024-01-01T00:00:00Z",
+        minifluxInitialSyncCompleted: Boolean = true,
+        minifluxIncrementalSyncTimestamp: String? = "2024-01-01T00:00:00Z",
         showReadEntries: Boolean = true,
         showPreviewImages: Boolean = true,
         cropPreviewImages: Boolean = false,
@@ -152,8 +152,8 @@ class ConfTest {
         backend = backend,
         minifluxUrl = minifluxUrl,
         minifluxToken = minifluxToken,
-        initialSyncCompleted = initialSyncCompleted,
-        lastEntriesSyncDatetime = lastEntriesSyncDatetime,
+        minifluxInitialSyncCompleted = minifluxInitialSyncCompleted,
+        minifluxIncrementalSyncTimestamp = minifluxIncrementalSyncTimestamp,
         showReadEntries = showReadEntries,
         showPreviewImages = showPreviewImages,
         cropPreviewImages = cropPreviewImages,

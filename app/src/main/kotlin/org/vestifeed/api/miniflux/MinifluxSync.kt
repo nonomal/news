@@ -100,34 +100,22 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
         return Pair(feed, listOf(selfLink, alternateLink))
     }
 
-    suspend fun syncUnreadEntries() {
-        val freshMinifluxEntries = api.getUnreadEntries()
-        val maxChangedAt = freshMinifluxEntries.maxOfOrNull { it.changed_at }
-        val freshVestiEntries = freshMinifluxEntries.map { it.toVestiEntry() }
-        db.transaction {
-            freshVestiEntries.forEach {
-                db.entry.insertOrReplace(listOf(it.first))
-                db.link.insertForEntry(it.first.id, it.second)
-            }
+    suspend fun initialSync() {
+        val startedAt = Instant.now().toString()
+        syncFeeds()
+        syncStarredEntries()
+        syncUnreadEntries()
+        withContext(Dispatchers.IO) {
             db.conf.update {
                 it.copy(
-                    lastEntriesSyncDatetime = maxChangedAt ?: Instant.now().toString(),
+                    minifluxInitialSyncCompleted = true,
+                    minifluxIncrementalSyncTimestamp = startedAt,
                 )
             }
         }
     }
 
-    suspend fun syncStarredEntries() {
-        val freshEntries = api.getStarredEntries().map { it.toVestiEntry() }
-        db.transaction {
-            freshEntries.forEach {
-                db.entry.insertOrReplace(listOf(it.first))
-                db.link.insertForEntry(it.first.id, it.second)
-            }
-        }
-    }
-
-    suspend fun syncChangedEntries() {
+    suspend fun incrementalSync() {
         db.log.insert(
             LogTable.InsertArgs(
                 level = "info",
@@ -135,12 +123,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 message = "Syncing changed entries",
             )
         )
-        val changedAfterRaw = db.conf.select().lastEntriesSyncDatetime.ifBlank { null }
-        var changedAfter = if (changedAfterRaw == null) {
-            OffsetDateTime.now()
-        } else {
-            OffsetDateTime.parse(changedAfterRaw)
-        }
+        var changedAfter = OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
         db.log.insert(
             LogTable.InsertArgs(
                 level = "info",
@@ -177,7 +160,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                     )
                     db.conf.update {
                         it.copy(
-                            lastEntriesSyncDatetime = newChangedAfter,
+                            minifluxIncrementalSyncTimestamp = newChangedAfter,
                         )
                     }
                     changedAfter = OffsetDateTime.parse(newChangedAfter)
@@ -185,6 +168,26 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 if (currentBatch.size < batchSize) {
                     break
                 }
+            }
+        }
+    }
+
+    suspend fun syncUnreadEntries() {
+        val freshEntries = api.getUnreadEntries().map { it.toVestiEntry() }
+        db.transaction {
+            freshEntries.forEach {
+                db.entry.insertOrReplace(listOf(it.first))
+                db.link.insertForEntry(it.first.id, it.second)
+            }
+        }
+    }
+
+    suspend fun syncStarredEntries() {
+        val freshEntries = api.getStarredEntries().map { it.toVestiEntry() }
+        db.transaction {
+            freshEntries.forEach {
+                db.entry.insertOrReplace(listOf(it.first))
+                db.link.insertForEntry(it.first.id, it.second)
             }
         }
     }

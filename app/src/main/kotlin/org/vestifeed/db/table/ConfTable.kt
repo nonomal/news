@@ -3,6 +3,7 @@ package org.vestifeed.db.table
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
+import org.vestifeed.db.bindTextOrNull
 import org.vestifeed.db.getTextOrNull
 import kotlin.use
 
@@ -13,8 +14,8 @@ class ConfTable(private val conn: SQLiteConnection) {
                 backend TEXT,
                 miniflux_url TEXT,
                 miniflux_token TEXT,
-                initial_sync_completed INTEGER NOT NULL,
-                last_entries_sync_datetime TEXT NOT NULL,
+                miniflux_initial_sync_completed INTEGER NOT NULL,
+                minifluxIncrementalSyncTimestamp TEXT,
                 show_read_entries INTEGER NOT NULL,
                 show_preview_images INTEGER NOT NULL,
                 crop_preview_images INTEGER NOT NULL,
@@ -32,8 +33,8 @@ class ConfTable(private val conn: SQLiteConnection) {
             backend = null,
             minifluxUrl = null,
             minifluxToken = null,
-            initialSyncCompleted = false,
-            lastEntriesSyncDatetime = "",
+            minifluxInitialSyncCompleted = false,
+            minifluxIncrementalSyncTimestamp = null,
             showReadEntries = false,
             showPreviewImages = true,
             cropPreviewImages = true,
@@ -56,8 +57,8 @@ class ConfTable(private val conn: SQLiteConnection) {
         val backend: Backend?,
         val minifluxUrl: String?,
         val minifluxToken: String?,
-        val initialSyncCompleted: Boolean,
-        val lastEntriesSyncDatetime: String,
+        val minifluxInitialSyncCompleted: Boolean,
+        val minifluxIncrementalSyncTimestamp: String?,
         val showReadEntries: Boolean,
         val showPreviewImages: Boolean,
         val cropPreviewImages: Boolean,
@@ -74,8 +75,8 @@ class ConfTable(private val conn: SQLiteConnection) {
         backend = getBackendOrNull(0),
         minifluxUrl = getTextOrNull(1),
         minifluxToken = getTextOrNull(2),
-        initialSyncCompleted = getInt(3) == 1,
-        lastEntriesSyncDatetime = getText(4),
+        minifluxInitialSyncCompleted = getInt(3) == 1,
+        minifluxIncrementalSyncTimestamp = getTextOrNull(4),
         showReadEntries = getInt(5) == 1,
         showPreviewImages = getInt(6) == 1,
         cropPreviewImages = getInt(7) == 1,
@@ -91,27 +92,15 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
+            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, miniflux_initial_sync_completed, minifluxIncrementalSyncTimestamp, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
-            if (conf.backend == null) {
-                stmt.bindNull(1)
-            } else {
-                stmt.bindText(1, conf.backend.name.lowercase())
-            }
-            if (conf.minifluxUrl == null) {
-                stmt.bindNull(2)
-            } else {
-                stmt.bindText(2, conf.minifluxUrl)
-            }
-            if (conf.minifluxToken == null) {
-                stmt.bindNull(3)
-            } else {
-                stmt.bindText(3, conf.minifluxToken)
-            }
-            stmt.bindInt(4, if (conf.initialSyncCompleted) 1 else 0)
-            stmt.bindText(5, conf.lastEntriesSyncDatetime)
+            stmt.bindTextOrNull(1, conf.backend?.name?.lowercase())
+            stmt.bindTextOrNull(2, conf.minifluxUrl)
+            stmt.bindTextOrNull(3, conf.minifluxToken)
+            stmt.bindInt(4, if (conf.minifluxInitialSyncCompleted) 1 else 0)
+            stmt.bindTextOrNull(5, conf.minifluxIncrementalSyncTimestamp)
             stmt.bindInt(6, if (conf.showReadEntries) 1 else 0)
             stmt.bindInt(7, if (conf.showPreviewImages) 1 else 0)
             stmt.bindInt(8, if (conf.cropPreviewImages) 1 else 0)
@@ -129,7 +118,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend, miniflux_url, miniflux_token, initial_sync_completed, last_entries_sync_datetime, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
+            SELECT backend, miniflux_url, miniflux_token, miniflux_initial_sync_completed, minifluxIncrementalSyncTimestamp, show_read_entries, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
             FROM conf
             """
         ).use { stmt ->

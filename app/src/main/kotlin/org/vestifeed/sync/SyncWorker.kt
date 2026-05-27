@@ -21,33 +21,19 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
     override fun doWork() = runBlocking { doWorkAsync() }
 
     private suspend fun doWorkAsync(): Result {
-        val conf = applicationContext.db().conf.select()
         val sync = applicationContext.sync()
 
-        if (!conf.initialSyncCompleted) {
-            return Result.retry()
-        }
-
-        when (val syncResult = sync.runInForeground()) {
-            is SyncResult.Success -> {
-                if (syncResult.newAndUpdatedEntries > 0) {
-                    runCatching {
-                        val unreadEntries =
-                            applicationContext.db().entry.selectUnread().size
-
-                        if (unreadEntries > 0) {
-                            showUnreadEntriesNotification(unreadEntries, applicationContext)
-                        }
-                    }
-                }
+        try {
+            sync.runInForeground()
+            val unreadEntries =
+                applicationContext.db().entry.selectUnread().size
+            if (unreadEntries > 0) {
+                showUnreadEntriesNotification(unreadEntries, applicationContext)
             }
-
-            is SyncResult.Failure -> {
-                return Result.failure()
-            }
+            return Result.success()
+        } catch (_: Throwable) {
+            return Result.failure()
         }
-
-        return Result.success()
     }
 
     private fun showUnreadEntriesNotification(unreadEntries: Int, context: Context) {

@@ -18,45 +18,56 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
         val freshFeedIds = freshFeeds.map { it.id }
         val cachedFeedIds = cachedFeeds.map { it.id.toLong() }
         val deletedOnServerIds = cachedFeedIds.filterNot { freshFeedIds.contains(it) }
-        deletedOnServerIds.forEach {
-            db.link.deleteByFeedId(it.toString())
-            db.feed.deleteById(it.toString())
+        withContext(Dispatchers.IO) {
+            deletedOnServerIds.forEach {
+                db.link.deleteByFeedId(it.toString())
+                db.feed.deleteById(it.toString())
+            }
         }
         for (freshFeed in freshFeeds) {
             val cached = cachedFeedIds.contains(freshFeed.id)
             val (feed, freshLinks) = freshFeed.parse()
             if (cached) {
                 val cachedFeed = cachedFeeds.find { it.id.toLong() == freshFeed.id }!!
-                db.feed.insertOrReplace(
-                    feed.copy(
-                        extOpenEntriesInBrowser = cachedFeed.extOpenEntriesInBrowser,
-                        extBlockedWords = cachedFeed.extBlockedWords,
-                        extShowPreviewImages = cachedFeed.extShowPreviewImages,
+                withContext(Dispatchers.IO) {
+                    db.feed.insertOrReplace(
+                        feed.copy(
+                            extOpenEntriesInBrowser = cachedFeed.extOpenEntriesInBrowser,
+                            extBlockedWords = cachedFeed.extBlockedWords,
+                            extShowPreviewImages = cachedFeed.extShowPreviewImages,
+                        )
                     )
-                )
-                val cachedLinks = db.link.selectByFeedId(cachedFeed.id)
+                }
+                val cachedLinks =
+                    withContext(Dispatchers.IO) { db.link.selectByFeedId(cachedFeed.id) }
                 val linksDeletedOnServer =
                     cachedLinks.filter { c -> freshLinks.none { f -> c.href == f.href && c.type == f.type } }
-                linksDeletedOnServer.forEach { db.link.deleteById(it.id!!) }
+                withContext(Dispatchers.IO) {
+                    linksDeletedOnServer.forEach { db.link.deleteById(it.id!!) }
+                }
                 for (freshLink in freshLinks) {
                     val cachedLink =
                         cachedLinks.find { it.href == freshLink.href && it.type == freshLink.type }
-                    if (cachedLink == null) {
-                        db.link.insertForFeed(feed.id, listOf(freshLink))
-                    } else {
-                        db.link.insertForFeed(
-                            feed.id, listOf(
-                                freshLink.copy(
-                                    extEnclosureDownloadProgress = cachedLink.extEnclosureDownloadProgress,
-                                    extCacheUri = cachedLink.extCacheUri,
+                    withContext(Dispatchers.IO) {
+                        if (cachedLink == null) {
+                            db.link.insertForFeed(feed.id, listOf(freshLink))
+                        } else {
+                            db.link.insertForFeed(
+                                feed.id, listOf(
+                                    freshLink.copy(
+                                        extEnclosureDownloadProgress = cachedLink.extEnclosureDownloadProgress,
+                                        extCacheUri = cachedLink.extCacheUri,
+                                    )
                                 )
                             )
-                        )
+                        }
                     }
                 }
             } else {
-                db.feed.insertOrReplace(feed)
-                db.link.insertForFeed(feed.id, freshLinks)
+                withContext(Dispatchers.IO) {
+                    db.feed.insertOrReplace(feed)
+                    db.link.insertForFeed(feed.id, freshLinks)
+                }
             }
         }
     }

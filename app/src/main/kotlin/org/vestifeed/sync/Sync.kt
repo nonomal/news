@@ -24,7 +24,7 @@ class Sync(
     sealed class State {
         data class Idle(val error: Throwable? = null) : State()
         object Starting : State()
-        data class InitialSync(val stage: InitialSyncStage) : State()
+        object InitialSync : State()
         data class FollowUpSync(val args: Args, val stage: FollowUpSyncStage) : State()
     }
 
@@ -164,7 +164,10 @@ class Sync(
                             }
 
                             if (notSyncedNotBookmarkedEntries.isNotEmpty()) {
-                                legacyApi.markEntriesAsBookmarked(notSyncedNotBookmarkedEntries, false)
+                                legacyApi.markEntriesAsBookmarked(
+                                    notSyncedNotBookmarkedEntries,
+                                    false
+                                )
 
                                 withContext(Dispatchers.IO) {
                                     db.transaction {
@@ -194,17 +197,8 @@ class Sync(
                     }
                 } else {
                     try {
-                        _state.update { State.InitialSync(InitialSyncStage.SyncingFeeds) }
-                        sync.syncFeeds()
-                        sync.syncUnreadEntries()
-                        sync.syncStarredEntries()
-                        withContext(Dispatchers.IO) {
-                            db.conf.update {
-                                it.copy(
-                                    minifluxInitialSyncCompleted = true,
-                                )
-                            }
-                        }
+                        _state.update { State.InitialSync }
+                        sync.initialSync()
                     } catch (e: Throwable) {
                         _state.update { State.Idle(e) }
                         return

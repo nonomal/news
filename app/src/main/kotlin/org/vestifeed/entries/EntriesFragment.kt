@@ -178,21 +178,10 @@ class EntriesFragment : AppFragment() {
 
         when (syncState) {
             is Sync.State.InitialSync -> {
-                when (syncState.stage) {
-                    Sync.InitialSyncStage.SyncingFeeds -> {
-                        binding.swipeRefresh.isVisible = false
-                        binding.progress.isVisible = true
-                        binding.message.isVisible = true
-                        binding.message.setText("Fetching feeds")
-                    }
-
-                    is Sync.InitialSyncStage.SyncingEntries -> {
-                        binding.swipeRefresh.isVisible = false
-                        binding.progress.isVisible = true
-                        binding.message.isVisible = true
-                        binding.message.setText("Fetching entries (${syncState.stage.entriesSynced})")
-                    }
-                }
+                binding.swipeRefresh.isVisible = false
+                binding.progress.isVisible = true
+                binding.message.isVisible = true
+                binding.message.setText("Initial sync")
             }
 
             is Sync.State.Idle -> {

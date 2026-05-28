@@ -35,7 +35,6 @@ import org.vestifeed.entry.EntryFragment
 import org.vestifeed.navigation.hideKeyboard
 import org.vestifeed.navigation.openUrl
 import org.vestifeed.navigation.showKeyboard
-import org.vestifeed.sync.Sync
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -112,13 +111,7 @@ class SearchFragment : AppFragment() {
                     extReadSynced = false,
                 )
 
-                sync().runInBackground(
-                    Sync.Args(
-                        syncFeeds = false,
-                        syncFlags = true,
-                        syncEntries = false,
-                    )
-                )
+                sync().runInBackground()
             }.onFailure { showErrorDialog(it) }
         }
     }

@@ -41,7 +41,6 @@ import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.openUrl
 import org.vestifeed.search.SearchFragment
 import org.vestifeed.settings.SettingsFragment
-import org.vestifeed.sync.Sync
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -145,12 +144,12 @@ class EntriesFragment : AppFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                sync().state.collect { onNewSyncState(it) }
+                sync().running.collect { onNewSyncState(it) }
             }
         }
     }
 
-    private suspend fun onNewSyncState(syncState: Sync.State) {
+    private suspend fun onNewSyncState(running: Boolean) {
         //Log.d("entries_fragment", "new sync state: $syncState")
 
         when (filter) {
@@ -174,65 +173,53 @@ class EntriesFragment : AppFragment() {
             null -> {}
         }
 
-        binding.swipeRefresh.isRefreshing = syncState is Sync.State.FollowUpSync
+        binding.swipeRefresh.isRefreshing = running
 
-        when (syncState) {
-            is Sync.State.InitialSync -> {
-                binding.swipeRefresh.isVisible = false
-                binding.progress.isVisible = true
+        if (running) {
+            binding.swipeRefresh.isVisible = false
+            binding.progress.isVisible = true
+            binding.message.isVisible = true
+            binding.message.setText("Initial sync")
+        } else {
+            binding.progress.isVisible = true
+
+            val entries = when (filter) {
+                EntriesFilter.Unread -> {
+                    withContext(Dispatchers.IO) { db().entry.selectUnread() }
+                }
+
+                EntriesFilter.Bookmarked -> {
+                    withContext(Dispatchers.IO) { db().entry.selectBookmarked() }
+                }
+
+                is EntriesFilter.BelongToFeed -> {
+                    withContext(Dispatchers.IO) {
+                        db().entry.selectByFeedId((filter as EntriesFilter.BelongToFeed).feedId)
+                            .filterNot { it.extRead }
+                    }
+                }
+
+                null -> emptyList()
+            }
+
+            val conf = withContext(Dispatchers.IO) {
+                db().conf.select()
+            }
+
+            val listItems = withContext(Dispatchers.IO) {
+                entries.map { it.toItem(conf) }
+            }
+
+            adapter.submitList(listItems)
+
+            binding.progress.isVisible = false
+
+            if (listItems.isEmpty()) {
                 binding.message.isVisible = true
-                binding.message.setText("Initial sync")
-            }
-
-            is Sync.State.Idle -> {
-                if (syncState.error != null) {
-                    showErrorDialog(syncState.error)
-                }
-
-                binding.progress.isVisible = true
-
-                val entries = when (filter) {
-                    EntriesFilter.Unread -> {
-                        withContext(Dispatchers.IO) { db().entry.selectUnread() }
-                    }
-
-                    EntriesFilter.Bookmarked -> {
-                        withContext(Dispatchers.IO) { db().entry.selectBookmarked() }
-                    }
-
-                    is EntriesFilter.BelongToFeed -> {
-                        withContext(Dispatchers.IO) {
-                            db().entry.selectByFeedId((filter as EntriesFilter.BelongToFeed).feedId)
-                                .filterNot { it.extRead }
-                        }
-                    }
-
-                    null -> emptyList()
-                }
-
-                val conf = withContext(Dispatchers.IO) {
-                    db().conf.select()
-                }
-
-                val listItems = withContext(Dispatchers.IO) {
-                    entries.map { it.toItem(conf) }
-                }
-
-                adapter.submitList(listItems)
-
-                binding.progress.isVisible = false
-
-                if (listItems.isEmpty()) {
-                    binding.message.isVisible = true
-                    binding.message.text = getEmptyMessage()
-                } else {
-                    binding.message.isVisible = false
-                    binding.swipeRefresh.isVisible = true
-                }
-            }
-
-            else -> {
-
+                binding.message.text = getEmptyMessage()
+            } else {
+                binding.message.isVisible = false
+                binding.swipeRefresh.isVisible = true
             }
         }
     }
@@ -268,13 +255,7 @@ class EntriesFragment : AppFragment() {
                 }
             }
 
-            sync().runInBackground(
-                Sync.Args(
-                    syncFeeds = false,
-                    syncFlags = true,
-                    syncEntries = false,
-                )
-            )
+            sync().runInBackground()
         }
     }
 
@@ -288,13 +269,7 @@ class EntriesFragment : AppFragment() {
                 )
             }
 
-            sync().runInBackground(
-                Sync.Args(
-                    syncFeeds = false,
-                    syncFlags = true,
-                    syncEntries = false,
-                )
-            )
+            sync().runInBackground()
         }
     }
 
@@ -504,10 +479,10 @@ class EntriesFragment : AppFragment() {
         super.onOpenGraphImageDownloaded()
         // todo optimize
         viewLifecycleOwner.lifecycleScope.launch {
-            val syncState = sync().state.value
+            val syncRunning = sync().running.value
 
-            if (syncState is Sync.State.Idle) {
-                onNewSyncState(sync().state.value)
+            if (!syncRunning) {
+                onNewSyncState(false)
             }
         }
     }

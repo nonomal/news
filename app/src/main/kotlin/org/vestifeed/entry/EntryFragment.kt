@@ -44,7 +44,6 @@ import org.vestifeed.enclosures.EnclosuresRepo
 import org.vestifeed.feedsettings.FeedSettingsFragment
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.openUrl
-import org.vestifeed.sync.Sync
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -242,13 +241,7 @@ class EntryFragment : AppFragment() {
                         extBookmarkedSynced = false,
                     )
                     updateBookmarkedButton(newBookmarkedState)
-                    sync().runInBackground(
-                        Sync.Args(
-                            syncFeeds = false,
-                            syncFlags = true,
-                            syncEntries = false,
-                        )
-                    )
+                    sync().runInBackground()
                 }
                 return true
             }

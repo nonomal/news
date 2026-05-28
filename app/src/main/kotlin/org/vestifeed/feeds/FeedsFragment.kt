@@ -54,7 +54,6 @@ import org.vestifeed.opml.leafOutlines
 import org.vestifeed.opml.toOpml
 import org.vestifeed.opml.toPrettyString
 import org.vestifeed.opml.toXmlDocument
-import org.vestifeed.sync.Sync
 import java.io.InputStream
 import java.io.OutputStream
 import javax.xml.parsers.DocumentBuilderFactory
@@ -344,13 +343,7 @@ class FeedsFragment : AppFragment() {
                     }
                 }
                 // force og download
-                sync().runInBackground(
-                    Sync.Args(
-                        syncFeeds = false,
-                        syncFlags = false,
-                        syncEntries = false,
-                    )
-                )
+                sync().runInBackground()
                 val feeds = withContext(Dispatchers.IO) {
                     db().feed.selectAll()
                 }

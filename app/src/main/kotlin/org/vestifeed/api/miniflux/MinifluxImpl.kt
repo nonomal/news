@@ -3,10 +3,13 @@ package org.vestifeed.api.miniflux
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.google.gson.JsonPrimitive
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import org.vestifeed.api.miniflux.Miniflux.EntriesPayload
+import org.vestifeed.api.miniflux.MinifluxApi.Companion.JSON
 import org.vestifeed.http.executeAsync
 import java.io.IOException
 import java.time.OffsetDateTime
@@ -16,7 +19,6 @@ class MinifluxImpl(
     val baseUrl: HttpUrl,
 ) : Miniflux {
     override suspend fun getFeeds(): List<Miniflux.Feed> {
-        // https://miniflux.app/docs/api.html#endpoint-get-feeds
         val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("feeds").build()).get()
             .build()
         val res = client.newCall(req).executeAsync()
@@ -128,5 +130,31 @@ class MinifluxImpl(
             mime_type = this["mime_type"].asString,
             size = this["size"].asLong,
         )
+    }
+
+    override suspend fun markEntriesAsRead(ids: List<Long>, read: Boolean) {
+        val args = JsonObject().apply {
+            add("entry_ids", JsonArray().apply { ids.forEach { add(it) } })
+            add("status", JsonPrimitive(if (read) "read" else "unread"))
+        }
+        val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("entries").build())
+            .put(args.toString().toRequestBody(JSON)).build()
+        val res = client.newCall(req).executeAsync()
+        if (!res.isSuccessful || res.code != 204) {
+            throw IOException("unexpected response code ${res.code}")
+        }
+    }
+
+    override suspend fun markEntriesAsStarred(ids: List<Long>, starred: Boolean) {
+        ids.forEach { id ->
+            val req = Request.Builder().url(
+                baseUrl.newBuilder().addPathSegment("entries").addPathSegment(id.toString())
+                    .addPathSegment("bookmark").build()
+            ).put(ByteArray(0).toRequestBody(null, 0, 0)).build()
+            val rawRes = client.newCall(req).executeAsync()
+            if (!rawRes.isSuccessful) {
+                throw IOException("http request failed with response code ${rawRes.code}")
+            }
+        }
     }
 }

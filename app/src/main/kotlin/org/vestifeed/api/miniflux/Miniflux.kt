@@ -51,4 +51,10 @@ interface Miniflux {
 
     // https://miniflux.app/docs/api.html#endpoint-get-entries
     suspend fun getEntriesChangedAfter(changedAfter: OffsetDateTime, limit: Long): List<Entry>
+
+    // https://miniflux.app/docs/api.html#endpoint-update-entries
+    suspend fun markEntriesAsRead(ids: List<Long>, read: Boolean)
+
+    // https://miniflux.app/docs/api.html#endpoint-update-entries
+    suspend fun markEntriesAsStarred(ids: List<Long>, starred: Boolean)
 }

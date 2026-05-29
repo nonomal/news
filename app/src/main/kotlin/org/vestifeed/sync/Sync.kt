@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.vestifeed.api.Api
 import org.vestifeed.api.miniflux.MinifluxImpl
 import org.vestifeed.api.miniflux.MinifluxSync
 import org.vestifeed.api.miniflux.minifluxHttpClient
@@ -19,7 +18,6 @@ import org.vestifeed.db.table.ConfTable
 
 class Sync(
     private val scope: CoroutineScope,
-    private val legacyApi: Api,
     private val db: Database,
 ) {
 
@@ -46,103 +44,19 @@ class Sync(
 
             when (conf.backend) {
                 ConfTable.Backend.Miniflux -> {
-                    val minifluxUrl = conf.minifluxUrl
-                    val minifluxToken = conf.minifluxToken
-
-                    if (minifluxUrl == null || minifluxToken == null) {
-                        throw Exception("Miniflux url or token are not set")
+                    if (conf.minifluxUrl == null) {
+                        throw Exception("conf.minifluxUrl is missing")
                     }
-
+                    if (conf.minifluxToken == null) {
+                        throw Exception("conf.minifluxToken is missing")
+                    }
                     val api = MinifluxImpl(
-                        client = minifluxHttpClient(token = minifluxToken),
-                        baseUrl = "$minifluxUrl/v1/".toHttpUrl(),
+                        client = minifluxHttpClient(token = conf.minifluxToken),
+                        baseUrl = "${conf.minifluxUrl}/v1/".toHttpUrl(),
                     )
-
                     val sync = MinifluxSync(db, api)
-
-                    if (conf.minifluxInitialSyncCompleted) {
-                        sync.syncFeeds()
-
-                        val unsyncedEntries =
-                            withContext(Dispatchers.IO) { db.entry.selectByReadSynced(false) }
-                        val unsyncedReadEntries = unsyncedEntries.filter { it.extRead }
-                        val unsyncedUnreadEntries = unsyncedEntries.filter { !it.extRead }
-
-                        if (unsyncedReadEntries.isNotEmpty()) {
-                            legacyApi.markEntriesAsRead(
-                                entriesIds = unsyncedReadEntries.map { it.id },
-                                read = true,
-                            )
-
-                            withContext(Dispatchers.IO) {
-                                db.transaction {
-                                    unsyncedReadEntries.forEach {
-                                        db.entry.updateReadSynced(true, it.id)
-                                    }
-                                }
-                            }
-                        }
-
-                        if (unsyncedUnreadEntries.isNotEmpty()) {
-                            legacyApi.markEntriesAsRead(
-                                entriesIds = unsyncedUnreadEntries.map { it.id },
-                                read = false,
-                            )
-
-                            withContext(Dispatchers.IO) {
-                                db.transaction {
-                                    unsyncedUnreadEntries.forEach {
-                                        db.entry.updateReadSynced(true, it.id)
-                                    }
-                                }
-                            }
-                        }
-
-                        val notSyncedEntries =
-                            withContext(Dispatchers.IO) {
-                                db.entry.selectByBookmarkedSynced(
-                                    false
-                                )
-                            }
-                        val notSyncedBookmarkedEntries =
-                            notSyncedEntries.filter { it.extBookmarked }
-                        val notSyncedNotBookmarkedEntries =
-                            notSyncedEntries.filterNot { it.extBookmarked }
-
-                        if (notSyncedBookmarkedEntries.isNotEmpty()) {
-                            legacyApi.markEntriesAsBookmarked(
-                                notSyncedBookmarkedEntries,
-                                true
-                            )
-
-                            withContext(Dispatchers.IO) {
-                                db.transaction {
-                                    notSyncedBookmarkedEntries.forEach {
-                                        db.entry.updateBookmarkedSynced(true, it.id)
-                                    }
-                                }
-                            }
-                        }
-
-                        if (notSyncedNotBookmarkedEntries.isNotEmpty()) {
-                            legacyApi.markEntriesAsBookmarked(
-                                notSyncedNotBookmarkedEntries,
-                                false
-                            )
-
-                            withContext(Dispatchers.IO) {
-                                db.transaction {
-                                    notSyncedNotBookmarkedEntries.forEach {
-                                        db.entry.updateBookmarkedSynced(true, it.id)
-                                    }
-                                }
-                            }
-                        }
-
-                        sync.incrementalSync()
-                    } else {
-                        sync.initialSync()
-                    }
+                    sync.syncFeeds()
+                    sync.syncEntries(initial = !conf.minifluxInitialSyncCompleted)
                 }
 
                 ConfTable.Backend.Embedded -> {
@@ -151,7 +65,7 @@ class Sync(
                 }
 
                 null -> {
-                    throw Exception("Backend is not set")
+                    throw Exception("conf.backend is missing")
                 }
             }
         } catch (_: Throwable) {

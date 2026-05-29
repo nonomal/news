@@ -111,73 +111,147 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
         return Pair(feed, listOf(selfLink, alternateLink))
     }
 
-    suspend fun initialSync() {
-        val startedAt = Instant.now().toString()
-        syncFeeds()
-        syncStarredEntries()
-        syncUnreadEntries()
-        withContext(Dispatchers.IO) {
-            db.conf.update {
-                it.copy(
-                    minifluxInitialSyncCompleted = true,
-                    minifluxIncrementalSyncTimestamp = startedAt,
-                )
+    suspend fun syncEntries(initial: Boolean) {
+        if (initial) {
+            val startedAt = Instant.now().toString()
+            syncStarredEntries()
+            syncUnreadEntries()
+            withContext(Dispatchers.IO) {
+                db.conf.update {
+                    it.copy(
+                        minifluxInitialSyncCompleted = true,
+                        minifluxIncrementalSyncTimestamp = startedAt,
+                    )
+                }
             }
-        }
-    }
+        } else {
+            val unsyncedEntries =
+                withContext(Dispatchers.IO) { db.entry.selectByReadSynced(false) }
+            val unsyncedReadEntries = unsyncedEntries.filter { it.extRead }
+            val unsyncedUnreadEntries = unsyncedEntries.filter { !it.extRead }
 
-    suspend fun incrementalSync() {
-        db.log.insert(
-            LogTable.InsertArgs(
-                level = "info",
-                tag = "miniflux_sync",
-                message = "Syncing changed entries",
-            )
-        )
-        var changedAfter = OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
-        db.log.insert(
-            LogTable.InsertArgs(
-                level = "info",
-                tag = "miniflux_sync",
-                message = "changedAfter = $changedAfter",
-            )
-        )
-        val batchSize = 100L
-        while (true) {
-            val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
+            if (unsyncedReadEntries.isNotEmpty()) {
+                api.markEntriesAsRead(
+                    ids = unsyncedReadEntries.map { it.id.toLong() },
+                    read = true,
+                )
+
+                withContext(Dispatchers.IO) {
+                    db.transaction {
+                        unsyncedReadEntries.forEach {
+                            db.entry.updateReadSynced(true, it.id)
+                        }
+                    }
+                }
+            }
+
+            if (unsyncedUnreadEntries.isNotEmpty()) {
+                api.markEntriesAsRead(
+                    ids = unsyncedUnreadEntries.map { it.id.toLong() },
+                    read = false,
+                )
+
+                withContext(Dispatchers.IO) {
+                    db.transaction {
+                        unsyncedUnreadEntries.forEach {
+                            db.entry.updateReadSynced(true, it.id)
+                        }
+                    }
+                }
+            }
+
+            val notSyncedEntries =
+                withContext(Dispatchers.IO) {
+                    db.entry.selectByBookmarkedSynced(
+                        false
+                    )
+                }
+            val notSyncedBookmarkedEntries =
+                notSyncedEntries.filter { it.extBookmarked }
+            val notSyncedNotBookmarkedEntries =
+                notSyncedEntries.filterNot { it.extBookmarked }
+
+            if (notSyncedBookmarkedEntries.isNotEmpty()) {
+                api.markEntriesAsStarred(
+                    ids = notSyncedBookmarkedEntries.map { it.id.toLong() },
+                    starred = true,
+                )
+
+                withContext(Dispatchers.IO) {
+                    db.transaction {
+                        notSyncedBookmarkedEntries.forEach {
+                            db.entry.updateBookmarkedSynced(true, it.id)
+                        }
+                    }
+                }
+            }
+
+            if (notSyncedNotBookmarkedEntries.isNotEmpty()) {
+                api.markEntriesAsStarred(
+                    ids = notSyncedNotBookmarkedEntries.map { it.id.toLong() },
+                    false,
+                )
+
+                withContext(Dispatchers.IO) {
+                    db.transaction {
+                        notSyncedNotBookmarkedEntries.forEach {
+                            db.entry.updateBookmarkedSynced(true, it.id)
+                        }
+                    }
+                }
+            }
             db.log.insert(
                 LogTable.InsertArgs(
                     level = "info",
                     tag = "miniflux_sync",
-                    message = "Got ${currentBatch.size} changed entries",
+                    message = "Syncing changed entries",
                 )
             )
-            if (currentBatch.isEmpty()) {
-                break
-            } else {
-                val newChangedAfter = currentBatch.maxOf { it.changed_at }
-                val typedCurrentBatch = currentBatch.map { it.toVestiEntry() }
-                db.transaction {
-                    typedCurrentBatch.forEach {
-                        db.entry.insertOrReplace(listOf(it.first))
-                        db.link.insertForEntry(it.first.id, it.second)
-                    }
-                    db.log.insert(
-                        LogTable.InsertArgs(
-                            level = "info",
-                            tag = "miniflux_sync",
-                            message = "Bumping lastEntriesSyncDatetime to $newChangedAfter",
-                        )
+            var changedAfter = OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
+            db.log.insert(
+                LogTable.InsertArgs(
+                    level = "info",
+                    tag = "miniflux_sync",
+                    message = "changedAfter = $changedAfter",
+                )
+            )
+            val batchSize = 100L
+            while (true) {
+                val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
+                db.log.insert(
+                    LogTable.InsertArgs(
+                        level = "info",
+                        tag = "miniflux_sync",
+                        message = "Got ${currentBatch.size} changed entries",
                     )
-                    db.conf.update {
-                        it.copy(
-                            minifluxIncrementalSyncTimestamp = newChangedAfter,
-                        )
-                    }
-                    changedAfter = OffsetDateTime.parse(newChangedAfter)
-                }
-                if (currentBatch.size < batchSize) {
+                )
+                if (currentBatch.isEmpty()) {
                     break
+                } else {
+                    val newChangedAfter = currentBatch.maxOf { it.changed_at }
+                    val typedCurrentBatch = currentBatch.map { it.toVestiEntry() }
+                    db.transaction {
+                        typedCurrentBatch.forEach {
+                            db.entry.insertOrReplace(listOf(it.first))
+                            db.link.insertForEntry(it.first.id, it.second)
+                        }
+                        db.log.insert(
+                            LogTable.InsertArgs(
+                                level = "info",
+                                tag = "miniflux_sync",
+                                message = "Bumping lastEntriesSyncDatetime to $newChangedAfter",
+                            )
+                        )
+                        db.conf.update {
+                            it.copy(
+                                minifluxIncrementalSyncTimestamp = newChangedAfter,
+                            )
+                        }
+                        changedAfter = OffsetDateTime.parse(newChangedAfter)
+                    }
+                    if (currentBatch.size < batchSize) {
+                        break
+                    }
                 }
             }
         }

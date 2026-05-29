@@ -19,7 +19,7 @@ import java.io.File
 class App : Application() {
     val scope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
-    val sync by lazy { Sync(scope, api, db) }
+    val sync by lazy { Sync(scope, db) }
 
     val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
 

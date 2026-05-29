@@ -30,6 +30,9 @@ class MinifluxSyncTest {
             override suspend fun getStarredEntries() = emptyList<Miniflux.Entry>()
             override suspend fun getEntriesChangedAfter(changedAfter: OffsetDateTime, limit: Long) =
                 emptyList<Miniflux.Entry>()
+
+            override suspend fun markEntriesAsRead(ids: List<Long>, read: Boolean) = Unit
+            override suspend fun markEntriesAsStarred(ids: List<Long>, starred: Boolean) = Unit
         }
         val sync = MinifluxSync(db, api)
         runBlocking { sync.syncFeeds() }

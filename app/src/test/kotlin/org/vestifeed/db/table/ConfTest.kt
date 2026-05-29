@@ -38,7 +38,6 @@ class ConfTest {
         assertEquals(null, defaultConf.backend)
         assertEquals(null, defaultConf.minifluxUrl)
         assertEquals(null, defaultConf.minifluxToken)
-        assertFalse(defaultConf.minifluxInitialSyncCompleted)
         assertEquals(null, defaultConf.minifluxIncrementalSyncTimestamp)
         assertFalse(defaultConf.showReadEntries)
         assertTrue(defaultConf.showPreviewImages)
@@ -69,7 +68,6 @@ class ConfTest {
         assertEquals(conf.backend, result.backend)
         assertEquals(conf.minifluxUrl, result.minifluxUrl)
         assertEquals(conf.minifluxToken, result.minifluxToken)
-        assertEquals(conf.minifluxInitialSyncCompleted, result.minifluxInitialSyncCompleted)
         assertEquals(conf.minifluxIncrementalSyncTimestamp, result.minifluxIncrementalSyncTimestamp)
         assertEquals(conf.showReadEntries, result.showReadEntries)
         assertEquals(conf.showPreviewImages, result.showPreviewImages)
@@ -136,7 +134,6 @@ class ConfTest {
         backend: ConfTable.Backend = ConfTable.Backend.Embedded,
         minifluxUrl: String = "https://miniflux.example.com",
         minifluxToken: String = "miniflux-token",
-        minifluxInitialSyncCompleted: Boolean = true,
         minifluxIncrementalSyncTimestamp: String? = "2024-01-01T00:00:00Z",
         showReadEntries: Boolean = true,
         showPreviewImages: Boolean = true,
@@ -152,7 +149,6 @@ class ConfTest {
         backend = backend,
         minifluxUrl = minifluxUrl,
         minifluxToken = minifluxToken,
-        minifluxInitialSyncCompleted = minifluxInitialSyncCompleted,
         minifluxIncrementalSyncTimestamp = minifluxIncrementalSyncTimestamp,
         showReadEntries = showReadEntries,
         showPreviewImages = showPreviewImages,

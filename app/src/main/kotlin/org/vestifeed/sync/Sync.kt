@@ -56,7 +56,7 @@ class Sync(
                     )
                     val sync = MinifluxSync(db, api)
                     sync.syncFeeds()
-                    sync.syncEntries(initial = !conf.minifluxInitialSyncCompleted)
+                    sync.syncEntries(initial = conf.minifluxIncrementalSyncTimestamp == null)
                 }
 
                 ConfTable.Backend.Embedded -> {

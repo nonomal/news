@@ -117,12 +117,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
             syncStarredEntries()
             syncUnreadEntries()
             withContext(Dispatchers.IO) {
-                db.conf.update {
-                    it.copy(
-                        minifluxInitialSyncCompleted = true,
-                        minifluxIncrementalSyncTimestamp = startedAt,
-                    )
-                }
+                db.conf.update { it.copy(minifluxIncrementalSyncTimestamp = startedAt) }
             }
         } else {
             val unsyncedEntries =
@@ -207,7 +202,8 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                     message = "Syncing changed entries",
                 )
             )
-            var changedAfter = OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
+            var changedAfter =
+                OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
             db.log.insert(
                 LogTable.InsertArgs(
                     level = "info",

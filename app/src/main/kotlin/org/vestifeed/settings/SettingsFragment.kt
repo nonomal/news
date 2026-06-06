@@ -142,11 +142,6 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
-    private fun setMarkScrolledEntriesAsRead(value: Boolean) {
-        db.conf.update { it.copy(markScrolledEntriesAsRead = value) }
-        refresh()
-    }
-
     private fun setUseBuiltInBrowser(value: Boolean) {
         db.conf.update { it.copy(useBuiltInBrowser = value) }
         refresh()
@@ -280,13 +275,6 @@ class SettingsFragment : AppFragment() {
         showPreviewText.apply {
             isChecked = state.conf.showPreviewText
             setOnCheckedChangeListener { _, isChecked -> setShowPreviewText(isChecked) }
-        }
-
-        markScrolledEntriesAsRead.apply {
-            isChecked = state.conf.markScrolledEntriesAsRead
-            setOnCheckedChangeListener { _, isChecked ->
-                setMarkScrolledEntriesAsRead(isChecked)
-            }
         }
 
         useBuiltInBrowser.apply {

@@ -17,7 +17,6 @@ class ConfTable(private val conn: SQLiteConnection) {
                 minifluxIncrementalSyncTimestamp TEXT,
                 show_preview_images INTEGER NOT NULL,
                 crop_preview_images INTEGER NOT NULL,
-                mark_scrolled_entries_as_read INTEGER NOT NULL,
                 sync_on_startup INTEGER NOT NULL,
                 sync_in_background INTEGER NOT NULL,
                 background_sync_interval_millis INTEGER NOT NULL,
@@ -34,7 +33,6 @@ class ConfTable(private val conn: SQLiteConnection) {
             minifluxIncrementalSyncTimestamp = null,
             showPreviewImages = true,
             cropPreviewImages = true,
-            markScrolledEntriesAsRead = false,
             syncOnStartup = true,
             syncInBackground = true,
             backgroundSyncIntervalMillis = 10800000L,
@@ -61,7 +59,6 @@ class ConfTable(private val conn: SQLiteConnection) {
         val minifluxIncrementalSyncTimestamp: String?,
         val showPreviewImages: Boolean,
         val cropPreviewImages: Boolean,
-        val markScrolledEntriesAsRead: Boolean,
         val syncOnStartup: Boolean,
         val syncInBackground: Boolean,
         val backgroundSyncIntervalMillis: Long,
@@ -77,20 +74,19 @@ class ConfTable(private val conn: SQLiteConnection) {
         minifluxIncrementalSyncTimestamp = getTextOrNull(3),
         showPreviewImages = getInt(4) == 1,
         cropPreviewImages = getInt(5) == 1,
-        markScrolledEntriesAsRead = getInt(6) == 1,
-        syncOnStartup = getInt(7) == 1,
-        syncInBackground = getInt(8) == 1,
-        backgroundSyncIntervalMillis = getLong(9),
-        useBuiltInBrowser = getInt(10) == 1,
-        showPreviewText = getInt(11) == 1,
-        syncedOnStartup = getInt(12) == 1,
+        syncOnStartup = getInt(6) == 1,
+        syncInBackground = getInt(7) == 1,
+        backgroundSyncIntervalMillis = getLong(8),
+        useBuiltInBrowser = getInt(9) == 1,
+        showPreviewText = getInt(10) == 1,
+        syncedOnStartup = getInt(11) == 1,
     )
 
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             stmt.bindTextOrNull(1, conf.backend?.name?.lowercase())
@@ -99,13 +95,12 @@ class ConfTable(private val conn: SQLiteConnection) {
             stmt.bindTextOrNull(4, conf.minifluxIncrementalSyncTimestamp)
             stmt.bindInt(5, if (conf.showPreviewImages) 1 else 0)
             stmt.bindInt(6, if (conf.cropPreviewImages) 1 else 0)
-            stmt.bindInt(7, if (conf.markScrolledEntriesAsRead) 1 else 0)
-            stmt.bindInt(8, if (conf.syncOnStartup) 1 else 0)
-            stmt.bindInt(9, if (conf.syncInBackground) 1 else 0)
-            stmt.bindLong(10, conf.backgroundSyncIntervalMillis)
-            stmt.bindInt(11, if (conf.useBuiltInBrowser) 1 else 0)
-            stmt.bindInt(12, if (conf.showPreviewText) 1 else 0)
-            stmt.bindInt(13, if (conf.syncedOnStartup) 1 else 0)
+            stmt.bindInt(7, if (conf.syncOnStartup) 1 else 0)
+            stmt.bindInt(8, if (conf.syncInBackground) 1 else 0)
+            stmt.bindLong(9, conf.backgroundSyncIntervalMillis)
+            stmt.bindInt(10, if (conf.useBuiltInBrowser) 1 else 0)
+            stmt.bindInt(11, if (conf.showPreviewText) 1 else 0)
+            stmt.bindInt(12, if (conf.syncedOnStartup) 1 else 0)
             stmt.step()
         }
     }
@@ -113,7 +108,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, mark_scrolled_entries_as_read, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
+            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, synced_on_startup
             FROM conf
             """
         ).use { stmt ->

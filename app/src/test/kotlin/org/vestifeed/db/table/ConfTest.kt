@@ -39,10 +39,8 @@ class ConfTest {
         assertEquals(null, defaultConf.minifluxUrl)
         assertEquals(null, defaultConf.minifluxToken)
         assertEquals(null, defaultConf.minifluxIncrementalSyncTimestamp)
-        assertFalse(defaultConf.showReadEntries)
         assertTrue(defaultConf.showPreviewImages)
         assertTrue(defaultConf.cropPreviewImages)
-        assertFalse(defaultConf.markScrolledEntriesAsRead)
         assertTrue(defaultConf.syncOnStartup)
         assertTrue(defaultConf.syncInBackground)
         assertEquals(10800000L, defaultConf.backgroundSyncIntervalMillis)
@@ -69,10 +67,8 @@ class ConfTest {
         assertEquals(conf.minifluxUrl, result.minifluxUrl)
         assertEquals(conf.minifluxToken, result.minifluxToken)
         assertEquals(conf.minifluxIncrementalSyncTimestamp, result.minifluxIncrementalSyncTimestamp)
-        assertEquals(conf.showReadEntries, result.showReadEntries)
         assertEquals(conf.showPreviewImages, result.showPreviewImages)
         assertEquals(conf.cropPreviewImages, result.cropPreviewImages)
-        assertEquals(conf.markScrolledEntriesAsRead, result.markScrolledEntriesAsRead)
         assertEquals(conf.syncOnStartup, result.syncOnStartup)
         assertEquals(conf.syncInBackground, result.syncInBackground)
         assertEquals(conf.backgroundSyncIntervalMillis, result.backgroundSyncIntervalMillis)
@@ -135,10 +131,8 @@ class ConfTest {
         minifluxUrl: String = "https://miniflux.example.com",
         minifluxToken: String = "miniflux-token",
         minifluxIncrementalSyncTimestamp: String? = "2024-01-01T00:00:00Z",
-        showReadEntries: Boolean = true,
         showPreviewImages: Boolean = true,
         cropPreviewImages: Boolean = false,
-        markScrolledEntriesAsRead: Boolean = true,
         syncOnStartup: Boolean = false,
         syncInBackground: Boolean = false,
         backgroundSyncIntervalMillis: Long = 3600000L,
@@ -150,10 +144,8 @@ class ConfTest {
         minifluxUrl = minifluxUrl,
         minifluxToken = minifluxToken,
         minifluxIncrementalSyncTimestamp = minifluxIncrementalSyncTimestamp,
-        showReadEntries = showReadEntries,
         showPreviewImages = showPreviewImages,
         cropPreviewImages = cropPreviewImages,
-        markScrolledEntriesAsRead = markScrolledEntriesAsRead,
         syncOnStartup = syncOnStartup,
         syncInBackground = syncInBackground,
         backgroundSyncIntervalMillis = backgroundSyncIntervalMillis,

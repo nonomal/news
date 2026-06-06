@@ -127,11 +127,6 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
-    private fun setShowReadEntries(value: Boolean) {
-        db.conf.update { it.copy(showReadEntries = value) }
-        refresh()
-    }
-
     private fun setShowPreviewImages(value: Boolean) {
         db.conf.update { it.copy(showPreviewImages = value) }
         refresh()
@@ -270,11 +265,6 @@ class SettingsFragment : AppFragment() {
         syncOnStartup.apply {
             isChecked = state.conf.syncOnStartup
             setOnCheckedChangeListener { _, isChecked -> setSyncOnStartup(isChecked) }
-        }
-
-        showOpenedEntries.apply {
-            isChecked = state.conf.showReadEntries
-            setOnCheckedChangeListener { _, isChecked -> setShowReadEntries(isChecked) }
         }
 
         showPreviewImages.apply {

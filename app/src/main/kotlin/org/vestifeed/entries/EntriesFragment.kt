@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.appcompat.graphics.drawable.DrawerArrowDrawable
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -39,7 +38,6 @@ import org.vestifeed.entry.EntryFragment
 import org.vestifeed.log.LogFragment
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.openUrl
-import org.vestifeed.search.SearchFragment
 import org.vestifeed.settings.SettingsFragment
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -324,157 +322,6 @@ class EntriesFragment : AppFragment() {
         }
     }
 
-    private fun FragmentEntriesBinding.setState(state: State) {
-        //Log.d("entries_fragment", state.toString())
-
-        updateToolbar(state)
-
-        progress.isVisible = false
-        message.isVisible = false
-        swipeRefresh.isVisible = false
-
-        when (state) {
-            is State.InitialSync -> {
-                progress.isVisible = true
-                message.isVisible = state.message.isNotBlank()
-                message.text = state.message
-            }
-
-            State.LoadingCachedEntries -> {
-                progress.isVisible = true
-            }
-
-            is State.ShowingCachedEntries -> {
-                //Log.d("entries_fragment", "cached entries: ${state.entries.size}")
-
-                if (state.entries.isEmpty()) {
-                    message.isVisible = true
-                    message.text = getEmptyMessage()
-                } else {
-                    swipeRefresh.isVisible = true
-                    adapter.submitList(state.entries)
-                }
-            }
-        }
-    }
-
-    private fun updateToolbar(state: State) {
-        binding.toolbar.apply {
-            when (filter) {
-                EntriesFilter.Bookmarked -> {
-                    when (state) {
-                        is State.ShowingCachedEntries -> {
-                            setTitle(getString(R.string.bookmarks) + " (${state.entries.size})")
-                        }
-
-                        else -> {
-                            setTitle(R.string.bookmarks)
-                        }
-                    }
-                }
-
-                EntriesFilter.Unread -> {
-                    when (state) {
-                        is State.ShowingCachedEntries -> {
-                            setTitle(getString(R.string.unread) + " (${state.entries.size})")
-                        }
-
-                        else -> {
-                            setTitle(R.string.unread)
-                        }
-                    }
-                }
-
-                is EntriesFilter.BelongToFeed -> {
-                    binding.toolbar.apply {
-                        navigationIcon = DrawerArrowDrawable(context).also { it.progress = 1f }
-                        setNavigationOnClickListener { parentFragmentManager.popBackStack() }
-                    }
-
-                    if (state is State.ShowingCachedEntries) {
-                        title = state.feed?.title
-                    }
-                }
-
-                null -> {}
-            }
-
-            updateSearchButton()
-            updateShowReadEntriesButton(state)
-            updateMarkAllAsReadButton()
-            updateLogsButton()
-            updateSettingsButton()
-        }
-    }
-
-    private fun updateSearchButton() {
-        binding.toolbar.menu!!.findItem(R.id.search).setOnMenuItemClickListener {
-            parentFragmentManager.commit {
-                replace(
-                    R.id.fragmentContainerView,
-                    SearchFragment::class.java,
-                    null,
-                )
-                addToBackStack(null)
-            }
-            true
-        }
-    }
-
-    private fun updateShowReadEntriesButton(state: State) {
-        val button = binding.toolbar.menu!!.findItem(R.id.showOpenedEntries)
-        button.isVisible = getShowReadEntriesButtonVisibility()
-
-        if (state !is State.ShowingCachedEntries) {
-            button.isVisible = false
-            return
-        }
-
-        val conf = db().conf.select()
-
-        if (conf.showReadEntries) {
-            button.setIcon(R.drawable.ic_baseline_visibility_24)
-            button.title = getString(R.string.hide_read_news)
-            touchHelper?.attachToRecyclerView(null)
-        } else {
-            button.setIcon(R.drawable.ic_baseline_visibility_off_24)
-            button.title = getString(R.string.show_read_news)
-            touchHelper?.attachToRecyclerView(binding.list)
-        }
-
-        button.setOnMenuItemClickListener {
-            saveConf { it.copy(showReadEntries = !it.showReadEntries) }
-            true
-        }
-    }
-
-    private fun updateMarkAllAsReadButton() {
-        binding.toolbar.menu!!.findItem(R.id.markAllAsRead).setOnMenuItemClickListener {
-            markAllAsRead()
-            true
-        }
-    }
-
-    private fun updateLogsButton() {
-        val button = binding.toolbar.menu!!.findItem(R.id.logs)
-        button.isVisible = BuildConfig.DEBUG
-    }
-
-    private fun updateSettingsButton() {
-        binding.toolbar.menu!!.findItem(R.id.settings).setOnMenuItemClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
-                addToBackStack(null)
-            }
-
-            true
-        }
-    }
-
-    private fun scrollToTop() {
-        binding.list.layoutManager?.scrollToPosition(0)
-    }
-
     override fun onOpenGraphImageDownloaded() {
         super.onOpenGraphImageDownloaded()
         // todo optimize
@@ -487,19 +334,17 @@ class EntriesFragment : AppFragment() {
         }
     }
 
-    private fun getShowReadEntriesButtonVisibility(): Boolean {
-        return when (filter) {
-            EntriesFilter.Unread -> true
-            EntriesFilter.Bookmarked -> false
-            is EntriesFilter.BelongToFeed -> true
-            null -> false
-        }
-    }
-
-    private fun getEmptyMessage(): String {
+    private suspend fun getEmptyMessage(): String {
         return when (filter) {
             is EntriesFilter.Bookmarked -> getString(R.string.you_have_no_bookmarks)
-            else -> getString(R.string.news_list_is_empty)
+            else -> {
+                val feeds = withContext(Dispatchers.IO) { db().feed.selectAll().size }
+                if (feeds == 0) {
+                    getString(R.string.you_have_no_feeds)
+                } else {
+                    getString(R.string.news_list_is_empty)
+                }
+            }
         }
     }
 

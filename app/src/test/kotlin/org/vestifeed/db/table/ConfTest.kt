@@ -46,7 +46,6 @@ class ConfTest {
         assertEquals(10800000L, defaultConf.backgroundSyncIntervalMillis)
         assertTrue(defaultConf.useBuiltInBrowser)
         assertTrue(defaultConf.showPreviewText)
-        assertFalse(defaultConf.syncedOnStartup)
     }
 
     @Test
@@ -74,7 +73,6 @@ class ConfTest {
         assertEquals(conf.backgroundSyncIntervalMillis, result.backgroundSyncIntervalMillis)
         assertEquals(conf.useBuiltInBrowser, result.useBuiltInBrowser)
         assertEquals(conf.showPreviewText, result.showPreviewText)
-        assertEquals(conf.syncedOnStartup, result.syncedOnStartup)
     }
 
     @Test
@@ -138,7 +136,6 @@ class ConfTest {
         backgroundSyncIntervalMillis: Long = 3600000L,
         useBuiltInBrowser: Boolean = false,
         showPreviewText: Boolean = false,
-        syncedOnStartup: Boolean = true,
     ) = ConfTable.Conf(
         backend = backend,
         minifluxUrl = minifluxUrl,
@@ -151,6 +148,5 @@ class ConfTest {
         backgroundSyncIntervalMillis = backgroundSyncIntervalMillis,
         useBuiltInBrowser = useBuiltInBrowser,
         showPreviewText = showPreviewText,
-        syncedOnStartup = syncedOnStartup,
     )
 }

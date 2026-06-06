@@ -46,8 +46,6 @@ class Activity : AppCompatActivity() {
             insets
         }
 
-        db().conf.update { it.copy(syncedOnStartup = false) }
-
         lifecycleScope.launch {
             val conf = db().conf.select()
 

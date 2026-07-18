@@ -28,6 +28,7 @@ class EnclosuresRepo(
 
     private val httpClient = OkHttpClient()
 
+    @Suppress("Recycle")
     suspend fun downloadAudioEnclosure(enclosure: LinkTable.Link) {
         if (enclosure.rel !is AtomLinkRel.Enclosure) {
             throw Exception("Invalid link rel: ${enclosure.rel}")

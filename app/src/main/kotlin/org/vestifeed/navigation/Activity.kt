@@ -3,6 +3,7 @@ package org.vestifeed.navigation
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
@@ -11,18 +12,28 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.navigation.NavigationBarView.OnItemReselectedListener
-import org.vestifeed.entries.EntriesFilter
-import org.vestifeed.entries.EntriesFragment
-import org.vestifeed.feeds.FeedsFragment
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.databinding.ActivityBinding
+import org.vestifeed.entries.EntriesFilter
+import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.feeds.FeedsFragment
+import org.vestifeed.lan.LocalNetworkPermissionRequester
 
 class Activity : AppCompatActivity() {
 
     lateinit var binding: ActivityBinding
+
+    private val localNetworkPermissionRequester = LocalNetworkPermissionRequester()
+
+    private val localNetworkPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            localNetworkPermissionRequester.onPermissionResult(it)
+        }
 
     private val onBackPressedCallback = object : OnBackPressedCallback(true) {
         override fun handleOnBackPressed() {
@@ -50,9 +61,28 @@ class Activity : AppCompatActivity() {
             val conf = db().conf.select()
 
             if (conf.backend != null && conf.syncOnStartup) {
-                Log.d("activity", "sync on startup start")
-                sync().runInBackground()
-                Log.d("activity", "sync on startup end")
+                val urls = when (conf.backend) {
+                    ConfTable.Backend.Miniflux -> {
+                        listOfNotNull(conf.minifluxUrl?.toHttpUrlOrNull())
+                    }
+
+                    ConfTable.Backend.Embedded -> {
+                        db().feed.selectAll()
+                            .flatMap { db().link.selectByFeedId(it.id) }
+                            .mapNotNull { it.href.toHttpUrlOrNull() }
+                    }
+                }
+
+                if (localNetworkPermissionRequester.requestIfNeeded(
+                        context = this@Activity,
+                        urls = urls,
+                        launcher = localNetworkPermissionLauncher,
+                    )
+                ) {
+                    Log.d("activity", "sync on startup start")
+                    sync().runInBackground()
+                    Log.d("activity", "sync on startup end")
+                }
             }
         }
 

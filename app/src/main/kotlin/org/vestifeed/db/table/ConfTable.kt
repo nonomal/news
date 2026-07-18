@@ -55,9 +55,14 @@ class ConfTable(private val conn: SQLiteConnection) {
         // if null, should fetch read + starred and set to
         // current timestamp to fetch future updates
         val minifluxIncrementalSyncTimestamp: String?,
+        // based on HTML OpenGraph tags
         val showPreviewImages: Boolean,
+        // fixed height
         val cropPreviewImages: Boolean,
+        // default on when it's cheap (Miniflux)
+        // default off when it's expensive (embedded)
         val syncOnStartup: Boolean,
+        // pre-fetched news speed things up when user comes back
         val syncInBackground: Boolean,
         val backgroundSyncIntervalMillis: Long,
         val useBuiltInBrowser: Boolean,

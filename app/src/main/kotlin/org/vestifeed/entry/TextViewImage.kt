@@ -13,6 +13,7 @@ import android.text.style.ImageSpan
 import android.widget.TextView
 import coil3.Image
 import coil3.target.Target
+import coil3.toBitmap
 
 class TextViewImage(
     private val textView: TextView,
@@ -43,7 +44,7 @@ class TextViewImage(
     }
 
     override fun onSuccess(result: Image) {
-        val unprocessedBitmap = (result as BitmapDrawable).bitmap
+        val unprocessedBitmap = result.toBitmap()
         val scaleToFullWidth = unprocessedBitmap.width >= textView.width / 5
 
         val bitmap = if (scaleToFullWidth) {

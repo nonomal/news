@@ -14,6 +14,7 @@
     <string name="log_out_warning">Do you really want to log out?</string>
     <string name="cancel">Cancel</string>
     <string name="direct_login_failed">Could not connect to server. Please make sure your login info is correct.</string>
+    <string name="local_network_permission_required" translatable="false">Local network access is required to connect to this address.</string>
     <string name="server_url_hint">https://example.com</string>
     <string name="username">Username</string>
     <string name="password">Password</string>

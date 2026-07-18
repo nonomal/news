@@ -72,6 +72,12 @@ class MinifluxAuthFragment : AppFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                if (!requestLocalNetworkAccess(listOf(url))) {
+                    binding.progress.isVisible = false
+                    showErrorDialog(R.string.local_network_permission_required)
+                    return@launch
+                }
+
                 val api = MinifluxApiBuilder().build(
                     url = url.toString().trim('/'),
                     token = token,

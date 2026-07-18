@@ -10,13 +10,13 @@ android {
     namespace = "org.vestifeed"
 
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     defaultConfig {
         applicationId = "org.vestifeed"
         minSdk = 34
-        targetSdk = 36
+        targetSdk = 37
         versionCode = 24
         versionName = "0.4.3"
 

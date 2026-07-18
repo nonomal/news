@@ -118,3 +118,124 @@ org.vestifeed.app/src/androidTest/kotlin/       # Instrumented tests
 ### What NOT to Do
 - Don't use `var` unless necessary (prefer `val`)
 - Don't commit secrets or keys to the repository
+
+## Emulator (debug device)
+
+Use the Android emulator when you need a real Android runtime for crash
+reproduction, log capture, or manual UI checks.
+
+### Listing available AVDs
+```bash
+$ANDROID_HOME/emulator/emulator -list-avds
+# or, if `emulator` is on $PATH:
+emulator -list-avds
+```
+
+### Cold-booting an AVD with a window
+The first invocation must be detached from the opencode shell, otherwise the
+shell wrapper times out and the emulator is killed when the call returns.
+Use `nohup setsid` redirected away from the tool's stdout:
+
+```bash
+nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro \
+    > /tmp/opencode/pixel9-emulator.log 2>&1 < /dev/null &
+disown
+```
+
+Headless mode (`-no-window`) is acceptable for adb-only flows but produces no
+usable screenshot for visual verification. Drop `-no-window` when you need to
+see the device.
+
+Wait for boot completion before continuing:
+```bash
+for i in $(seq 1 30); do
+    boot=$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r\n')
+    [ "$boot" = "1" ] && { echo "boot in ${i}*5s"; break; }
+    sleep 5
+done
+adb devices  # expect `emulator-5554    device`
+```
+
+### Installing and launching the debug build
+The debug variant has `applicationIdSuffix = ".debug"`, so the package id is
+`org.vestifeed.debug` and the launchable component is
+`org.vestifeed.navigation.Activity`. The launcher query
+`cmd package resolve-activity --brief -c android.intent.category.LAUNCHER`
+often returns "No activity found" for the suffixed id; launch via `monkey`
+instead:
+
+```bash
+adb -s emulator-5554 install -r -t app/build/outputs/apk/debug/app-debug.apk
+adb -s emulator-5554 shell monkey -p org.vestifeed.debug \
+    -c android.intent.category.LAUNCHER 1
+adb -s emulator-5554 shell ps -A | grep vesti   # confirm process is alive
+```
+
+### Capturing a screenshot
+```bash
+adb -s emulator-5554 shell screencap -p /sdcard/vesti.png
+adb -s emulator-5554 pull /sdcard/vesti.png /tmp/opencode/vesti.png
+```
+
+### Stopping the emulator
+Always shut down via adb so the AVD lock files and GRPC server are released
+cleanly; raw `pkill` can leave the next boot slow:
+
+```bash
+adb -s emulator-5554 emu kill
+```
+
+If a previous launch was killed mid-startup, also clean the lock file under
+`/run/user/$UID/avd/running/pid_<pid>.ini` so the next start is not blocked.
+
+## Dependency Upgrades
+
+Apply upgrades in small, isolatable steps; this repository pins everything in
+`gradle/libs.versions.toml` and the `buildSrc`/wrapper flow below is the only
+way changes should flow in.
+
+### Recommended workflow
+1. Pick one version line at a time. Update its `version.ref` in the catalog, then
+   run `./gradlew check assembleRelease`. If it fails, revert and try the next
+   stable before layering further changes.
+2. Check `buildSrc`-equivalent or AGP-released compatibility tables (e.g.
+   AGP 9.x ships with built-in Kotlin 2.2.x) **before** bumping Kotlin itself.
+   Adding the `org.jetbrains.kotlin.android` plugin on AGP 9 is a non-default
+   path that requires `android.newDsl=false` in `gradle.properties`, which is
+   already deprecated in 9.0 and scheduled for removal in 10.0.
+3. After each version bump, mirror it in any related code that imports a
+   renamed, moved, or removed symbol. Run
+   `./gradlew :app:dependencies --configuration releaseRuntimeClasspath`
+   afterwards to confirm no transitive downgrade happened.
+4. For libraries with breaking interop, leave a `Wait for ...` comment next to
+   the version pin (see the Coil entry in `gradle/libs.versions.toml`) so the
+   next person knows not to retry the bump until a compatible toolchain exists.
+5. When AGP forces a build-toolchain change (Android 17, Compose 1.10, etc.),
+   apply the SDK target at the same time as the build-tooling bump, not later.
+6. For ad-hoc tooling files (`.github/workflows/*.yml`, scripts like
+   `deploy`), keep workflow drift and library drift in the same PR so CI can
+   validate the new release pipeline.
+
+### Common gotchas observed in this repo
+- **AGP vs Kotlin metadata**: dependencies compiled with Kotlin ≥2.4 metadata
+  (Coil 3.5+, recent KSP, kotlinx-coroutines 1.11+) need AGP that bundles Kotlin
+  ≥2.4. If a library refuses to build against the AGP-managed compiler, defer
+  the upgrade instead of switching to the deprecated legacy DSL.
+- **Android 17 / API 37 behavior changes** (`targetSdk = 37`): mandatory
+  `ACCESS_LOCAL_NETWORK` runtime prompt for user-typed LAN URLs, Certificate
+  Transparency enabled by default, ECH where supported, and new large-screen
+  behavior. Touch
+  `app/src/main/AndroidManifest.xml`, `app/src/main/kotlin/org/vestifeed/lan/`,
+  and any cleartext/LAN path in `app/src/main/kotlin/org/vestifeed/api/`.
+- **Stable jetifier/AGP interactions**: when `app/src/main/AndroidManifest.xml`
+  uses `android:targetSdk` and `compileSdk` separately, the CI workflow’s
+  `actions/setup-java` matrix must stay ahead of the catalog `agp` minimum.
+- **R8 + new dependencies**: with `isMinifyEnabled = true` and no custom
+  ProGuard rules, new reflection-based libraries may need consumer rules that
+  ship inside the AAR. Run `assembleRelease` to surface keep-rule complaints
+  in the R8 report under `app/build/outputs/mapping/release/`.
+- **Manifest strings**: new user-facing copy introduced during upgrades
+  (e.g. error messages) must be added with `translatable="false"` if the app
+  intentionally keeps English-only fallback, otherwise lint will fail the
+  `MissingTranslation` check across every locale resource.
+

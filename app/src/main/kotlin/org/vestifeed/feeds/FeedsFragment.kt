@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
 import org.vestifeed.anim.animateVisibilityChanges
@@ -214,6 +215,12 @@ class FeedsFragment : AppFragment() {
             existingFeedIds.flatMap { db().link.selectByFeedId(it) }
         }
 
+        val feedUrls = outlines.mapNotNull { it.xmlUrl?.toHttpUrlOrNull() }
+        if (!requestLocalNetworkAccess(feedUrls)) {
+            showErrorDialog(R.string.local_network_permission_required)
+            return
+        }
+
         for (outline in outlines) {
             val outlineUrl = (outline.xmlUrl ?: "").toHttpUrlOrNull()
 
@@ -328,31 +335,38 @@ class FeedsFragment : AppFragment() {
             return
         }
         viewLifecycleOwner.lifecycleScope.launch {
-            val prevState = state.value
-            state.update { State.Loading }
-            try {
-                val res = api().addFeed(parsedUrl)
-                withContext(Dispatchers.IO) {
-                    db().transaction {
-                        db().feed.insertOrReplace(res.feed)
-                        db().link.insertForFeed(res.feed.id, res.feedLinks)
-                        res.entries.forEach { (entry, links) ->
-                            db().entry.insertOrReplace(listOf(entry))
-                            db().link.insertForEntry(entry.id, links)
-                        }
-                    }
-                }
-                // force og download
-                sync().runInBackground()
-                val feeds = withContext(Dispatchers.IO) {
-                    db().feed.selectAll()
-                }
-                state.update { State.ShowingFeeds(feeds.map { it.toItem(db()) }) }
-            } catch (e: Throwable) {
-                state.update { prevState }
-                showErrorDialog(e)
+            if (!requestLocalNetworkAccess(listOf(parsedUrl))) {
+                showErrorDialog(R.string.local_network_permission_required)
                 return@launch
             }
+
+            addFeed(parsedUrl)
+        }
+    }
+
+    private suspend fun addFeed(url: HttpUrl) {
+        val prevState = state.value
+        state.update { State.Loading }
+        try {
+            val res = api().addFeed(url)
+            withContext(Dispatchers.IO) {
+                db().transaction {
+                    db().feed.insertOrReplace(res.feed)
+                    db().link.insertForFeed(res.feed.id, res.feedLinks)
+                    res.entries.forEach { (entry, links) ->
+                        db().entry.insertOrReplace(listOf(entry))
+                        db().link.insertForEntry(entry.id, links)
+                    }
+                }
+            }
+            sync().runInBackground()
+            val feeds = withContext(Dispatchers.IO) {
+                db().feed.selectAll()
+            }
+            state.update { State.ShowingFeeds(feeds.map { it.toItem(db()) }) }
+        } catch (e: Throwable) {
+            state.update { prevState }
+            showErrorDialog(e)
         }
     }
 

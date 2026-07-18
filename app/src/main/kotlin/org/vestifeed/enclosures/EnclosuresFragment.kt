@@ -27,6 +27,7 @@ import org.vestifeed.app.db
 import org.vestifeed.databinding.FragmentEnclosuresBinding
 import org.vestifeed.db.table.LinkTable
 import org.vestifeed.dialog.showErrorDialog
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -123,6 +124,12 @@ class EnclosuresFragment : AppFragment() {
 
     fun downloadAudioEnclosure(enclosure: LinkTable.Link) {
         viewLifecycleOwner.lifecycleScope.launch {
+            val url = enclosure.href.toHttpUrlOrNull()
+            if (url != null && !requestLocalNetworkAccess(listOf(url))) {
+                showErrorDialog(R.string.local_network_permission_required)
+                return@launch
+            }
+
             runCatching { enclosuresRepo.downloadAudioEnclosure(enclosure) }
                 .onFailure { showErrorDialog(it) }
         }

@@ -55,6 +55,7 @@
     <string name="undo">Ongedaan maken</string>
     <string name="retry">Opnieuw proberen</string>
     <string name="importing_feeds_n_of_n">Importeren feeds (%1$d of %2$d)</string>
+    <string name="initial_sync">Eerste synchronisatie</string>
     <string name="mark_scrolled_entries_as_read">Markeer gescrolde items als gelezen</string>
     <string name="open_feed_settings">Open feed instellingen</string>
     <string name="fetch_news_on_startup">Nieuws ophalen bij opstarten</string>

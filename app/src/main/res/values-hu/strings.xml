@@ -55,6 +55,7 @@
     <string name="undo">Visszavonás</string>
     <string name="retry">Újra</string>
     <string name="importing_feeds_n_of_n">Hírfolyamok importálása (%1$d ennyiből: %2$d)</string>
+    <string name="initial_sync">Kezdeti szinkronizálás</string>
     <string name="mark_scrolled_entries_as_read">Az átgörgetett bejegyzések olvasottként való megjelölése</string>
     <string name="open_feed_settings">Hírfolyam beállításainak megnyitása</string>
     <string name="fetch_news_on_startup">Hírek lekérdezése az alkalmazás indításakor</string>

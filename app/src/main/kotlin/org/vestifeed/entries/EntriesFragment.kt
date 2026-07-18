@@ -21,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.parser.AtomLinkRel
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.BuildConfig
@@ -31,7 +30,6 @@ import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
@@ -50,19 +48,6 @@ class EntriesFragment : AppFragment() {
             EntriesFilter::class.java,
         )
     }
-
-    sealed class State {
-        data class InitialSync(val message: String) : State()
-
-        object LoadingCachedEntries : State()
-
-        data class ShowingCachedEntries(
-            val feed: FeedTable.Feed?,
-            val entries: List<EntriesAdapter.Item>,
-        ) : State()
-    }
-
-    private val state = MutableStateFlow<State>(State.LoadingCachedEntries)
 
     private var _binding: FragmentEntriesBinding? = null
     private val binding get() = _binding!!
@@ -134,12 +119,6 @@ class EntriesFragment : AppFragment() {
             }
         }
 
-//        viewLifecycleOwner.lifecycleScope.launch {
-//            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-//                state.collect { binding.setState(it) }
-//            }
-//        }
-
         viewLifecycleOwner.lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.RESUMED) {
                 sync().running.collect { onNewSyncState(it) }
@@ -148,8 +127,6 @@ class EntriesFragment : AppFragment() {
     }
 
     private suspend fun onNewSyncState(running: Boolean) {
-        //Log.d("entries_fragment", "new sync state: $syncState")
-
         when (filter) {
             EntriesFilter.Unread -> {
                 val unread = withContext(Dispatchers.IO) {
@@ -180,9 +157,11 @@ class EntriesFragment : AppFragment() {
 
         if (running) {
             binding.swipeRefresh.isVisible = false
-            binding.progress.isVisible = true
-            binding.message.isVisible = true
-            binding.message.setText("Initial sync")
+            if (adapter.itemCount == 0) {
+                binding.progress.isVisible = true
+                binding.message.isVisible = true
+                binding.message.setText(R.string.initial_sync)
+            }
         } else {
             binding.progress.isVisible = true
 
@@ -231,12 +210,6 @@ class EntriesFragment : AppFragment() {
         super.onDestroyView()
         _binding = null
     }
-
-//    private fun refresh() {
-//        val conf = db().conf.select()
-//        val syncState = sync().state.value
-//        updateState(conf, syncState)
-//    }
 
     private fun onPullRefresh() {
         sync().runInBackground()

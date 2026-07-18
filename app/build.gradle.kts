@@ -44,6 +44,10 @@ android {
         buildConfig = true
         viewBinding = true
     }
+
+    lint {
+        disable += "GradleDependency"
+    }
 }
 
 dependencies {

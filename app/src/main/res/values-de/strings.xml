@@ -94,19 +94,11 @@
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Lesezeichen (%1$d)</string>
     <plurals name="d_hours">
-        <item quantity="zero">%d Stunden</item>
         <item quantity="one">%d Stunde</item>
-        <item quantity="two">%d Stunden</item>
-        <item quantity="few">%d Stunden</item>
-        <item quantity="many">%d Stunden</item>
         <item quantity="other">%d Stunden</item>
     </plurals>
     <plurals name="you_have_d_unread_news">
-        <item quantity="zero">Du hast %d ungelesene Nachrichten</item>
         <item quantity="one">Du hast %d ungelesene Nachricht</item>
-        <item quantity="two">Du hast %d ungelesene Nachrichten</item>
-        <item quantity="few">Du hast %d ungelesene Nachrichten</item>
-        <item quantity="many">Du hast %d ungelesene Nachrichten</item>
         <item quantity="other">Du hast %d ungelesene Nachrichten</item>
     </plurals>
 </resources>

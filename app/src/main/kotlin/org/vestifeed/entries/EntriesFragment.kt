@@ -157,7 +157,8 @@ class EntriesFragment : AppFragment() {
             }
 
             EntriesFilter.Bookmarked -> {
-                binding.toolbar.setTitle(R.string.bookmarks)
+                val bookmarked = db().entry.selectBookmarked().size
+                binding.toolbar.setTitle(getString(R.string.bookmarks_n, bookmarked))
             }
 
             is EntriesFilter.BelongToFeed -> {

@@ -1,7 +1,5 @@
 package org.vestifeed.entries
 
-import android.os.Build
-import android.util.DisplayMetrics
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -34,26 +32,8 @@ class EntriesAdapter(
     }
 
     private fun screenWidth(): Int {
-        return when {
-            Build.VERSION.SDK_INT >= 31 -> {
-                val windowManager = activity.getSystemService<WindowManager>()!!
-                windowManager.currentWindowMetrics.bounds.width()
-            }
-
-            Build.VERSION.SDK_INT >= 30 -> {
-                val displayMetrics = DisplayMetrics()
-                @Suppress("DEPRECATION")
-                activity.display?.getRealMetrics(displayMetrics)
-                displayMetrics.widthPixels
-            }
-
-            else -> {
-                val displayMetrics = DisplayMetrics()
-                @Suppress("DEPRECATION")
-                activity.windowManager.defaultDisplay.getMetrics(displayMetrics)
-                displayMetrics.widthPixels
-            }
-        }
+        val windowManager = activity.getSystemService<WindowManager>()!!
+        return windowManager.currentWindowMetrics.bounds.width()
     }
 
     data class Item(

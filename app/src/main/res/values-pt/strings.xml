@@ -95,10 +95,12 @@
     <string name="bookmarks_n">Favoritos (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d hora</item>
+        <item quantity="many">%d horas</item>
         <item quantity="other">%d horas</item>
     </plurals>
     <plurals name="you_have_d_unread_news">
         <item quantity="one">Você tem %d noticia não lidas</item>
+        <item quantity="many">Você tem %d noticias não lidas</item>
         <item quantity="other">Você tem %d noticias não lidas</item>
     </plurals>
 </resources>

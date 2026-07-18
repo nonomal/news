@@ -95,10 +95,12 @@
     <string name="bookmarks_n">Marcadores (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d horas</item>
+        <item quantity="many">%d horas</item>
         <item quantity="other">%d horas</item>
     </plurals>
     <plurals name="you_have_d_unread_news">
         <item quantity="one">Tienes %d noticias sin leer</item>
+        <item quantity="many">Tienes %d noticias sin leer</item>
         <item quantity="other">Tienes %d noticias sin leer</item>
     </plurals>
 </resources>

@@ -124,6 +124,18 @@ org.vestifeed.app/src/androidTest/kotlin/       # Instrumented tests
 Use the Android emulator when you need a real Android runtime for crash
 reproduction, log capture, or manual UI checks.
 
+### Android SDK tool locations
+On this workstation, `adb` is installed at
+`$HOME/Android/Sdk/platform-tools/adb`. It may not be on `PATH`, and
+`ANDROID_HOME` may be unset. Either use the full path directly or initialize
+the shell before running the commands below:
+
+```bash
+export ANDROID_HOME="$HOME/Android/Sdk"
+export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+adb devices
+```
+
 ### Listing available AVDs
 ```bash
 $ANDROID_HOME/emulator/emulator -list-avds

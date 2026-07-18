@@ -137,14 +137,56 @@ shell wrapper times out and the emulator is killed when the call returns.
 Use `nohup setsid` redirected away from the tool's stdout:
 
 ```bash
-nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro \
+nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro -gpu host \
     > /tmp/opencode/pixel9-emulator.log 2>&1 < /dev/null &
 disown
 ```
 
+Always pass `-gpu host`. Without it, recent emulator builds (≥ 36.x) probe the
+host GPU and self-disable hardware rendering on AMD/Intel drivers they don't
+recognise, falling back to `lavapipe` (CPU Vulkan) + `swangle`. The QEMU
+process then pegs multiple cores per frame, the guest's `99th gpu percentile`
+climbs to several seconds, and Mutter starts reporting the AVD window as
+"app is unresponsive" every few seconds. Verify the fix landed by checking
+the log for `Selecting Vulkan device:` (should mention a real GPU, not
+`llvmpipe`) and that `ps -o pcpu=` on `qemu-system-x86` stays under ~100%.
+
 Headless mode (`-no-window`) is acceptable for adb-only flows but produces no
 usable screenshot for visual verification. Drop `-no-window` when you need to
 see the device.
+
+### Quickboot (snapshot) workflow
+Cold boot is 12–30 s; quickboot from a saved `default_boot` snapshot is ~8 s
+(~1.8 s of which is loading the snapshot itself). On the **first** launch the
+emulator has no snapshot and falls back to cold boot. After it has booted
+cleanly once, save a snapshot and use that on every subsequent launch:
+
+```bash
+# 1. Boot once with no existing snapshot (cold). Wait for sys.boot_completed.
+# 2. Install the debug build, launch it, and let any first-run setup finish.
+# 3. Save the snapshot so the NEXT launch uses quickboot.
+adb -s emulator-5554 emu avd snapshot save default_boot
+
+# 4. From now on, the same launch command below loads the snapshot in ~2 s
+#    instead of running a full boot. Do NOT pass -no-snapshot or -no-snapshot-load.
+nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro -gpu host \
+    > /tmp/opencode/pixel9-emulator.log 2>&1 < /dev/null &
+disown
+```
+
+Stale snapshot symptoms — if the log shows `Failed to load snapshot
+'default_boot'` / `Error -1 from the snapshot callback`, the saved image no
+longer matches (typically after an emulator/system-image upgrade or a package
+install that broke the saved memory state). To recover:
+
+```bash
+rm -rf ~/.android/avd/Pixel_9_Pro.avd/snapshots/default_boot
+# then re-do steps 1–3 above.
+```
+
+Re-save the snapshot whenever you make persistent system-level changes inside
+the AVD (install debug APKs that touch system state, change `adb shell pm`
+defaults, etc.); a normal app `install -r` does not invalidate it.
 
 Wait for boot completion before continuing:
 ```bash

@@ -92,6 +92,7 @@
     <string name="this_entry_doesnt_have_any_external_links">لا يحتوي هذا الإدخال على أي روابط خارجية</string>
     <string name="required_argument_is_missing">مفقود الوسيط المطلوب: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
+    <string name="bookmarks_n">العلامات المرجعية (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="zero">%d ساعات</item>
         <item quantity="one">%d ساعة</item>

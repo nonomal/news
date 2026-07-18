@@ -288,8 +288,13 @@ way changes should flow in.
   ProGuard rules, new reflection-based libraries may need consumer rules that
   ship inside the AAR. Run `assembleRelease` to surface keep-rule complaints
   in the R8 report under `app/build/outputs/mapping/release/`.
-- **Manifest strings**: new user-facing copy introduced during upgrades
-  (e.g. error messages) must be added with `translatable="false"` if the app
-  intentionally keeps English-only fallback, otherwise lint will fail the
-  `MissingTranslation` check across every locale resource.
+- **Locale strings**: any new or modified string in
+  `app/src/main/res/values/strings.xml` must also be added to every other
+  `app/src/main/res/values-*/strings.xml` in the locale that matches the
+  surrounding translation, otherwise lint will fail the `MissingTranslation`
+  check. Reuse the existing translated noun/verb from sibling keys (e.g.
+  `bookmarks` for `bookmarks_n`) and keep the `%1$d` placeholder. Only fall
+  back to English in a locale when no translation exists for the base term.
+  Use `translatable="false"` only for non-user-facing values such as email
+  addresses, channel IDs, or URL templates.
 

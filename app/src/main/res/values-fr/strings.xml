@@ -92,6 +92,7 @@
     <string name="this_entry_doesnt_have_any_external_links">Cet article n’a pas de lien externe</string>
     <string name="required_argument_is_missing">L\'argument requis est manquant : %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
+    <string name="bookmarks_n">Épingles (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d heure</item>
         <item quantity="many">%d heures</item>

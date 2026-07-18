@@ -92,6 +92,7 @@
     <string name="this_entry_doesnt_have_any_external_links">Esta entrada não tem nenhum link externo</string>
     <string name="required_argument_is_missing">Falta o argumento obrigatório: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
+    <string name="bookmarks_n">Favoritos (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d hora</item>
         <item quantity="other">%d horas</item>

@@ -234,6 +234,19 @@ class EntryTable(private val conn: SQLiteConnection) {
         }
     }
 
+    fun selectUnreadCount(): Int {
+        conn.prepare(
+            """
+            SELECT COUNT(*)
+            FROM entry e
+            JOIN feed f ON f.id = e.feed_id
+            WHERE e.ext_read = 0 AND e.ext_bookmarked = 0;
+            """
+        ).use { stmt ->
+            return if (stmt.step()) stmt.getInt(0) else 0
+        }
+    }
+
     fun selectBookmarked(): List<EntriesAdapterRow> {
         conn.prepare(
             """

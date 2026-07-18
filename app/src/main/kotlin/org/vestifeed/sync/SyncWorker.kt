@@ -26,7 +26,7 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         try {
             sync.runInForeground()
             val unreadEntries =
-                applicationContext.db().entry.selectUnread().size
+                applicationContext.db().entry.selectUnreadCount()
             if (unreadEntries > 0) {
                 showUnreadEntriesNotification(unreadEntries, applicationContext)
             }

@@ -121,6 +121,7 @@ class EntryQueriesTest {
         val unread = db.entry.selectUnread()
 
         assertEquals(2, unread.size)
+        assertEquals(2, db.entry.selectUnreadCount())
         assertEquals("Entry 1", unread.find { it.id == entries[0].id }?.title)
         assertEquals("Entry 4", unread.find { it.id == entries[3].id }?.title)
         assertEquals(feed1.title, unread.find { it.id == entries[0].id }?.feedTitle)

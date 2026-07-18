@@ -159,7 +159,9 @@ class EntriesFragment : AppFragment() {
             }
 
             EntriesFilter.Bookmarked -> {
-                val bookmarked = db().entry.selectBookmarked().size
+                val bookmarked = withContext(Dispatchers.IO) {
+                    db().entry.selectBookmarkedCount()
+                }
                 binding.toolbar.setTitle(getString(R.string.bookmarks_n, bookmarked))
             }
 

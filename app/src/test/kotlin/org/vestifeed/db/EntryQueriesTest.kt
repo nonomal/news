@@ -146,6 +146,7 @@ class EntryQueriesTest {
         val bookmarked = db.entry.selectBookmarked()
 
         assertEquals(2, bookmarked.size)
+        assertEquals(2, db.entry.selectBookmarkedCount())
         assertEquals("Entry 1", bookmarked.find { it.id == entries[0].id }?.title)
         assertEquals("Entry 3", bookmarked.find { it.id == entries[2].id }?.title)
         assertEquals(feed1.title, bookmarked.find { it.id == entries[0].id }?.feedTitle)

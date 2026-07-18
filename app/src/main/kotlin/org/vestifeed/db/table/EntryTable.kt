@@ -268,6 +268,19 @@ class EntryTable(private val conn: SQLiteConnection) {
         }
     }
 
+    fun selectBookmarkedCount(): Int {
+        conn.prepare(
+            """
+            SELECT COUNT(*)
+            FROM entry e
+            JOIN feed f ON f.id = e.feed_id
+            WHERE e.ext_bookmarked = 1;
+            """
+        ).use { stmt ->
+            return if (stmt.step()) stmt.getInt(0) else 0
+        }
+    }
+
     fun selectCount(): Long {
         conn.prepare("SELECT COUNT(*) FROM entry;").use { stmt ->
             return if (stmt.step()) stmt.getLong(0) else 0L

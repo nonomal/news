@@ -156,8 +156,8 @@ class EntriesFragment : AppFragment() {
         binding.swipeRefresh.isRefreshing = running
 
         if (running) {
-            binding.swipeRefresh.isVisible = false
             if (adapter.itemCount == 0) {
+                binding.swipeRefresh.isVisible = false
                 binding.progress.isVisible = true
                 binding.message.isVisible = true
                 binding.message.setText(R.string.initial_sync)

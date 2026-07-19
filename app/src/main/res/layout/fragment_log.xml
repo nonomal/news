@@ -26,37 +26,32 @@
             android:id="@+id/chipTrace"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="trace" />
+            android:layout_height="wrap_content" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipDebug"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:checked="true"
-            android:text="debug" />
+            android:checked="true" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipInfo"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="info" />
+            android:layout_height="wrap_content" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipWarn"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="warn" />
+            android:layout_height="wrap_content" />
 
         <com.google.android.material.chip.Chip
             android:id="@+id/chipError"
             style="@style/Widget.Material3.Chip.Filter"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="error" />
+            android:layout_height="wrap_content" />
 
     </com.google.android.material.chip.ChipGroup>
 

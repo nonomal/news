@@ -48,6 +48,12 @@ class LogFragment : AppFragment() {
             adapter = this@LogFragment.adapter
         }
 
+        binding.chipTrace.text = LogLevel.TRACE.value
+        binding.chipDebug.text = LogLevel.DEBUG.value
+        binding.chipInfo.text = LogLevel.INFO.value
+        binding.chipWarn.text = LogLevel.WARN.value
+        binding.chipError.text = LogLevel.ERROR.value
+
         binding.chipDebug.isChecked = true
         binding.filterChips.setOnCheckedStateChangeListener { _, checkedIds ->
             if (checkedIds.isEmpty()) {
@@ -55,12 +61,12 @@ class LogFragment : AppFragment() {
                 return@setOnCheckedStateChangeListener
             }
             val minLevel = when (checkedIds.first()) {
-                R.id.chipTrace -> "trace"
-                R.id.chipDebug -> "debug"
-                R.id.chipInfo -> "info"
-                R.id.chipWarn -> "warn"
-                R.id.chipError -> "error"
-                else -> "debug"
+                R.id.chipTrace -> LogLevel.TRACE
+                R.id.chipDebug -> LogLevel.DEBUG
+                R.id.chipInfo -> LogLevel.INFO
+                R.id.chipWarn -> LogLevel.WARN
+                R.id.chipError -> LogLevel.ERROR
+                else -> LogLevel.DEBUG
             }
             loadLogs(minLevel)
         }
@@ -73,10 +79,10 @@ class LogFragment : AppFragment() {
                 .show()
         }
 
-        loadLogs("debug")
+        loadLogs(LogLevel.DEBUG)
     }
 
-    private fun loadLogs(minLevel: String) {
+    private fun loadLogs(minLevel: LogLevel) {
         _state.update { it.copy(isLoading = true) }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -124,6 +130,6 @@ class LogFragment : AppFragment() {
     data class State(
         val isLoading: Boolean = true,
         val logs: List<LogAdapter.Item> = emptyList(),
-        val minLevel: String = "debug",
+        val minLevel: LogLevel = LogLevel.DEBUG,
     )
 }

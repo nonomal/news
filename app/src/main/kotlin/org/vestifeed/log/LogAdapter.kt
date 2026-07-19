@@ -37,17 +37,17 @@ class LogAdapter : ListAdapter<LogAdapter.Item, LogAdapter.ViewHolder>(DiffCallb
 
         fun bind(item: Item) = binding.apply {
             val entry = item.entry
-            level.text = entry.level.uppercase()
+            level.text = entry.level.value.uppercase()
             tag.text = entry.tag
             message.text = entry.message
             timestamp.text = entry.timestamp
 
             val color = when (entry.level) {
-                "error" -> 0xFFDC3545.toInt()
-                "warn" -> 0xFFFFC107.toInt()
-                "info" -> 0xFF17A2B8.toInt()
-                "debug" -> 0xFF6C757D.toInt()
-                else -> 0xFFADE4E4.toInt()
+                LogLevel.ERROR -> 0xFFDC3545.toInt()
+                LogLevel.WARN -> 0xFFFFC107.toInt()
+                LogLevel.INFO -> 0xFF17A2B8.toInt()
+                LogLevel.DEBUG -> 0xFF6C757D.toInt()
+                LogLevel.TRACE -> 0xFFADE4E4.toInt()
             }
             level.setTextColor(color)
         }

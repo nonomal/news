@@ -8,6 +8,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.vestifeed.db.Database
+import org.vestifeed.log.LogLevel
 
 class LogTest {
 
@@ -32,7 +33,7 @@ class LogTest {
     fun logQueries_insert() {
         val entry = createInsertArgs()
         db.log.insert(entry)
-        val result = db.log.selectByMinLevel("trace").single()
+        val result = db.log.selectByMinLevel(LogLevel.TRACE).single()
         assertEquals(entry.level, result.level)
         assertEquals(entry.tag, result.tag)
         assertEquals(entry.message, result.message)
@@ -42,13 +43,13 @@ class LogTest {
     fun logQueries_insert_multiple() {
         val entries = listOf(createInsertArgs(), createInsertArgs(), createInsertArgs())
         db.log.insert(entries)
-        assertEquals(3, db.log.selectByMinLevel("trace").size)
+        assertEquals(3, db.log.selectByMinLevel(LogLevel.TRACE).size)
     }
 
     @Test
     fun logQueries_insert_emptyList() {
         db.log.insert(emptyList())
-        assertTrue(db.log.selectByMinLevel("trace").isEmpty())
+        assertTrue(db.log.selectByMinLevel(LogLevel.TRACE).isEmpty())
     }
 
     @Test
@@ -60,7 +61,7 @@ class LogTest {
         )
         db.log.insert(entries)
 
-        val result = db.log.selectByMinLevel("trace")
+        val result = db.log.selectByMinLevel(LogLevel.TRACE)
         assertEquals("Third", result[0].message)
         assertEquals("Second", result[1].message)
         assertEquals("First", result[2].message)
@@ -68,7 +69,7 @@ class LogTest {
 
     @Test
     fun logQueries_selectAll_empty() {
-        assertTrue(db.log.selectByMinLevel("trace").isEmpty())
+        assertTrue(db.log.selectByMinLevel(LogLevel.TRACE).isEmpty())
     }
 
     @Test
@@ -78,7 +79,7 @@ class LogTest {
 
         db.log.deleteAll()
 
-        assertTrue(db.log.selectByMinLevel("trace").isEmpty())
+        assertTrue(db.log.selectByMinLevel(LogLevel.TRACE).isEmpty())
     }
 
     @Test
@@ -87,7 +88,7 @@ class LogTest {
         val entry = createInsertArgs(data = data)
         db.log.insert(entry)
 
-        val result = db.log.selectByMinLevel("trace").single()
+        val result = db.log.selectByMinLevel(LogLevel.TRACE).single()
         assertEquals("value", result.data!!.get("key").asString)
     }
 
@@ -96,12 +97,12 @@ class LogTest {
         val entry = createInsertArgs(data = null)
         db.log.insert(entry)
 
-        val result = db.log.selectByMinLevel("trace").single()
+        val result = db.log.selectByMinLevel(LogLevel.TRACE).single()
         assertNull(result.data)
     }
 
     private fun createInsertArgs(
-        level: String = "info",
+        level: LogLevel = LogLevel.INFO,
         tag: String = "TestTag",
         message: String = "Test message",
         data: JsonObject? = null,

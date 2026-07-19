@@ -7,6 +7,7 @@ import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
 import org.vestifeed.db.table.LogTable
+import org.vestifeed.log.LogLevel
 import org.vestifeed.parser.AtomLinkRel
 import java.time.Instant
 import java.time.OffsetDateTime
@@ -197,7 +198,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
             }
             db.log.insert(
                 LogTable.InsertArgs(
-                    level = "info",
+                    level = LogLevel.INFO,
                     tag = "miniflux_sync",
                     message = "Syncing changed entries",
                 )
@@ -206,7 +207,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
             db.log.insert(
                 LogTable.InsertArgs(
-                    level = "info",
+                    level = LogLevel.INFO,
                     tag = "miniflux_sync",
                     message = "changedAfter = $changedAfter",
                 )
@@ -216,7 +217,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
                 db.log.insert(
                     LogTable.InsertArgs(
-                        level = "info",
+                        level = LogLevel.INFO,
                         tag = "miniflux_sync",
                         message = "Got ${currentBatch.size} changed entries",
                     )
@@ -233,7 +234,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                         }
                         db.log.insert(
                             LogTable.InsertArgs(
-                                level = "info",
+                                level = LogLevel.INFO,
                                 tag = "miniflux_sync",
                                 message = "Bumping lastEntriesSyncDatetime to $newChangedAfter",
                             )

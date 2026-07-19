@@ -17,6 +17,7 @@ import org.vestifeed.db.table.LogTable
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.entries.toBundle
+import org.vestifeed.log.LogLevel
 import org.vestifeed.sync.BackgroundSyncScheduler
 import java.util.concurrent.TimeUnit
 
@@ -39,7 +40,7 @@ class AuthFragment : AppFragment() {
         binding.initButtons()
         db().log.insert(
             LogTable.InsertArgs(
-                level = "debug",
+                level = LogLevel.DEBUG,
                 tag = "AuthFragment",
                 message = "onViewCreated",
             )
@@ -70,7 +71,7 @@ class AuthFragment : AppFragment() {
 
             db().log.insert(
                 LogTable.InsertArgs(
-                    level = "debug",
+                    level = LogLevel.DEBUG,
                     tag = "AuthFragment",
                     message = "Switching to embedded backend",
                 )

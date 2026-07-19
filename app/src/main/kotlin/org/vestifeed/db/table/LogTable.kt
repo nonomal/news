@@ -5,6 +5,7 @@ import androidx.sqlite.execSQL
 import com.google.gson.JsonObject
 import org.vestifeed.db.bindJsonObjectOrNull
 import org.vestifeed.db.getJsonObjectOrNull
+import org.vestifeed.log.LogLevel
 import kotlin.use
 
 class LogTable(private val conn: SQLiteConnection) {
@@ -24,14 +25,14 @@ class LogTable(private val conn: SQLiteConnection) {
     data class Entry(
         val id: Long,
         val timestamp: String,
-        val level: String,
+        val level: LogLevel,
         val tag: String,
         val message: String,
         val data: JsonObject?,
     )
 
     data class InsertArgs(
-        val level: String,
+        val level: LogLevel,
         val tag: String,
         val message: String,
         val data: JsonObject? = null,
@@ -52,7 +53,7 @@ class LogTable(private val conn: SQLiteConnection) {
             """
         ).use { stmt ->
             args.forEach { entry ->
-                stmt.bindText(1, entry.level)
+                stmt.bindText(1, entry.level.value)
                 stmt.bindText(2, entry.tag)
                 stmt.bindText(3, entry.message)
                 stmt.bindJsonObjectOrNull(4, entry.data)
@@ -62,22 +63,13 @@ class LogTable(private val conn: SQLiteConnection) {
         }
     }
 
-    private val levelPriority = mapOf(
-        "trace" to 0,
-        "debug" to 1,
-        "info" to 2,
-        "warn" to 3,
-        "error" to 4,
-    )
-
-    fun selectByMinLevel(minLevel: String): List<Entry> {
-        val minPriority = levelPriority[minLevel] ?: 1
-        val allowedLevels = levelPriority.filter { it.value >= minPriority }.keys
+    fun selectByMinLevel(minLevel: LogLevel): List<Entry> {
+        val allowedLevels = LogLevel.entries.filter { it.priority >= minLevel.priority }
         conn.prepare(
             """
             SELECT id, timestamp, level, tag, message, data
             FROM log
-            WHERE level IN (${allowedLevels.joinToString(",") { "'$it'" }})
+            WHERE level IN (${allowedLevels.joinToString(",") { "'${it.value}'" }})
             ORDER BY id DESC;
             """
         ).use { stmt ->
@@ -87,7 +79,7 @@ class LogTable(private val conn: SQLiteConnection) {
                         Entry(
                             id = stmt.getLong(0),
                             timestamp = stmt.getText(1),
-                            level = stmt.getText(2),
+                            level = LogLevel.from(stmt.getText(2)) ?: LogLevel.DEBUG,
                             tag = stmt.getText(3),
                             message = stmt.getText(4),
                             data = stmt.getJsonObjectOrNull(5),

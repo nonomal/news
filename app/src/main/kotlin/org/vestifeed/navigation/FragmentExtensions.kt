@@ -1,11 +1,11 @@
 package org.vestifeed.navigation
 
 import android.content.Intent
-import android.net.Uri
 import android.view.View
 import android.view.inputmethod.InputMethodManager
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.getSystemService
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import org.vestifeed.dialog.showErrorDialog
 
@@ -24,7 +24,7 @@ fun Fragment.openUrl(
     useBuiltInBrowser: Boolean,
 ) {
     val uri = runCatching {
-        Uri.parse(url)
+        url.toUri()
     }.getOrElse {
         showErrorDialog(it)
         return

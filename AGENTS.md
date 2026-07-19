@@ -35,6 +35,17 @@ This is a web feed reader for Android.
 ```bash
 ./gradlew connectedDebugAndroidTest
 ```
+This runs the full instrumented suite without uninstalling the existing debug
+app first, so tests may read or modify persistent emulator data. Do not use
+this command when the user asks to run the E2E test.
+
+### Run E2E Test (fresh install)
+```bash
+./devtools e2e
+```
+Always use `./devtools e2e` for E2E requests. It uninstalls the debug app before
+running only `org.vestifeed.e2e.EmbeddedBackendTest`; never substitute
+`./gradlew connectedDebugAndroidTest`.
 
 ### Clean Build
 ```bash

@@ -19,7 +19,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
-import androidx.core.text.HtmlCompat
+import androidx.core.text.parseAsHtml
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -388,11 +388,8 @@ class EntryFragment : AppFragment() {
         content: String,
         imageGetter: Html.ImageGetter
     ): SpannableStringBuilder {
-        val summary = HtmlCompat.fromHtml(
-            content,
-            HtmlCompat.FROM_HTML_MODE_LEGACY,
-            imageGetter,
-            null
+        val summary = content.parseAsHtml(
+            imageGetter = imageGetter,
         ) as SpannableStringBuilder
 
         if (summary.isBlank()) return summary

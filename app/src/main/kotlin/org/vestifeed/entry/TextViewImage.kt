@@ -1,16 +1,16 @@
 package org.vestifeed.entry
 
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.ColorFilter
 import android.graphics.PixelFormat
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Handler
 import android.os.Looper
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
 import android.widget.TextView
+import androidx.core.graphics.drawable.toDrawable
+import androidx.core.graphics.scale
 import coil3.Image
 import coil3.target.Target
 import coil3.toBitmap
@@ -49,11 +49,9 @@ class TextViewImage(
 
         val bitmap = if (scaleToFullWidth) {
             val scaleFactor = textView.width.toFloat() / unprocessedBitmap.width.toFloat()
-            Bitmap.createScaledBitmap(
-                unprocessedBitmap,
-                textView.width,
-                (unprocessedBitmap.height * scaleFactor).toInt(),
-                true,
+            unprocessedBitmap.scale(
+                width = textView.width,
+                height = (unprocessedBitmap.height * scaleFactor).toInt(),
             )
         } else {
             unprocessedBitmap
@@ -64,7 +62,7 @@ class TextViewImage(
 
         setBounds(0, 0, bitmap.width, (bitmap.height / textView.lineSpacingMultiplier).toInt())
 
-        this.drawable = BitmapDrawable(textView.context.resources, bitmap).apply {
+        this.drawable = bitmap.toDrawable(textView.context.resources).apply {
             setBounds(
                 0,
                 -verticalCutoff.toInt(),

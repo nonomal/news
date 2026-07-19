@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.result.ActivityResultLauncher
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -16,6 +17,7 @@ import kotlin.coroutines.resume
 object LocalNetworkAccess {
     private const val ENFORCEMENT_SDK = 37
 
+    @RequiresApi(ENFORCEMENT_SDK)
     val permission: String = Manifest.permission.ACCESS_LOCAL_NETWORK
 
     fun isEnforced(): Boolean {

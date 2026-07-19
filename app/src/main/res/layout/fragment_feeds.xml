@@ -33,15 +33,13 @@
             android:id="@+id/progress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:alpha="0" />
+            android:layout_gravity="center" />
 
         <TextView
             android:id="@+id/message"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:alpha="0"
             android:text="@string/you_have_no_feeds"
             android:textAppearance="?textAppearanceBody1" />
 
@@ -51,7 +49,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:alpha="0"
             android:text="@string/import_feeds_from_opml_file" />
 
     </LinearLayout>
@@ -61,7 +58,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_margin="16dp"
-        android:alpha="0"
         android:contentDescription="@string/add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

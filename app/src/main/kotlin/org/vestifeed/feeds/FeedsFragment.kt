@@ -15,6 +15,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
@@ -33,8 +34,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
-import org.vestifeed.anim.animateVisibilityChanges
-import org.vestifeed.anim.showSmooth
 import org.vestifeed.app.api
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -436,14 +435,13 @@ class FeedsFragment : AppFragment() {
     }
 
     private fun FragmentFeedsBinding.setState(state: State) {
-        animateVisibilityChanges(
-            views = listOf(toolbar, list, progress, message, importOpml, fab),
-            visibleViews = when (state) {
-                is State.Loading -> listOf(toolbar, progress)
-                is State.ShowingFeeds -> listOf(toolbar, list, fab)
-                is State.ImportingFeeds -> listOf(toolbar, message)
-            },
-        )
+        listOf(toolbar, list, progress, message, importOpml, fab).forEach { it.isVisible = false }
+
+        when (state) {
+            is State.Loading -> listOf(toolbar, progress).forEach { it.isVisible = true }
+            is State.ShowingFeeds -> listOf(toolbar, list, fab).forEach { it.isVisible = true }
+            is State.ImportingFeeds -> listOf(toolbar, message).forEach { it.isVisible = true }
+        }
 
         when (state) {
             is State.Loading -> {}
@@ -452,9 +450,9 @@ class FeedsFragment : AppFragment() {
                 (binding.list.adapter as? FeedsAdapter)?.submitList(state.feeds)
 
                 if (state.feeds.isEmpty()) {
-                    message.showSmooth()
+                    message.isVisible = true
                     message.text = getString(R.string.you_have_no_feeds)
-                    importOpml.showSmooth()
+                    importOpml.isVisible = true
                 }
             }
 

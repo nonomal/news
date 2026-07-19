@@ -22,8 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.R
-import org.vestifeed.anim.animateVisibilityChanges
-import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentSearchBinding
@@ -37,8 +35,6 @@ import org.vestifeed.navigation.openUrl
 import org.vestifeed.navigation.showKeyboard
 
 class SearchFragment : AppFragment() {
-
-    private val db by lazy { (requireContext().applicationContext as App).db }
 
     private val args = MutableStateFlow<Args?>(null)
 
@@ -144,16 +140,14 @@ class SearchFragment : AppFragment() {
     }
 
     private fun FragmentSearchBinding.setState(state: State) {
-        animateVisibilityChanges(
-            views = listOf(toolbar, list, progress, message),
-            visibleViews = when (state) {
-                is State.QueryIsEmpty,
-                is State.QueryIsTooShort -> listOf(toolbar)
+        listOf(toolbar, list, progress, message).forEach { it.isVisible = false }
 
-                is State.RunningQuery -> listOf(toolbar, progress)
-                is State.ShowingQueryResults -> listOf(toolbar, list)
-            },
-        )
+        when (state) {
+            is State.QueryIsEmpty,
+            is State.QueryIsTooShort -> listOf(toolbar).forEach { it.isVisible = true }
+            is State.RunningQuery -> listOf(toolbar, progress).forEach { it.isVisible = true }
+            is State.ShowingQueryResults -> listOf(toolbar, list).forEach { it.isVisible = true }
+        }
 
         if (state is State.ShowingQueryResults) {
             adapter.submitList(state.items)

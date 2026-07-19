@@ -21,6 +21,7 @@ import org.vestifeed.db.table.ConfTable
 import org.vestifeed.databinding.ActivityBinding
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.entries.toBundle
 import org.vestifeed.feeds.FeedsFragment
 import org.vestifeed.lan.LocalNetworkPermissionRequester
 
@@ -94,7 +95,7 @@ class Activity : AppCompatActivity() {
                     replace(
                         R.id.fragmentContainerView,
                         EntriesFragment::class.java,
-                        bundleOf("filter" to EntriesFilter.Unread),
+                        EntriesFilter.Unread.toBundle(),
                     )
                 }
             }
@@ -109,12 +110,12 @@ class Activity : AppCompatActivity() {
         binding.bottomNav.apply {
             setOnItemSelectedListener { item ->
                 when (item.itemId) {
-                    R.id.newsFragment -> {
+R.id.newsFragment -> {
                         supportFragmentManager.commit {
                             replace(
                                 R.id.fragmentContainerView,
                                 EntriesFragment::class.java,
-                                bundleOf("filter" to EntriesFilter.Unread),
+                                EntriesFilter.Unread.toBundle(),
                             )
                         }
                         true
@@ -125,7 +126,7 @@ class Activity : AppCompatActivity() {
                             replace(
                                 R.id.fragmentContainerView,
                                 EntriesFragment::class.java,
-                                bundleOf("filter" to EntriesFilter.Bookmarked),
+                                EntriesFilter.Bookmarked.toBundle(),
                             )
                         }
                         true

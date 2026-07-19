@@ -1,6 +1,5 @@
 package org.vestifeed.search
 
-import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -14,29 +13,28 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.parser.AtomLinkRel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.vestifeed.R
 import org.vestifeed.anim.animateVisibilityChanges
 import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentSearchBinding
-import org.vestifeed.db.table.ConfTable
-import org.vestifeed.db.table.EntryTable
 import org.vestifeed.dialog.showErrorDialog
+import org.vestifeed.entries.CardListAdapterDecoration
 import org.vestifeed.entries.EntriesAdapter
+import org.vestifeed.entries.EntryRowMapper
 import org.vestifeed.entry.EntryFragment
 import org.vestifeed.navigation.hideKeyboard
 import org.vestifeed.navigation.openUrl
 import org.vestifeed.navigation.showKeyboard
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 class SearchFragment : AppFragment() {
 
@@ -71,7 +69,6 @@ class SearchFragment : AppFragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             args.filterNotNull().collect { args ->
-                val conf = db.conf.select()
                 if (args.query.length < 3) {
                     _state.update { State.QueryIsTooShort }
                     return@collect
@@ -79,8 +76,9 @@ class SearchFragment : AppFragment() {
 
                 _state.update { State.RunningQuery }
 
-                val rows = db().entry.selectByQuery(args.query)
-                val items = rows.map { it.toItem(conf) }
+                val rows = withContext(Dispatchers.IO) { db().entry.selectByQuery(args.query) }
+                val conf = withContext(Dispatchers.IO) { db().conf.select() }
+                val items = rows.map { EntryRowMapper.toItem(it, conf) }
 
                 _state.update { State.ShowingQueryResults(items) }
             }
@@ -176,45 +174,21 @@ class SearchFragment : AppFragment() {
                     useBuiltInBrowser = item.useBuiltInBrowser,
                 )
             } else {
-                parentFragmentManager.commit {
-                    replace(
-                        R.id.fragmentContainerView,
-                        EntryFragment::class.java,
-                        bundleOf("entryId" to item.id),
-                    )
-                    addToBackStack(null)
-                }
+                openEntryFragment(item.id)
             }
         } else {
-            parentFragmentManager.commit {
-                replace(
-                    R.id.fragmentContainerView,
-                    EntryFragment::class.java,
-                    bundleOf("entryId" to item.id),
-                )
-                addToBackStack(null)
-            }
+            openEntryFragment(item.id)
         }
     }
 
-    private class CardListAdapterDecoration(private val gapInPixels: Int) :
-        RecyclerView.ItemDecoration() {
-
-        override fun getItemOffsets(
-            outRect: Rect,
-            view: View,
-            parent: RecyclerView,
-            state: RecyclerView.State,
-        ) {
-            val position = parent.getChildAdapterPosition(view)
-
-            val bottomGap = if (position == (parent.adapter?.itemCount ?: 0) - 1) {
-                gapInPixels
-            } else {
-                0
-            }
-
-            outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
+    private fun openEntryFragment(entryId: String) {
+        parentFragmentManager.commit {
+            replace(
+                R.id.fragmentContainerView,
+                EntryFragment::class.java,
+                bundleOf("entryId" to entryId),
+            )
+            addToBackStack(null)
         }
     }
 
@@ -227,29 +201,5 @@ class SearchFragment : AppFragment() {
         object QueryIsTooShort : State()
         object RunningQuery : State()
         data class ShowingQueryResults(val items: List<EntriesAdapter.Item>) : State()
-    }
-
-    private fun EntryTable.SelectByQuery.toItem(conf: ConfTable.Conf): EntriesAdapter.Item {
-        return EntriesAdapter.Item(
-            id = id,
-            showImage = extShowPreviewImages || conf.showPreviewImages,
-            cropImage = conf.cropPreviewImages,
-            imageUrl = extOpenGraphImageUrl,
-            imageWidth = extOpenGraphImageWidth,
-            imageHeight = extOpenGraphImageHeight,
-            title = title,
-            subtitle = "$feedTitle · ${DATE_TIME_FORMAT.format(published)}",
-            summary = summary ?: "",
-            read = extRead,
-            openInBrowser = extOpenEntriesInBrowser,
-            useBuiltInBrowser = conf.useBuiltInBrowser,
-        )
-    }
-
-    companion object {
-        private val DATE_TIME_FORMAT = DateTimeFormatter.ofLocalizedDateTime(
-            FormatStyle.MEDIUM,
-            FormatStyle.SHORT,
-        )
     }
 }

@@ -176,20 +176,20 @@ class EntryTable(private val conn: SQLiteConnection) {
     }
 
     data class EntriesAdapterRow(
-        val id: String,
+        override val id: String,
         val feedId: String,
         val extBookmarked: Boolean,
-        val extShowPreviewImages: Boolean,
-        val extOpenGraphImageUrl: String,
-        val extOpenGraphImageWidth: Int,
-        val extOpenGraphImageHeight: Int,
-        val title: String,
-        val feedTitle: String,
-        val published: OffsetDateTime,
-        val summary: String,
-        val extRead: Boolean,
-        val extOpenEntriesInBrowser: Boolean,
-    )
+        override val extShowPreviewImages: Boolean,
+        override val extOpenGraphImageUrl: String,
+        override val extOpenGraphImageWidth: Int,
+        override val extOpenGraphImageHeight: Int,
+        override val title: String,
+        override val feedTitle: String,
+        override val published: OffsetDateTime,
+        override val summary: String,
+        override val extRead: Boolean,
+        override val extOpenEntriesInBrowser: Boolean,
+    ) : org.vestifeed.entries.EntryRowMappable
 
     fun selectByFeedId(feedId: String): List<EntriesAdapterRow> {
         conn.prepare(
@@ -574,18 +574,18 @@ class EntryTable(private val conn: SQLiteConnection) {
     }
 
     data class SelectByQuery(
-        val id: String,
-        val extShowPreviewImages: Boolean,
-        val extOpenGraphImageUrl: String,
-        val extOpenGraphImageWidth: Int,
-        val extOpenGraphImageHeight: Int,
-        val title: String,
-        val feedTitle: String,
-        val published: OffsetDateTime,
-        val summary: String?,
-        val extRead: Boolean,
-        val extOpenEntriesInBrowser: Boolean,
-    )
+        override val id: String,
+        override val extShowPreviewImages: Boolean,
+        override val extOpenGraphImageUrl: String,
+        override val extOpenGraphImageWidth: Int,
+        override val extOpenGraphImageHeight: Int,
+        override val title: String,
+        override val feedTitle: String,
+        override val published: OffsetDateTime,
+        override val summary: String?,
+        override val extRead: Boolean,
+        override val extOpenEntriesInBrowser: Boolean,
+    ) : org.vestifeed.entries.EntryRowMappable
 
     fun selectByQuery(query: String): List<SelectByQuery> {
         val searchQuery = "%$query%"

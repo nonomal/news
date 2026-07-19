@@ -1,69 +1,65 @@
 package org.vestifeed.entries
 
-import android.graphics.Rect
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
-import androidx.core.os.bundleOf
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
 import androidx.fragment.app.commit
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import org.vestifeed.parser.AtomLinkRel
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.vestifeed.BuildConfig
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
-import org.vestifeed.db.table.ConfTable
-import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.LogTable
 import org.vestifeed.dialog.showErrorDialog
-import org.vestifeed.entry.EntryFragment
 import org.vestifeed.log.LogFragment
 import org.vestifeed.navigation.AppFragment
-import org.vestifeed.navigation.openUrl
 import org.vestifeed.settings.SettingsFragment
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
+/**
+ * Pure renderer for the entries list. All data, mutations and intent
+ * dispatch live in [EntriesViewModel]; this class wires up views and forwards
+ * user input.
+ */
 class EntriesFragment : AppFragment() {
-
-    private val filter: EntriesFilter? by lazy {
-        arguments?.getParcelable(
-            "filter",
-            EntriesFilter::class.java,
-        )
-    }
 
     private var _binding: FragmentEntriesBinding? = null
     private val binding get() = _binding!!
 
-    private val snackbar by lazy {
-        Snackbar.make(binding.root, "", Snackbar.LENGTH_SHORT).apply {
-            anchorView = requireActivity().findViewById(R.id.bottomNav)
-        }
+    private val filter: EntriesFilter? by lazy {
+        arguments?.toEntriesFilter()
     }
+
+    private val viewModel: EntriesViewModel by viewModels {
+        EntriesViewModelFactory(
+            filter = requireNotNull(filter) {
+                "EntriesFragment requires a ${EntriesFilter.ARG_FILTER} argument"
+            },
+            db = db(),
+            sync = sync(),
+        )
+    }
+
+    private val navigator = lazy { EntriesNavigator(this) }
 
     private val adapter by lazy {
-        EntriesAdapter(requireActivity()) { onListItemClick(it) }
-            .apply { scrollToTopOnInsert() }
+        EntriesAdapter(requireActivity()) { viewModel.onItemClicked(it) }
+            .also { it.scrollToTopOnInsert(binding.list, ::isViewAlive) }
     }
 
-    private val touchHelper: ItemTouchHelper? by lazy { createTouchHelper() }
+    private val touchHelper by lazy { createTouchHelper() }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -77,133 +73,19 @@ class EntriesFragment : AppFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        db().log.insert(
-            LogTable.InsertArgs(
-                level = "debug",
-                tag = "EntriesFragment",
-                message = "onViewCreated",
-            )
-        )
-
         if (filter == null) {
-            showErrorDialog(getString(R.string.required_argument_is_missing, "filter")) {
+            showErrorDialog(getString(R.string.required_argument_is_missing, EntriesFilter.ARG_FILTER)) {
                 requireActivity().finish()
             }
+            return
         }
 
-        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
-            insets.getInsets(WindowInsetsCompat.Type.statusBars()).let {
-                v.updatePadding(top = it.top)
-            }
-            insets
-        }
-
-        initSwipeRefresh()
+        applyStatusBarInsets()
+        initToolbarMenu()
         initList()
-
-        binding.toolbar.menu!!.findItem(R.id.settings).setOnMenuItemClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
-                addToBackStack(null)
-            }
-            true
-        }
-
-        if (BuildConfig.DEBUG) {
-            binding.toolbar.menu!!.findItem(R.id.logs).setOnMenuItemClickListener {
-                parentFragmentManager.commit {
-                    replace(R.id.fragmentContainerView, LogFragment::class.java, null)
-                    addToBackStack(null)
-                }
-                true
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                sync().running.collect { onNewSyncState(it) }
-            }
-        }
-    }
-
-    private suspend fun onNewSyncState(running: Boolean) {
-        when (filter) {
-            EntriesFilter.Unread -> {
-                val unread = withContext(Dispatchers.IO) {
-                    db().entry.selectUnreadCount()
-                }
-                binding.toolbar.setTitle(getString(R.string.unread_n, unread))
-            }
-
-            EntriesFilter.Bookmarked -> {
-                val bookmarked = withContext(Dispatchers.IO) {
-                    db().entry.selectBookmarkedCount()
-                }
-                binding.toolbar.setTitle(getString(R.string.bookmarks_n, bookmarked))
-            }
-
-            is EntriesFilter.BelongToFeed -> {
-                val feedId = (filter as EntriesFilter.BelongToFeed).feedId
-                val feed = withContext(Dispatchers.IO) {
-                    db().feed.selectById(feedId)
-                }
-                binding.toolbar.setTitle(feed?.title ?: feedId)
-            }
-
-            null -> {}
-        }
-
-        binding.swipeRefresh.isRefreshing = running
-
-        if (running) {
-            if (adapter.itemCount == 0) {
-                binding.swipeRefresh.isVisible = false
-                binding.progress.isVisible = true
-                binding.message.isVisible = true
-                binding.message.setText(R.string.initial_sync)
-            }
-        } else {
-            binding.progress.isVisible = true
-
-            val entries = when (filter) {
-                EntriesFilter.Unread -> {
-                    withContext(Dispatchers.IO) { db().entry.selectUnread() }
-                }
-
-                EntriesFilter.Bookmarked -> {
-                    withContext(Dispatchers.IO) { db().entry.selectBookmarked() }
-                }
-
-                is EntriesFilter.BelongToFeed -> {
-                    withContext(Dispatchers.IO) {
-                        db().entry.selectByFeedId((filter as EntriesFilter.BelongToFeed).feedId)
-                            .filterNot { it.extRead }
-                    }
-                }
-
-                null -> emptyList()
-            }
-
-            val conf = withContext(Dispatchers.IO) {
-                db().conf.select()
-            }
-
-            val listItems = withContext(Dispatchers.IO) {
-                entries.map { it.toItem(conf) }
-            }
-
-            adapter.submitList(listItems)
-
-            binding.progress.isVisible = false
-
-            if (listItems.isEmpty()) {
-                binding.message.isVisible = true
-                binding.message.text = getEmptyMessage()
-            } else {
-                binding.message.isVisible = false
-                binding.swipeRefresh.isVisible = true
-            }
-        }
+        initSwipeRefresh()
+        observeState()
+        observeActions()
     }
 
     override fun onDestroyView() {
@@ -211,281 +93,166 @@ class EntriesFragment : AppFragment() {
         _binding = null
     }
 
-    private fun onPullRefresh() {
-        sync().runInBackground()
-    }
-
-    private fun saveConf(newConf: (ConfTable.Conf) -> ConfTable.Conf) {
-        db().conf.update(newConf)
-    }
-
-    private fun setRead(entryIds: Collection<String>, read: Boolean) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                entryIds.forEach {
-                    db().entry.updateReadAndReadSynced(
-                        id = it,
-                        extRead = read,
-                        extReadSynced = false,
-                    )
-                }
-            }
-
-            sync().runInBackground()
+    override fun onOpenGraphImageDownloaded() {
+        super.onOpenGraphImageDownloaded()
+        if (filter != null) {
+            viewModel.onOpenGraphImageDownloaded()
         }
     }
 
-    private fun setBookmarked(entryId: String, bookmarked: Boolean) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
-                db().entry.updateBookmarkedAndBookmarkedSynced(
-                    id = entryId,
-                    extBookmarked = bookmarked,
-                    extBookmarkedSynced = false
-                )
-            }
+    private fun isViewAlive(): Boolean = _binding != null
 
-            sync().runInBackground()
+    private fun applyStatusBarInsets() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).let {
+                v.updatePadding(top = it.top)
+            }
+            insets
         }
     }
 
-    private fun markAllAsRead() {
-        // todo
-    }
-
-    private fun EntryTable.EntriesAdapterRow.toItem(conf: ConfTable.Conf): EntriesAdapter.Item {
-        return EntriesAdapter.Item(
-            id = id,
-            showImage = extShowPreviewImages || conf.showPreviewImages,
-            cropImage = conf.cropPreviewImages,
-            imageUrl = extOpenGraphImageUrl,
-            imageWidth = extOpenGraphImageWidth,
-            imageHeight = extOpenGraphImageHeight,
-            title = title,
-            subtitle = "$feedTitle · ${DATE_TIME_FORMAT.format(published)}",
-            summary = summary ?: "",
-            read = extRead,
-            openInBrowser = extOpenEntriesInBrowser,
-            useBuiltInBrowser = conf.useBuiltInBrowser,
-        )
-    }
-
-    private fun initSwipeRefresh() {
-        binding.swipeRefresh.apply {
-            when (filter) {
-                is EntriesFilter.Unread, is EntriesFilter.BelongToFeed -> {
-                    isEnabled = true
-                    setOnRefreshListener { onPullRefresh() }
-                }
-
-                else -> isEnabled = false
+    private fun initToolbarMenu() {
+        binding.toolbar.setOnMenuItemClickListener { item ->
+            when (item.itemId) {
+                R.id.settings -> openFragment(SettingsFragment::class.java)
+                R.id.logs -> if (BuildConfig.DEBUG) openFragment(LogFragment::class.java) else false
+                else -> false
             }
         }
+    }
+
+    private fun openFragment(cls: Class<out androidx.fragment.app.Fragment>): Boolean {
+        parentFragmentManager.commit {
+            replace(R.id.fragmentContainerView, cls, null)
+            addToBackStack(null)
+        }
+        return true
     }
 
     private fun initList() {
-        if (binding.list.adapter == null) {
-            binding.list.apply {
+        binding.list.apply {
+            if (adapter == null) {
                 layoutManager = LinearLayoutManager(requireContext())
                 adapter = this@EntriesFragment.adapter
-
-                val listItemDecoration = CardListAdapterDecoration(
-                    resources.getDimensionPixelSize(R.dimen.entries_cards_gap)
+                addItemDecoration(
+                    CardListAdapterDecoration(
+                        resources.getDimensionPixelSize(R.dimen.entries_cards_gap),
+                    ),
                 )
-
-                addItemDecoration(listItemDecoration)
             }
-
-            touchHelper?.attachToRecyclerView(binding.list)
         }
+        touchHelper?.attachToRecyclerView(binding.list)
     }
 
-    override fun onOpenGraphImageDownloaded() {
-        super.onOpenGraphImageDownloaded()
-        // todo optimize
+    private fun initSwipeRefresh() {
+        val f = filter ?: return
+        binding.swipeRefresh.isEnabled = f.swipeRefreshEnabled
+        binding.swipeRefresh.setOnRefreshListener { viewModel.refresh() }
+    }
+
+    private fun observeState() {
         viewLifecycleOwner.lifecycleScope.launch {
-            val syncRunning = sync().running.value
-
-            if (!syncRunning) {
-                onNewSyncState(false)
-            }
-        }
-    }
-
-    private suspend fun getEmptyMessage(): String {
-        return when (filter) {
-            is EntriesFilter.Bookmarked -> getString(R.string.you_have_no_bookmarks)
-            else -> {
-                val feeds = withContext(Dispatchers.IO) { db().feed.selectAll().size }
-                if (feeds == 0) {
-                    getString(R.string.you_have_no_feeds)
-                } else {
-                    getString(R.string.news_list_is_empty)
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.state.collect { state ->
+                    renderTitle(state.title)
+                    binding.swipeRefresh.isRefreshing = state.running
+                    renderItems(state.items)
                 }
             }
         }
     }
 
-    private fun showSnackbar(
-        @StringRes actionText: Int,
-        action: (() -> Unit),
-        undoAction: (() -> Unit),
-    ) {
-        runCatching {
-            snackbar.apply {
-                setText(actionText)
-                setAction(R.string.undo) { undoAction.invoke() }
-            }.show()
-
-            action.invoke()
-        }.onFailure {
-            showErrorDialog(it)
+    private fun observeActions() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.actions.collect { navigator.value.handle(it) }
+            }
         }
     }
 
-    private fun onListItemClick(item: EntriesAdapter.Item) {
-        db().entry.updateReadAndReadSynced(
-            id = item.id,
-            extRead = true,
-            extReadSynced = false,
+    private fun renderTitle(title: TitleState) {
+        binding.toolbar.setTitle(
+            when (title) {
+                TitleState.Loading -> ""
+                is TitleState.Custom -> title.title
+                is TitleState.Res -> getString(title.resId, *title.args.toTypedArray())
+            },
         )
+    }
 
-        if (item.openInBrowser) {
-            val links = db().link.selectByEntryId(item.id)
-            val alternateLinks = links.filter { it.rel is AtomLinkRel.Alternate }
-
-            if (alternateLinks.isEmpty()) {
-                showErrorDialog(R.string.this_entry_doesnt_have_any_external_links)
-                return
+    private fun renderItems(items: ItemsState) {
+        when (items) {
+            ItemsState.Loading -> {
+                binding.progress.isVisible = true
+                binding.message.isVisible = false
+                binding.swipeRefresh.isVisible = false
             }
 
-            val alternateHtmlLink = alternateLinks.firstOrNull { it.type == "text/html" }
-            val linkToOpen = alternateHtmlLink ?: alternateLinks.first()
+            ItemsState.InitialSync -> {
+                binding.progress.isVisible = true
+                binding.message.isVisible = true
+                binding.message.setText(R.string.initial_sync)
+                binding.swipeRefresh.isVisible = false
+            }
 
-            openUrl(
-                url = linkToOpen.href,
-                useBuiltInBrowser = item.useBuiltInBrowser,
-            )
-        } else {
-            parentFragmentManager.commit {
-                replace(
-                    R.id.fragmentContainerView,
-                    EntryFragment::class.java,
-                    bundleOf("entryId" to item.id),
-                )
-                addToBackStack(null)
+            is ItemsState.Showing -> {
+                binding.progress.isVisible = false
+                binding.message.isVisible = false
+                binding.swipeRefresh.isVisible = true
+                adapter.submitList(items.items)
+            }
+
+            is ItemsState.Empty -> {
+                binding.progress.isVisible = false
+                binding.swipeRefresh.isVisible = false
+                binding.message.isVisible = true
+                binding.message.text = getString(items.messageRes, *items.args.toTypedArray())
             }
         }
     }
 
     private fun createTouchHelper(): ItemTouchHelper? {
-        return when (filter) {
-            EntriesFilter.Unread, is EntriesFilter.BelongToFeed -> {
-                ItemTouchHelper(object : SwipeHelper(
-                    requireContext(),
-                    R.drawable.ic_baseline_visibility_24,
-                    R.drawable.ic_baseline_bookmark_add_24,
-                ) {
-                    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                        val entry = adapter.currentList[viewHolder.bindingAdapterPosition]
+        val policy = filter?.swipePolicy ?: return null
+        val leftIcon = policy.left?.iconRes
+        val rightIcon = policy.right?.iconRes
+        if (leftIcon == null && rightIcon == null) return null
 
-                        when (direction) {
-                            ItemTouchHelper.LEFT -> {
-                                showSnackbar(
-                                    actionText = R.string.marked_as_read,
-                                    action = { setRead(listOf(entry.id), true) },
-                                    undoAction = { setRead(listOf(entry.id), false) },
-                                )
-                            }
+        val leftAction = policy.left
+        val rightAction = policy.right
 
-                            ItemTouchHelper.RIGHT -> {
-                                showSnackbar(
-                                    actionText = R.string.bookmarked,
-                                    action = { setBookmarked(entry.id, true) },
-                                    undoAction = { setBookmarked(entry.id, false) },
-                                )
-                            }
+        return ItemTouchHelper(
+            object : SwipeHelper(requireContext(), leftIcon ?: 0, rightIcon ?: 0) {
+                override fun onSwiped(viewHolder: androidx.recyclerview.widget.RecyclerView.ViewHolder, direction: Int) {
+                    val action = when (direction) {
+                        ItemTouchHelper.LEFT -> leftAction
+                        ItemTouchHelper.RIGHT -> rightAction
+                        else -> null
+                    } ?: return
+                    val entry = adapter.currentList.getOrNull(viewHolder.bindingAdapterPosition) ?: return
+                    val vm = viewModel
+                    showUndoSnackbar(action.messageRes) {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            action.undo(vm, entry.id)
                         }
                     }
-                })
-            }
-
-            EntriesFilter.Bookmarked -> {
-                ItemTouchHelper(object : SwipeHelper(
-                    requireContext(),
-                    R.drawable.ic_baseline_bookmark_remove_24,
-                    R.drawable.ic_baseline_bookmark_remove_24,
-                ) {
-                    override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                        val entry = adapter.currentList[viewHolder.bindingAdapterPosition]
-
-                        when (direction) {
-                            ItemTouchHelper.LEFT -> {
-                                showSnackbar(
-                                    actionText = R.string.removed_from_bookmarks,
-                                    action = { setBookmarked(entry.id, false) },
-                                    undoAction = { setBookmarked(entry.id, true) },
-                                )
-                            }
-
-                            ItemTouchHelper.RIGHT -> {
-                                showSnackbar(
-                                    actionText = R.string.removed_from_bookmarks,
-                                    action = { setBookmarked(entry.id, false) },
-                                    undoAction = { setBookmarked(entry.id, true) },
-                                )
-                            }
-                        }
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        action.apply(vm, entry.id)
                     }
-                })
-            }
-
-            else -> null
-        }
-    }
-
-    private fun EntriesAdapter.scrollToTopOnInsert() {
-        registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
-            override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
-                if (_binding == null) {
-                    return
                 }
-
-                if (positionStart == 0) {
-                    (binding.list.layoutManager as LinearLayoutManager).scrollToPositionWithOffset(
-                        0,
-                        0,
-                    )
-                }
-            }
-        })
-    }
-
-    private class CardListAdapterDecoration(private val gapInPixels: Int) :
-        RecyclerView.ItemDecoration() {
-
-        override fun getItemOffsets(
-            outRect: Rect,
-            view: View,
-            parent: RecyclerView,
-            state: RecyclerView.State,
-        ) {
-            val position = parent.getChildAdapterPosition(view)
-
-            val bottomGap = if (position == (parent.adapter?.itemCount ?: 0) - 1) {
-                gapInPixels
-            } else {
-                0
-            }
-
-            outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
-        }
-    }
-
-    companion object {
-        private val DATE_TIME_FORMAT = DateTimeFormatter.ofLocalizedDateTime(
-            FormatStyle.MEDIUM,
-            FormatStyle.SHORT,
+            },
         )
+    }
+
+    /**
+     * Shows a snackbar with an "undo" action that runs [onUndo] if the user
+     * taps it before the snackbar dismisses. The snackbar is anchored to the
+     * activity's bottom navigation so it doesn't cover the list.
+     */
+    private fun showUndoSnackbar(@StringRes messageRes: Int, onUndo: () -> Unit) {
+        val rootView = _binding?.root ?: return
+        Snackbar.make(rootView, messageRes, Snackbar.LENGTH_SHORT)
+            .setAnchorView(requireActivity().findViewById(R.id.bottomNav))
+            .setAction(R.string.undo) { onUndo() }
+            .show()
     }
 }

@@ -5,7 +5,9 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import androidx.core.content.getSystemService
 import androidx.fragment.app.FragmentActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.databinding.ListItemEntryBinding
 
 class EntriesAdapter(
@@ -50,4 +52,26 @@ class EntriesAdapter(
         val openInBrowser: Boolean,
         val useBuiltInBrowser: Boolean,
     )
+}
+
+/**
+ * Whenever the adapter receives a new list that inserts an item at position 0
+ * (typical when new entries arrive from a sync), scroll the host RecyclerView
+ * back to the top so the user actually sees the new content.
+ *
+ * The passed [isAlive] callback should return false once the host view is
+ * destroyed — the data observer fires asynchronously and can outlive the
+ * view.
+ */
+fun EntriesAdapter.scrollToTopOnInsert(
+    list: RecyclerView,
+    isAlive: () -> Boolean,
+) {
+    registerAdapterDataObserver(object : RecyclerView.AdapterDataObserver() {
+        override fun onItemRangeInserted(positionStart: Int, itemCount: Int) {
+            if (!isAlive()) return
+            if (positionStart != 0) return
+            (list.layoutManager as? LinearLayoutManager)?.scrollToPositionWithOffset(0, 0)
+        }
+    })
 }

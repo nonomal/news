@@ -6,7 +6,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import org.vestifeed.navigation.AppFragment
 import androidx.fragment.app.FragmentManager
@@ -25,6 +24,7 @@ import org.vestifeed.db.table.ConfTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.entries.toBundle
 import org.vestifeed.sync.BackgroundSyncScheduler
 
 class MinifluxAuthFragment : AppFragment() {
@@ -105,7 +105,7 @@ class MinifluxAuthFragment : AppFragment() {
                         replace(
                             R.id.fragmentContainerView,
                             EntriesFragment::class.java,
-                            bundleOf("filter" to EntriesFilter.Unread),
+                            EntriesFilter.Unread.toBundle(),
                         )
                     }
                 }

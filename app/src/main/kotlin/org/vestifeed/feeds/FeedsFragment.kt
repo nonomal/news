@@ -44,6 +44,7 @@ import org.vestifeed.db.table.FeedTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.entries.toBundle
 import org.vestifeed.feedsettings.FeedSettingsFragment
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.openUrl
@@ -494,7 +495,7 @@ class FeedsFragment : AppFragment() {
                     replace(
                         R.id.fragmentContainerView,
                         EntriesFragment::class.java,
-                        bundleOf("filter" to EntriesFilter.BelongToFeed(feedId = item.id)),
+                        EntriesFilter.BelongToFeed(feedId = item.id).toBundle(),
                     )
                     addToBackStack(null)
                 }

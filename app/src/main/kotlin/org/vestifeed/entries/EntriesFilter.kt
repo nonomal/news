@@ -2,14 +2,74 @@ package org.vestifeed.entries
 
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.annotation.StringRes
+import androidx.core.os.bundleOf
+import org.vestifeed.R
+import org.vestifeed.db.Database
+import org.vestifeed.db.table.EntryTable
 
+/**
+ * Discriminator + per-variant policy for the entries screen. Each variant
+ * declares how to load its rows, what title to show in the toolbar, whether
+ * swipe-to-refresh is enabled, which swipe actions appear and what empty
+ * message to display. Adding a new entries tab (e.g. "Today", "By Tag") is
+ * now a matter of adding a new variant rather than threading another `when`
+ * branch through the fragment.
+ */
 sealed class EntriesFilter : Parcelable {
 
-    abstract override fun describeContents(): Int
+    abstract val swipeRefreshEnabled: Boolean
+    abstract val swipePolicy: SwipePolicy
 
-    abstract override fun writeToParcel(parcel: Parcel, flags: Int)
+    /** Load the rows that should appear in the list for this filter. */
+    abstract suspend fun loadEntries(db: Database): List<EntryTable.EntriesAdapterRow>
+
+    /** Toolbar title for this filter. */
+    abstract suspend fun resolveTitle(db: Database): TitleFormat
+
+    /** Resource id of the empty-list message, given the current feed count. */
+    @StringRes
+    abstract fun emptyMessageRes(feedCount: Int): Int
+
+    /** Either a parameterized resource or a literal string for the toolbar. */
+    sealed class TitleFormat {
+        data class Res(@StringRes val resId: Int, val args: List<Any> = emptyList()) : TitleFormat()
+        data class Custom(val title: String) : TitleFormat()
+    }
 
     object Unread : EntriesFilter() {
+        override val swipeRefreshEnabled = true
+        override val swipePolicy = SwipePolicy(
+            left = SwipeAction(
+                iconRes = R.drawable.ic_baseline_visibility_24,
+                messageRes = R.string.marked_as_read,
+                apply = { setRead(it, read = true) },
+                undo = { setRead(it, read = false) },
+            ),
+            right = SwipeAction(
+                iconRes = R.drawable.ic_baseline_bookmark_add_24,
+                messageRes = R.string.bookmarked,
+                apply = { setBookmarked(it, bookmarked = true) },
+                undo = { setBookmarked(it, bookmarked = false) },
+            ),
+        )
+
+        override suspend fun loadEntries(db: Database): List<EntryTable.EntriesAdapterRow> {
+            return db.entry.selectUnread()
+        }
+
+        override suspend fun resolveTitle(db: Database): TitleFormat {
+            return TitleFormat.Res(
+                resId = R.string.unread_n,
+                args = listOf(db.entry.selectUnreadCount()),
+            )
+        }
+
+        override fun emptyMessageRes(feedCount: Int): Int {
+            return if (feedCount == 0) R.string.you_have_no_feeds
+            else R.string.news_list_is_empty
+        }
+
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -18,6 +78,35 @@ sealed class EntriesFilter : Parcelable {
     }
 
     object Bookmarked : EntriesFilter() {
+        override val swipeRefreshEnabled = false
+        override val swipePolicy = SwipePolicy(
+            left = SwipeAction(
+                iconRes = R.drawable.ic_baseline_bookmark_remove_24,
+                messageRes = R.string.removed_from_bookmarks,
+                apply = { setBookmarked(it, bookmarked = false) },
+                undo = { setBookmarked(it, bookmarked = true) },
+            ),
+            right = SwipeAction(
+                iconRes = R.drawable.ic_baseline_bookmark_remove_24,
+                messageRes = R.string.removed_from_bookmarks,
+                apply = { setBookmarked(it, bookmarked = false) },
+                undo = { setBookmarked(it, bookmarked = true) },
+            ),
+        )
+
+        override suspend fun loadEntries(db: Database): List<EntryTable.EntriesAdapterRow> {
+            return db.entry.selectBookmarked()
+        }
+
+        override suspend fun resolveTitle(db: Database): TitleFormat {
+            return TitleFormat.Res(
+                resId = R.string.bookmarks_n,
+                args = listOf(db.entry.selectBookmarkedCount()),
+            )
+        }
+
+        override fun emptyMessageRes(feedCount: Int): Int = R.string.you_have_no_bookmarks
+
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -26,6 +115,33 @@ sealed class EntriesFilter : Parcelable {
     }
 
     data class BelongToFeed(val feedId: String) : EntriesFilter() {
+        override val swipeRefreshEnabled = true
+        override val swipePolicy = SwipePolicy(
+            left = SwipeAction(
+                iconRes = R.drawable.ic_baseline_visibility_24,
+                messageRes = R.string.marked_as_read,
+                apply = { setRead(it, read = true) },
+                undo = { setRead(it, read = false) },
+            ),
+            right = SwipeAction(
+                iconRes = R.drawable.ic_baseline_bookmark_add_24,
+                messageRes = R.string.bookmarked,
+                apply = { setBookmarked(it, bookmarked = true) },
+                undo = { setBookmarked(it, bookmarked = false) },
+            ),
+        )
+
+        override suspend fun loadEntries(db: Database): List<EntryTable.EntriesAdapterRow> {
+            return db.entry.selectByFeedId(feedId).filterNot { it.extRead }
+        }
+
+        override suspend fun resolveTitle(db: Database): TitleFormat {
+            val feed = db.feed.selectById(feedId)
+            return TitleFormat.Custom(feed?.title ?: feedId)
+        }
+
+        override fun emptyMessageRes(feedCount: Int): Int = R.string.news_list_is_empty
+
         override fun describeContents(): Int = 0
 
         override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -35,6 +151,8 @@ sealed class EntriesFilter : Parcelable {
     }
 
     companion object {
+        const val ARG_FILTER = "filter"
+
         @JvmField
         val CREATOR: Parcelable.Creator<EntriesFilter> = object : Parcelable.Creator<EntriesFilter> {
             override fun createFromParcel(parcel: Parcel): EntriesFilter {
@@ -42,7 +160,7 @@ sealed class EntriesFilter : Parcelable {
                     0 -> Unread
                     1 -> Bookmarked
                     2 -> BelongToFeed(parcel.readString()!!)
-                    else -> throw IllegalArgumentException("Unknown type")
+                    else -> throw IllegalArgumentException("Unknown EntriesFilter type")
                 }
             }
 
@@ -52,3 +170,8 @@ sealed class EntriesFilter : Parcelable {
         }
     }
 }
+
+fun EntriesFilter.toBundle() = bundleOf(EntriesFilter.ARG_FILTER to this)
+
+fun android.os.Bundle.toEntriesFilter(): EntriesFilter? =
+    getParcelable(EntriesFilter.ARG_FILTER, EntriesFilter::class.java)

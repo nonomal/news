@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import org.vestifeed.navigation.AppFragment
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
@@ -17,6 +16,7 @@ import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.entries.toBundle
 import org.vestifeed.sync.BackgroundSyncScheduler
 import java.util.concurrent.TimeUnit
 
@@ -90,7 +90,7 @@ class AuthFragment : AppFragment() {
                 replace(
                     R.id.fragmentContainerView,
                     EntriesFragment::class.java,
-                    bundleOf("filter" to EntriesFilter.Unread),
+                    EntriesFilter.Unread.toBundle(),
                 )
             }
         }

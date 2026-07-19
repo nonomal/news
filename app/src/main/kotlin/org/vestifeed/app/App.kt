@@ -10,7 +10,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.vestifeed.api.Api
-import org.vestifeed.api.HotSwapApi
+import org.vestifeed.api.api
 import org.vestifeed.db.Database
 import org.vestifeed.og.OpenGraphImageFetcher
 import org.vestifeed.sync.Sync
@@ -23,7 +23,7 @@ class App : Application() {
 
     val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
 
-    val api by lazy { HotSwapApi(db) }
+    val api by lazy { api(db) }
 
     val db by lazy {
         Database(

@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import org.vestifeed.api.miniflux.MinifluxImpl
+import org.vestifeed.api.Api
 import org.vestifeed.api.miniflux.MinifluxSync
 import org.vestifeed.api.miniflux.minifluxHttpClient
 import org.vestifeed.api.standalone.EmbeddedSync
@@ -50,7 +50,7 @@ class Sync(
                     if (conf.minifluxToken == null) {
                         throw Exception("conf.minifluxToken is missing")
                     }
-                    val api = MinifluxImpl(
+                    val api = Api.Miniflux(
                         client = minifluxHttpClient(token = conf.minifluxToken),
                         baseUrl = "${conf.minifluxUrl}/v1/".toHttpUrl(),
                     )

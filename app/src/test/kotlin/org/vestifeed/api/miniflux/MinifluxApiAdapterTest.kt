@@ -6,6 +6,6 @@ class MinifluxApiTest {
 
     @Test
     fun dummy() {
-        // Tests for MinifluxApi are covered by integration tests
+        // Tests for Api.Miniflux are covered by integration tests
     }
 }

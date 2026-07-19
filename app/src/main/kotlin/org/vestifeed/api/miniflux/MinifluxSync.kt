@@ -2,21 +2,22 @@ package org.vestifeed.api.miniflux
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.vestifeed.api.Api
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.log.LogLevel
-import org.vestifeed.parser.AtomLinkRel
 import java.time.Instant
 import java.time.OffsetDateTime
 
-class MinifluxSync(val db: Database, val api: Miniflux) {
+class MinifluxSync(val db: Database, val api: Api.Miniflux) {
+
     suspend fun syncFeeds() {
-        val freshFeeds = api.getFeeds()
+        val freshFeedPairs = api.getFeedsWithLinks()
         val cachedFeeds = withContext(Dispatchers.IO) { db.feed.selectAll() }
-        val freshFeedIds = freshFeeds.map { it.id }
+        val freshFeedIds = freshFeedPairs.map { it.first.id.toLong() }
         val cachedFeedIds = cachedFeeds.map { it.id.toLong() }
         val deletedOnServerIds = cachedFeedIds.filterNot { freshFeedIds.contains(it) }
         withContext(Dispatchers.IO) {
@@ -25,11 +26,10 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 db.feed.deleteById(it.toString())
             }
         }
-        for (freshFeed in freshFeeds) {
-            val cached = cachedFeedIds.contains(freshFeed.id)
-            val (feed, freshLinks) = freshFeed.parse()
+        for ((feed, freshLinks) in freshFeedPairs) {
+            val cached = cachedFeedIds.contains(feed.id.toLong())
             if (cached) {
-                val cachedFeed = cachedFeeds.find { it.id.toLong() == freshFeed.id }!!
+                val cachedFeed = cachedFeeds.find { it.id == feed.id }!!
                 withContext(Dispatchers.IO) {
                     db.feed.insertOrReplace(
                         feed.copy(
@@ -73,45 +73,6 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
         }
     }
 
-    private fun Miniflux.Feed.parse(): Pair<FeedTable.Feed, List<LinkTable.Link>> {
-        val feedId = id.toString()
-
-        val selfLink = LinkTable.Link(
-            id = null,
-            feedId = feedId,
-            entryId = null,
-            href = feedUrl,
-            rel = AtomLinkRel.Self,
-            type = null,
-            hreflang = null,
-            title = null,
-            length = null,
-            extEnclosureDownloadProgress = null,
-            extCacheUri = null,
-        )
-        val alternateLink = LinkTable.Link(
-            id = null,
-            feedId = feedId,
-            entryId = null,
-            href = siteUrl,
-            rel = AtomLinkRel.Alternate,
-            type = "text/html",
-            hreflang = null,
-            title = null,
-            length = null,
-            extEnclosureDownloadProgress = null,
-            extCacheUri = null,
-        )
-        val feed = FeedTable.Feed(
-            id = feedId,
-            title = title,
-            extOpenEntriesInBrowser = false,
-            extBlockedWords = "",
-            extShowPreviewImages = null,
-        )
-        return Pair(feed, listOf(selfLink, alternateLink))
-    }
-
     suspend fun syncEntries(initial: Boolean) {
         if (initial) {
             val startedAt = Instant.now().toString()
@@ -128,7 +89,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
 
             if (unsyncedReadEntries.isNotEmpty()) {
                 api.markEntriesAsRead(
-                    ids = unsyncedReadEntries.map { it.id.toLong() },
+                    entriesIds = unsyncedReadEntries.map { it.id },
                     read = true,
                 )
 
@@ -143,7 +104,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
 
             if (unsyncedUnreadEntries.isNotEmpty()) {
                 api.markEntriesAsRead(
-                    ids = unsyncedUnreadEntries.map { it.id.toLong() },
+                    entriesIds = unsyncedUnreadEntries.map { it.id },
                     read = false,
                 )
 
@@ -168,9 +129,9 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 notSyncedEntries.filterNot { it.extBookmarked }
 
             if (notSyncedBookmarkedEntries.isNotEmpty()) {
-                api.markEntriesAsStarred(
-                    ids = notSyncedBookmarkedEntries.map { it.id.toLong() },
-                    starred = true,
+                api.markEntriesAsBookmarked(
+                    entries = notSyncedBookmarkedEntries,
+                    bookmarked = true,
                 )
 
                 withContext(Dispatchers.IO) {
@@ -183,9 +144,9 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
             }
 
             if (notSyncedNotBookmarkedEntries.isNotEmpty()) {
-                api.markEntriesAsStarred(
-                    ids = notSyncedNotBookmarkedEntries.map { it.id.toLong() },
-                    false,
+                api.markEntriesAsBookmarked(
+                    entries = notSyncedNotBookmarkedEntries,
+                    bookmarked = false,
                 )
 
                 withContext(Dispatchers.IO) {
@@ -225,10 +186,9 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                 if (currentBatch.isEmpty()) {
                     break
                 } else {
-                    val newChangedAfter = currentBatch.maxOf { it.changed_at }
-                    val typedCurrentBatch = currentBatch.map { it.toVestiEntry() }
+                    val newChangedAfter = currentBatch.maxOf { it.first.updated }
                     db.transaction {
-                        typedCurrentBatch.forEach {
+                        currentBatch.forEach {
                             db.entry.insertOrReplace(listOf(it.first))
                             db.link.insertForEntry(it.first.id, it.second)
                         }
@@ -241,10 +201,10 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
                         )
                         db.conf.update {
                             it.copy(
-                                minifluxIncrementalSyncTimestamp = newChangedAfter,
+                                minifluxIncrementalSyncTimestamp = newChangedAfter.toString(),
                             )
                         }
-                        changedAfter = OffsetDateTime.parse(newChangedAfter)
+                        changedAfter = newChangedAfter
                     }
                     if (currentBatch.size < batchSize) {
                         break
@@ -255,7 +215,7 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
     }
 
     suspend fun syncUnreadEntries() {
-        val freshEntries = api.getUnreadEntries().map { it.toVestiEntry() }
+        val freshEntries = api.getUnreadEntries()
         db.transaction {
             freshEntries.forEach {
                 db.entry.insertOrReplace(listOf(it.first))
@@ -265,72 +225,12 @@ class MinifluxSync(val db: Database, val api: Miniflux) {
     }
 
     suspend fun syncStarredEntries() {
-        val freshEntries = api.getStarredEntries().map { it.toVestiEntry() }
+        val freshEntries = api.getStarredEntries()
         db.transaction {
             freshEntries.forEach {
                 db.entry.insertOrReplace(listOf(it.first))
                 db.link.insertForEntry(it.first.id, it.second)
             }
         }
-    }
-
-    private fun Miniflux.Entry.toVestiEntry(): Pair<EntryTable.Entry, List<LinkTable.Link>> {
-        val links = mutableListOf<LinkTable.Link>()
-
-        if (url.isNotBlank()) {
-            links += LinkTable.Link(
-                id = null,
-                feedId = null,
-                entryId = id.toString(),
-                href = url,
-                rel = AtomLinkRel.Alternate,
-                type = "text/html",
-                hreflang = null,
-                title = null,
-                length = null,
-                extEnclosureDownloadProgress = null,
-                extCacheUri = null,
-            )
-        }
-
-        enclosures?.forEach { enclosure ->
-            links += LinkTable.Link(
-                id = null,
-                feedId = null,
-                entryId = id.toString(),
-                href = enclosure.url,
-                rel = AtomLinkRel.Enclosure,
-                type = enclosure.mime_type,
-                hreflang = null,
-                title = null,
-                length = enclosure.size,
-                extEnclosureDownloadProgress = null,
-                extCacheUri = null,
-            )
-        }
-
-        return Pair(
-            EntryTable.Entry(
-                contentType = "html",
-                contentSrc = "",
-                contentText = content,
-                summary = null,
-                id = id.toString(),
-                feedId = feed_id.toString(),
-                title = title,
-                published = OffsetDateTime.parse(published_at),
-                updated = OffsetDateTime.parse(changed_at),
-                authorName = author,
-                extRead = status == "read",
-                extReadSynced = true,
-                extBookmarked = starred,
-                extBookmarkedSynced = true,
-                extCommentsUrl = comments_url,
-                extOpenGraphImageChecked = false,
-                extOpenGraphImageUrl = "",
-                extOpenGraphImageWidth = 0,
-                extOpenGraphImageHeight = 0,
-            ), links
-        )
     }
 }

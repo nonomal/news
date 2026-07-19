@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.logging.HttpLoggingInterceptor
 import org.vestifeed.BuildConfig
+import org.vestifeed.api.Api
 import org.vestifeed.http.tokenAuthInterceptor
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
@@ -14,7 +15,7 @@ class MinifluxApiBuilder {
     fun build(
         url: String,
         token: String,
-    ): MinifluxApi {
+    ): Api.Miniflux {
         val builder = OkHttpClient.Builder()
             .addInterceptor(tokenAuthInterceptor(token))
             .addInterceptor(errorInterceptor())
@@ -29,7 +30,7 @@ class MinifluxApiBuilder {
             builder.addInterceptor(loggingInterceptor)
         }
 
-        return MinifluxApi(
+        return Api.Miniflux(
             client = builder.build(),
             baseUrl = "$url/v1/".toHttpUrl(),
         )

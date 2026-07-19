@@ -174,7 +174,7 @@ class EmbeddedSync(private val db: Database) {
         }
 
         val rawDescription = description ?: ""
-        val summary = rawDescription.stripHtml().take(400)
+        val summary = rawDescription.toEntrySummary()
 
         return Pair(
             EntryTable.Entry(
@@ -205,13 +205,6 @@ class EmbeddedSync(private val db: Database) {
         val digest = MessageDigest.getInstance("SHA-256")
         val hash = digest.digest(string.toByteArray())
         return Base64.encodeToString(hash, Base64.DEFAULT)
-    }
-
-    private fun String.stripHtml(): String {
-        return this
-            .replace(Regex("<[^>]*>"), " ")
-            .replace(Regex("\\s+"), " ")
-            .trim()
     }
 
     private fun Date.toIsoString(): String = ISO.format(this)

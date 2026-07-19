@@ -1,0 +1,332 @@
+#!/usr/bin/env bash
+#
+# devtools — manage the Vesti Android dev environment.
+#
+# Usage:
+#   ./devtools emulator start    Boot the AVD (default_boot snapshot if present)
+#   ./devtools emulator stop     Shut the emulator down cleanly
+#   ./devtools emulator status   Show ADB device list and boot state
+#   ./devtools emulator doctor   Diagnose Wayland / GPU / Qt plugin issues
+#   ./devtools run [-- ...]      Assemble debug APK, install it on the emulator, launch it
+#
+# Environment overrides:
+#   ANDROID_HOME         Android SDK root             (default: $HOME/Android/Sdk)
+#   VESTI_AVD            AVD name to launch           (default: Pixel_9_Pro)
+#   VESTI_DEVICE         ADB device id                (default: emulator-5554)
+#   VESTI_PACKAGE        Application id (debug build) (default: org.vestifeed.debug)
+#   VESTI_LOG_DIR        Where to write emulator logs (default: /tmp/opencode)
+#   VESTI_APK_PATH       Debug APK to install         (default: <repo>/app/build/outputs/apk/debug/app-debug.apk)
+#
+# Emulator tuning (only relevant for `emulator start` / `run`):
+#   VESTI_GPU_MODE       host | swiftshader_indirect | guest | auto  (default: host)
+#   VESTI_NO_WINDOW      1 to run headless (no Mutter window, no ANR dialogs) (default: 0)
+#   VESTI_CORES          Cap QEMU to N cores — helps when ANR trips on overload  (default: unset)
+#   VESTI_NO_AUDIO       1 to disable audio  (default: 0)
+#   VESTI_NO_SNAPSHOT_SAVE  1 to skip snapshot save on shutdown  (default: 0)
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
+VESTI_AVD="${VESTI_AVD:-Pixel_9_Pro}"
+VESTI_DEVICE="${VESTI_DEVICE:-emulator-5554}"
+VESTI_PACKAGE="${VESTI_PACKAGE:-org.vestifeed.debug}"
+VESTI_LOG_DIR="${VESTI_LOG_DIR:-/tmp/opencode}"
+VESTI_APK_PATH="${VESTI_APK_PATH:-$SCRIPT_DIR/app/build/outputs/apk/debug/app-debug.apk}"
+
+VESTI_GPU_MODE="${VESTI_GPU_MODE:-host}"
+VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
+VESTI_CORES="${VESTI_CORES:-}"
+VESTI_NO_AUDIO="${VESTI_NO_AUDIO:-0}"
+VESTI_NO_SNAPSHOT_SAVE="${VESTI_NO_SNAPSHOT_SAVE:-0}"
+
+ADB="$ANDROID_HOME/platform-tools/adb"
+EMU="$ANDROID_HOME/emulator/emulator"
+
+if [ ! -x "$ADB" ]; then
+  err "adb not found at $ADB — set ANDROID_HOME"
+  exit 1
+fi
+
+# The emulator ships its own Qt (currently 6.5.x on the Linux build) and
+# its plugin dir does NOT include a Wayland platform plugin. The system
+# libqwayland.so cannot be substituted: Qt enforces a per-minor-version
+# ABI check, so even when the plugin is on the search path, the emulator
+# Qt will refuse to load it. Native Wayland for the emulator requires
+# the SDK to ship a Wayland plugin itself, which it doesn't. The Qt
+# platform ends up being xcb (XWayland) on Wayland sessions, which is
+# what triggers the ANR loop. The real workarounds are:
+#   - VESTI_NO_WINDOW=1 to run headless (no Mutter window)
+#   - VESTI_GPU_MODE=swiftshader_indirect to force software host GL
+# Leave VESTI_QT_PLATFORM unset to accept the emulator's default.
+
+log() { printf '==> %s\n' "$*"; }
+err() { printf 'error: %s\n' "$*" >&2; }
+
+usage() {
+  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+}
+
+usage_emulator() {
+  cat <<EOF
+Usage: ./devtools emulator <command>
+
+Commands:
+  start    Boot the AVD (uses default_boot snapshot if present)
+  stop     Shut the emulator down cleanly via \`adb emu kill\`
+  status   Show ADB device list and boot state
+  doctor   Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
+
+Common tunables (env vars):
+  VESTI_GPU_MODE=swiftshader_indirect  Force software GL (slower, but works around
+                                       a broken host GPU context)
+  VESTI_NO_WINDOW=1                   Run headless; eliminates Mutter ANR dialogs.
+                                       View screen via \`adb shell screencap\` or scrcpy.
+  VESTI_CORES=N                       Cap QEMU cores (default: unset = all cores)
+  VESTI_NO_AUDIO=1                    Disable audio emulation
+  VESTI_NO_SNAPSHOT_SAVE=1            Don't save a snapshot on shutdown
+EOF
+}
+
+# Connected and online device ids (one per line).
+adb_connected() {
+  "$ADB" devices 2>/dev/null \
+    | tail -n +2 \
+    | awk '$2 == "device" {print $1}'
+}
+
+wait_for_boot() {
+  log "Waiting for $VESTI_DEVICE to finish booting..."
+  local boot
+  for _ in $(seq 1 60); do
+    boot=$("$ADB" -s "$VESTI_DEVICE" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r\n' || true)
+    [ "$boot" = "1" ] && { log "Booted."; return 0; }
+    sleep 5
+  done
+  err "Emulator failed to boot in 5 minutes. See $VESTI_LOG_DIR/emulator.log"
+  return 1
+}
+
+# Build the emulator CLI args from the VESTI_* env knobs.
+emulator_extra_args() {
+  local -a args=()
+  [ "$VESTI_NO_WINDOW" = "1" ] && args+=(-no-window)
+  [ "$VESTI_NO_AUDIO" = "1" ] && args+=(-no-audio)
+  [ "$VESTI_NO_SNAPSHOT_SAVE" = "1" ] && args+=(-no-snapshot-save)
+  [ -n "$VESTI_CORES" ] && args+=(-cores "$VESTI_CORES")
+  printf '%s\n' "${args[@]}"
+}
+
+# === emulator subcommand ====================================================
+
+emulator_start() {
+  mkdir -p "$VESTI_LOG_DIR"
+
+  if adb_connected | grep -qx "$VESTI_DEVICE"; then
+    log "Emulator $VESTI_DEVICE is already running."
+    return 0
+  fi
+
+  if pgrep -f "qemu-system.*$VESTI_AVD" >/dev/null; then
+    log "Emulator $VESTI_AVD is starting in the background; waiting for boot..."
+    wait_for_boot
+    return 0
+  fi
+
+  if [ ! -x "$EMU" ]; then
+    err "emulator binary not found at $EMU — set ANDROID_HOME"
+    return 1
+  fi
+
+  local extra
+  extra=$(emulator_extra_args)
+
+  log "Starting AVD $VESTI_AVD (logs: $VESTI_LOG_DIR/emulator.log)"
+  log "  -gpu $VESTI_GPU_MODE${extra:+ $extra}"
+  # Detach from the shell so the script can exit cleanly while the
+  # emulator keeps running.
+  # shellcheck disable=SC2086
+  nohup setsid "$EMU" -avd "$VESTI_AVD" -gpu "$VESTI_GPU_MODE" \
+    ${extra:+$extra} \
+    > "$VESTI_LOG_DIR/emulator.log" 2>&1 < /dev/null &
+  disown
+  wait_for_boot
+}
+
+emulator_stop() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    log "No emulator running on $VESTI_DEVICE."
+    return 0
+  fi
+
+  log "Stopping emulator $VESTI_DEVICE..."
+  "$ADB" -s "$VESTI_DEVICE" emu kill || true
+
+  # Clean stale AVD lock files from a previous interrupted run so the
+  # next start isn't blocked.
+  find "/run/user/$UID/avd/running" -name 'pid_*.ini' -delete 2>/dev/null || true
+  log "Stopped."
+}
+
+emulator_status() {
+  "$ADB" devices
+  if adb_connected | grep -qx "$VESTI_DEVICE"; then
+    local boot
+    boot=$("$ADB" -s "$VESTI_DEVICE" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r\n' || true)
+    log "Boot completed: ${boot:-?}"
+  fi
+}
+
+# Print the diagnostic signals most likely to explain emulator freezes.
+emulator_doctor() {
+  printf '== adb ==\n'
+  printf '  ANDROID_HOME=%s\n' "$ANDROID_HOME"
+  printf '  adb:  %s %s\n' "$ADB" "$([ -x "$ADB" ] && echo OK || echo MISSING)"
+  printf '  emu:  %s %s\n' "$EMU" "$([ -x "$EMU" ] && echo OK || echo MISSING)"
+
+  printf '\n== session ==\n'
+  printf '  XDG_SESSION_TYPE=%s\n' "${XDG_SESSION_TYPE:-?}"
+  printf '  DISPLAY=%s  WAYLAND_DISPLAY=%s\n' "${DISPLAY:-unset}" "${WAYLAND_DISPLAY:-unset}"
+  if pgrep -a Xwayland >/dev/null; then
+    printf '  Xwayland: running (Qt will fall back to XCB if no Wayland plugin)\n'
+  else
+    printf '  Xwayland: not running\n'
+  fi
+
+  printf '\n== Qt platform plugins ==\n'
+  local qt_plugins="$ANDROID_HOME/emulator/lib64/qt/plugins/platforms"
+  if [ -d "$qt_plugins" ]; then
+    ls "$qt_plugins" 2>/dev/null | sed 's/^/  /'
+  else
+    printf '  (emulator Qt plugins dir not found: %s)\n' "$qt_plugins"
+  fi
+  local emu_qt_ver sys_qt_ver
+  emu_qt_ver=$(strings "$ANDROID_HOME/emulator/lib64/qt/lib/libQt6CoreAndroidEmu.so.6" 2>/dev/null \
+    | grep -oE 'Qt 6\.[0-9]+\.[0-9]+' | sort -u | head -1)
+  if [ -n "$emu_qt_ver" ]; then
+    printf '  emulator Qt: %s\n' "$emu_qt_ver"
+  fi
+  if command -v qmake6 >/dev/null; then
+    sys_qt_ver=$(qmake6 -query QT_VERSION 2>/dev/null || true)
+  elif command -v qmake >/dev/null; then
+    sys_qt_ver=$(qmake -query QT_VERSION 2>/dev/null || true)
+  fi
+  [ -n "$sys_qt_ver" ] && printf '  system Qt:   %s\n' "$sys_qt_ver"
+  if [ -n "$emu_qt_ver" ] && [ -n "$sys_qt_ver" ]; then
+    local emu_minor="${emu_qt_ver#Qt 6.}" sys_minor="${sys_qt_ver#Qt 6.}"
+    if [ "$emu_minor" != "$sys_minor" ]; then
+      printf '  ABIs differ (%s vs %s) — system libqwayland.so will be rejected by the\n' "$emu_minor" "$sys_minor"
+      printf '  emulator Qt at load time. Native Wayland for the emulator requires the\n'
+      printf '  SDK to ship a Wayland plugin itself, which it currently does not.\n'
+      printf '  Workarounds: VESTI_NO_WINDOW=1 (headless) or VESTI_GPU_MODE=swiftshader_indirect.\n'
+    fi
+  fi
+
+  printf '\n== Vulkan ICDs ==\n'
+  if [ -d /usr/share/vulkan/icd.d ]; then
+    ls /usr/share/vulkan/icd.d 2>/dev/null | sed 's/^/  /' || true
+  fi
+  if command -v vulkaninfo >/dev/null; then
+    printf '\n== vulkaninfo summary ==\n'
+    vulkaninfo --summary 2>/dev/null | head -20 | sed 's/^/  /'
+  fi
+
+  printf '\n== AVDs ==\n'
+  if [ -x "$EMU" ]; then
+    "$EMU" -list-avds 2>/dev/null | sed 's/^/  /' || true
+  fi
+
+  printf '\n== adb devices ==\n'
+  "$ADB" devices | sed 's/^/  /'
+
+  printf '\n== Mutter ANR timeout ==\n'
+  if command -v gsettings >/dev/null && gsettings list-keys org.gnome.mutter 2>/dev/null \
+      | grep -q '^check-alive-timeout$'; then
+    local timeout
+    timeout=$(gsettings get org.gnome.mutter check-alive-timeout 2>/dev/null || echo '?')
+    printf '  org.gnome.mutter check-alive-timeout = %s\n' "$timeout"
+    if [ "$timeout" = "uint32 0" ]; then
+      printf '  (disabled — Mutter will not pop "app not responding" dialogs)\n'
+    else
+      printf '  Mutter shows the ANR dialog after this many ms of no ping response.\n'
+      printf '  If the emulator freezes trigger it, mute with:\n'
+      printf '    gsettings set org.gnome.mutter check-alive-timeout 0\n'
+      printf '  (revert with: gsettings reset org.gnome.mutter check-alive-timeout)\n'
+    fi
+  else
+    printf '  (gsettings not available or no GNOME session)\n'
+  fi
+
+  printf '\n== running emulator processes ==\n'
+  if pgrep -af "qemu-system.*$VESTI_AVD" >/dev/null; then
+    ps -o pid,pcpu,pmem,etime,comm -p "$(pgrep -f "qemu-system.*$VESTI_AVD" | tr '\n' ',' | sed 's/,$//')" \
+      | sed 's/^/  /'
+  else
+    printf '  (none)\n'
+  fi
+
+  printf '\n== last emulator log lines (GPU / host UI / Vulkan) ==\n'
+  if [ -f "$VESTI_LOG_DIR/emulator.log" ]; then
+    grep -E 'Selecting Vulkan device|useVulkanComposition|hardware rendering|Qt platform plugin|gpu info|guestVulkanOnly|Graphics Adapter' \
+      "$VESTI_LOG_DIR/emulator.log" | tail -20 | sed 's/^/  /'
+  else
+    printf '  (no log yet — start the emulator first)\n'
+  fi
+}
+
+cmd_emulator() {
+  local sub="${1:-help}"
+  shift || true
+  case "$sub" in
+    start)  emulator_start ;;
+    stop)   emulator_stop ;;
+    status) emulator_status ;;
+    doctor) emulator_doctor ;;
+    help|-h|--help) usage_emulator ;;
+    *) err "Unknown emulator command: $sub"; usage_emulator; return 1 ;;
+  esac
+}
+
+# === run subcommand =========================================================
+
+cmd_run() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    log "Emulator $VESTI_DEVICE is not running; starting it..."
+    emulator_start
+  fi
+
+  log "Assembling debug APK..."
+  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleDebug "$@"
+
+  if [ ! -f "$VESTI_APK_PATH" ]; then
+    err "APK not found at $VESTI_APK_PATH"
+    return 1
+  fi
+
+  log "Installing $VESTI_PACKAGE on $VESTI_DEVICE..."
+  "$ADB" -s "$VESTI_DEVICE" install -r -t "$VESTI_APK_PATH"
+
+  log "Launching $VESTI_PACKAGE..."
+  # `cmd package resolve-activity` returns "No activity found" for the
+  # suffixed debug id, so dispatch via monkey instead.
+  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1
+
+  log "Process status:"
+  "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
+}
+
+# === dispatch ===============================================================
+
+main() {
+  local cmd="${1:-help}"
+  shift || true
+  case "$cmd" in
+    emulator) cmd_emulator "$@" ;;
+    run)      cmd_run "$@" ;;
+    help|-h|--help) usage ;;
+    *) err "Unknown command: $cmd"; usage; return 1 ;;
+  esac
+}
+
+main "$@"

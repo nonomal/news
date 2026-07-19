@@ -1,5 +1,6 @@
 package org.vestifeed.feeds
 
+import java.text.NumberFormat
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
@@ -31,6 +32,7 @@ class FeedsAdapter(
     ) : RecyclerView.ViewHolder(
         binding.root,
     ) {
+        private val integerFormat = NumberFormat.getIntegerInstance()
 
         fun bind(item: Item) {
             binding.apply {
@@ -38,7 +40,7 @@ class FeedsAdapter(
                 secondaryText.text = item.selfLink.toString()
 
                 unreadCount.isVisible = item.unreadCount > 0
-                unreadCount.text = item.unreadCount.toString()
+                unreadCount.text = integerFormat.format(item.unreadCount)
 
                 actions.setOnClickListener {
                     val popup = PopupMenu(root.context, actions)

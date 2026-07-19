@@ -12,6 +12,7 @@
 #   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
 #   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
+#   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
@@ -21,6 +22,7 @@
 #   VESTI_PACKAGE        Application id (debug build) (default: org.vestifeed.debug)
 #   VESTI_LOG_DIR        Where to write emulator logs (default: /tmp/opencode)
 #   VESTI_APK_PATH       Debug APK to install         (default: <repo>/app/build/outputs/apk/debug/app-debug.apk)
+#   VESTI_RECORD_PATH    Output video for `e2e --record` (default: <repo>/e2e.mp4)
 #
 # Emulator tuning (only relevant for `emulator start` / `run`):
 #   VESTI_GPU_MODE       host | swiftshader_indirect | guest | auto  (default: host)
@@ -39,6 +41,8 @@ VESTI_DEVICE="${VESTI_DEVICE:-emulator-5554}"
 VESTI_PACKAGE="${VESTI_PACKAGE:-org.vestifeed.debug}"
 VESTI_LOG_DIR="${VESTI_LOG_DIR:-/tmp/opencode}"
 VESTI_APK_PATH="${VESTI_APK_PATH:-$SCRIPT_DIR/app/build/outputs/apk/debug/app-debug.apk}"
+VESTI_RECORD_PATH="${VESTI_RECORD_PATH:-$SCRIPT_DIR/e2e.mp4}"
+VESTI_RECORD_PID_FILE="${VESTI_RECORD_PID_FILE:-$VESTI_LOG_DIR/e2e-screenrecord.pid}"
 
 VESTI_GPU_MODE="${VESTI_GPU_MODE:-host}"
 VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
@@ -374,6 +378,26 @@ cmd_run() {
 }
 
 cmd_e2e() {
+  local record_path=""
+  local gradle_args=()
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --record)
+        record_path="${2:-$VESTI_RECORD_PATH}"
+        shift 2
+        ;;
+      --record=*)
+        record_path="${1#--record=}"
+        shift
+        ;;
+      *)
+        gradle_args+=("$1")
+        shift
+        ;;
+    esac
+  done
+
   if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
     err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
     return 1
@@ -381,11 +405,80 @@ cmd_e2e() {
 
   cmd_clean
 
+  if [ -n "$record_path" ]; then
+    start_screen_recording "$record_path" || return 1
+  fi
+
   log "Running authentication end-to-end test from a fresh install..."
+  set +e
   ANDROID_SERIAL="$VESTI_DEVICE" "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" \
     connectedDebugAndroidTest \
     "-Pandroid.testInstrumentationRunnerArguments.class=org.vestifeed.e2e.EmbeddedBackendTest" \
-    "$@"
+    "${gradle_args[@]}"
+  local status=$?
+  set -e
+
+  if [ -n "$record_path" ]; then
+    stop_screen_recording "$record_path" || true
+  fi
+
+  return "$status"
+}
+
+# === screen recording =======================================================
+
+screenrecord_supported() {
+  "$ADB" -s "$VESTI_DEVICE" shell which screenrecord >/dev/null 2>&1
+}
+
+start_screen_recording() {
+  local dest="$1"
+
+  if ! screenrecord_supported; then
+    err "screenrecord is not available on $VESTI_DEVICE"
+    return 1
+  fi
+
+  if [ -f "$dest" ]; then
+    rm -f "$dest"
+  fi
+  mkdir -p "$(dirname "$dest")"
+
+  log "Recording screen of $VESTI_DEVICE to $dest..."
+  "$ADB" -s "$VESTI_DEVICE" shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
+  "$ADB" -s "$VESTI_DEVICE" shell screenrecord --time-limit 600 --size 720x1280 --bit-rate 6000000 /sdcard/e2e.mp4 &
+  echo $! > "$VESTI_RECORD_PID_FILE"
+}
+
+stop_screen_recording() {
+  local dest="$1"
+
+  if [ ! -f "$VESTI_RECORD_PID_FILE" ]; then
+    return 0
+  fi
+  local pid
+  pid=$(cat "$VESTI_RECORD_PID_FILE")
+  rm -f "$VESTI_RECORD_PID_FILE"
+
+  # Wait for the recording process inside the device to finish a valid
+  # MP4 trailer; sending `INT` to the device-side process terminates it
+  # cleanly.
+  local device_pid
+  device_pid=$("$ADB" -s "$VESTI_DEVICE" shell pidof screenrecord 2>/dev/null | tr -d '\r')
+  if [ -n "$device_pid" ]; then
+    "$ADB" -s "$VESTI_DEVICE" shell "kill -INT $device_pid" >/dev/null 2>&1 || true
+  fi
+
+  # Wait for the local adb wrapper to exit so the trailer is written.
+  wait "$pid" 2>/dev/null || true
+
+  log "Pulling recording from device..."
+  "$ADB" -s "$VESTI_DEVICE" pull /sdcard/e2e.mp4 "$dest" || {
+    err "Failed to pull recording from device"
+    return 1
+  }
+  "$ADB" -s "$VESTI_DEVICE" shell rm -f /sdcard/e2e.mp4 >/dev/null 2>&1 || true
+  log "Saved recording to $dest"
 }
 
 # === clean subcommand =======================================================

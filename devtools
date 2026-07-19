@@ -11,6 +11,7 @@
 #   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
 #   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
 #   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
+#   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
@@ -69,7 +70,7 @@ log() { printf '==> %s\n' "$*"; }
 err() { printf 'error: %s\n' "$*" >&2; }
 
 usage() {
-  sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 usage_emulator() {
@@ -372,6 +373,21 @@ cmd_run() {
   "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
 }
 
+cmd_e2e() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+    return 1
+  fi
+
+  cmd_clean
+
+  log "Running authentication end-to-end test from a fresh install..."
+  ANDROID_SERIAL="$VESTI_DEVICE" "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" \
+    connectedDebugAndroidTest \
+    "-Pandroid.testInstrumentationRunnerArguments.class=org.vestifeed.e2e.EmbeddedBackendTest" \
+    "$@"
+}
+
 # === clean subcommand =======================================================
 
 cmd_clean() {
@@ -404,6 +420,7 @@ main() {
   case "$cmd" in
     emulator) cmd_emulator "$@" ;;
     run)      cmd_run "$@" ;;
+    e2e)      cmd_e2e "$@" ;;
     clean)    cmd_clean ;;
     help|-h|--help) usage ;;
     *) err "Unknown command: $cmd"; usage; return 1 ;;

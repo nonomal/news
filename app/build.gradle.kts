@@ -60,7 +60,8 @@ dependencies {
     implementation(libs.androidx.sqlite)
     implementation(libs.androidx.sqlite.framework)
     testImplementation(libs.androidx.sqlite.bundled.jvm)
-    debugImplementation(libs.androidx.fragment.testing)
+    debugImplementation(libs.androidx.fragment.testing.manifest)
+    androidTestImplementation(libs.androidx.fragment.testing)
     implementation(libs.androidx.work)
     androidTestImplementation(libs.androidx.work.testing)
     implementation(libs.androidx.browser)
@@ -93,6 +94,8 @@ dependencies {
 
     // Instrumented tests
     androidTestImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)
 }

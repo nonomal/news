@@ -3,11 +3,10 @@ package org.vestifeed.sync
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.work.ListenableWorker
 import androidx.work.testing.TestWorkerBuilder
-import app.App
-import conf.ConfRepo
-import di.Di
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.vestifeed.app.App
 
 class SyncWorkerTest {
 
@@ -17,15 +16,14 @@ class SyncWorkerTest {
     fun setup() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         app = instrumentation.targetContext.applicationContext as App
+        app.db.conf.update { it.copy(backend = null) }
     }
 
     @Test
-    fun retryIfInitialSyncIncomplete() {
-        val confRepo = Di.get(ConfRepo::class.java)
-        confRepo.update { it.copy(initial_sync_completed = false) }
+    fun failureWithoutBackend() {
         val workerBuilder = TestWorkerBuilder.from(app, SyncWorker::class.java)
         val worker = workerBuilder.build()
         val result = worker.doWork()
-        assert(result is ListenableWorker.Result.Retry)
+        assertTrue(result is ListenableWorker.Result.Failure)
     }
 }

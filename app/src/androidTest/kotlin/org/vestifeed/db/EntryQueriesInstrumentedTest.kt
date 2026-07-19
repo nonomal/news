@@ -7,7 +7,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.vestifeed.app.db
-import org.vestifeed.db.table.Feed
+import org.vestifeed.db.table.EntryTable.Entry
+import org.vestifeed.db.table.FeedTable.Feed
 import java.time.OffsetDateTime
 import java.util.UUID
 
@@ -43,14 +44,12 @@ class EntryQueriesInstrumentedTest {
 
 private fun createFeed(
     id: String = UUID.randomUUID().toString(),
-    links: List<Link> = emptyList(),
     title: String = "Test Feed",
     extOpenEntriesInBrowser: Boolean? = null,
     extBlockedWords: String = "",
     extShowPreviewImages: Boolean? = null,
 ) = Feed(
     id = id,
-    links = links,
     title = title,
     extOpenEntriesInBrowser = extOpenEntriesInBrowser,
     extBlockedWords = extBlockedWords,
@@ -61,7 +60,6 @@ private fun entry() = Entry(
     contentType = "",
     contentSrc = "",
     contentText = "",
-    links = emptyList(),
     summary = "",
     id = UUID.randomUUID().toString(),
     feedId = "",
@@ -73,7 +71,6 @@ private fun entry() = Entry(
     extReadSynced = true,
     extBookmarked = false,
     extBookmarkedSynced = true,
-    extNextcloudGuidHash = "",
     extCommentsUrl = "",
     extOpenGraphImageChecked = true,
     extOpenGraphImageUrl = "",

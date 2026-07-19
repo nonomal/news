@@ -6,7 +6,6 @@
     <string name="settings">Настройки</string>
     <string name="unread">Непрочитане</string>
     <string name="show_read_news">Показать прочитанные новости</string>
-    <string name="hide_read_news">Скрыть прочитанные новости</string>
     <string name="bookmark">Закладка</string>
     <string name="remove_bookmark">Удалить закладку</string>
     <string name="logo">Логотип</string>
@@ -15,8 +14,6 @@
     <string name="cancel">Отмена</string>
     <string name="direct_login_failed">Не удалось подключиться к серверу. Пожалуйста, убедитесь, что ваши данные для входа в систему правильные.</string>
     <string name="server_url_hint">https://example.com</string>
-    <string name="username">Имя пользователя</string>
-    <string name="password">Пароль</string>
     <string name="api_token">API токен</string>
     <string name="news_list_is_empty">Список новостей пуст</string>
     <string name="you_have_no_bookmarks">У вас нет закладок</string>
@@ -43,8 +40,6 @@
     <string name="delete_all_data_warning">Это действие сбросит приложение и удалит все данные.</string>
     <string name="standalone_mode">Автономный режим</string>
     <string name="open_in_browser">Открыть в браузере</string>
-    <string name="show_newest_first">Сначала показать новые</string>
-    <string name="show_oldest_first">Сначала показать старые</string>
     <string name="marked_as_read">Помечено как прочитанное</string>
     <string name="bookmarked">Добавлено в закладки</string>
     <string name="search">Поиск</string>
@@ -53,10 +48,8 @@
     <string name="import_feeds_from_opml_file">Импорт из файла OPML</string>
     <string name="export_feeds_to_opml_file">Экспорт в файл OPML</string>
     <string name="undo">Отменить</string>
-    <string name="retry">Повторить</string>
     <string name="importing_feeds_n_of_n">Импорт лент (%1$d из %2$d)</string>
     <string name="initial_sync">Початкова синхронізація</string>
-    <string name="mark_scrolled_entries_as_read">Отметить прокрученные записи прочитанными</string>
     <string name="open_feed_settings">Открыть настройки ленты</string>
     <string name="fetch_news_on_startup">Получать новости при запуске</string>
     <string name="open_entries_in_browser">Открывать записи в браузере</string>
@@ -70,7 +63,6 @@
     <string name="mark_all_as_read">Пометить все как прочитанные</string>
     <string name="unread_news">Непрочитанные новости</string>
     <string name="got_exception_of_class_s">%1$s получено. Подробности в журнале исключений</string>
-    <string name="trust_self_signed_certificates">Доверять самоподписанным сертификатам</string>
     <string name="you_have_no_feeds">You have no feeds</string>
     <string name="export_database">Export database</string>
     <string name="preview_images">Preview images</string>
@@ -84,12 +76,9 @@
     <string name="enclosures">Enclosures</string>
     <string name="manage_enclosures">Manage enclosures</string>
     <string name="connect_to_miniflux">Connect to Miniflux</string>
-    <string name="connect_to_nextcloud">Connect to Nextcloud</string>
     <string name="connect">Connect</string>
     <string name="invalid_url">Invalid URL</string>
     <string name="audio_n">Audio %1$d</string>
-    <string name="crash_title">The app has crashed</string>
-    <string name="crash_summary">You can let us know about that by sharing your crash report</string>
     <string name="this_entry_doesnt_have_any_external_links">This entry doesn\'t have any external links</string>
     <string name="required_argument_is_missing">Відсутній обов\'язковий аргумент: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>

@@ -124,123 +124,47 @@ org.vestifeed.app/src/androidTest/kotlin/       # Instrumented tests
 Use the Android emulator when you need a real Android runtime for crash
 reproduction, log capture, or manual UI checks.
 
-### Android SDK tool locations
-On this workstation, `adb` is installed at
-`$HOME/Android/Sdk/platform-tools/adb`. It may not be on `PATH`, and
-`ANDROID_HOME` may be unset. Either use the full path directly or initialize
-the shell before running the commands below:
+All emulator interaction goes through the `./devtools` CLI in the repo root.
+Don't invoke `adb` or the `emulator` binary directly — the CLI encodes the
+defaults the agent would otherwise have to memorise (AVD/device id, package
+id, quickboot snapshot handling, the `monkey`-vs-`resolve-activity` launch
+quirk). If a workflow you need isn't covered, add a subcommand to `devtools`
+rather than reaching for `adb` directly — the CLI is the only supported
+surface.
 
 ```bash
-export ANDROID_HOME="$HOME/Android/Sdk"
-export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-adb devices
+./devtools emulator start                         # boot the AVD (loads default_boot snapshot if present)
+./devtools emulator status                       # confirm the device is online and booted
+./devtools emulator stop                         # shut down cleanly via `adb emu kill`
+./devtools emulator doctor                       # diagnose Wayland / GPU / Qt-plugin freezes
+./devtools emulator screencap /tmp/foo.png       # capture a screenshot from the device
+./devtools emulator snapshot save                # freeze current state as the default_boot snapshot
+./devtools emulator snapshot delete              # wipe a stale default_boot snapshot
+./devtools run                                   # assemble debug APK, install it, launch it
+./devtools clean                                 # uninstall the debug APK from a running emulator
 ```
 
-### Listing available AVDs
-```bash
-$ANDROID_HOME/emulator/emulator -list-avds
-# or, if `emulator` is on $PATH:
-emulator -list-avds
-```
+### Useful tunables
+Set these env vars before `./devtools emulator start` or `./devtools run`:
 
-### Cold-booting an AVD with a window
-The first invocation must be detached from the opencode shell, otherwise the
-shell wrapper times out and the emulator is killed when the call returns.
-Use `nohup setsid` redirected away from the tool's stdout:
-
-```bash
-nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro -gpu host \
-    > /tmp/opencode/pixel9-emulator.log 2>&1 < /dev/null &
-disown
-```
-
-Always pass `-gpu host`. Without it, recent emulator builds (≥ 36.x) probe the
-host GPU and self-disable hardware rendering on AMD/Intel drivers they don't
-recognise, falling back to `lavapipe` (CPU Vulkan) + `swangle`. The QEMU
-process then pegs multiple cores per frame, the guest's `99th gpu percentile`
-climbs to several seconds, and Mutter starts reporting the AVD window as
-"app is unresponsive" every few seconds. Verify the fix landed by checking
-the log for `Selecting Vulkan device:` (should mention a real GPU, not
-`llvmpipe`) and that `ps -o pcpu=` on `qemu-system-x86` stays under ~100%.
-
-Headless mode (`-no-window`) is acceptable for adb-only flows but produces no
-usable screenshot for visual verification. Drop `-no-window` when you need to
-see the device.
+- `VESTI_GPU_MODE=swiftshader_indirect` — fall back to software host GL
+  when the default `-gpu host` is unstable on this machine (recent emulator
+  builds ≥ 36.x probe the host GPU and self-disable rendering on
+  AMD/Intel drivers they don't recognise, which is what triggers the
+  Mutter "app is unresponsive" loop)
+- `VESTI_NO_WINDOW=1` — run headless; suppresses the Mutter ANR dialogs
+  the wedged emulator Qt/XCB thread otherwise triggers under Wayland
+- `VESTI_CORES=N` — cap QEMU cores when ANRs trip on overload
 
 ### Quickboot (snapshot) workflow
-Cold boot is 12–30 s; quickboot from a saved `default_boot` snapshot is ~8 s
-(~1.8 s of which is loading the snapshot itself). On the **first** launch the
-emulator has no snapshot and falls back to cold boot. After it has booted
-cleanly once, save a snapshot and use that on every subsequent launch:
-
-```bash
-# 1. Boot once with no existing snapshot (cold). Wait for sys.boot_completed.
-# 2. Install the debug build, launch it, and let any first-run setup finish.
-# 3. Save the snapshot so the NEXT launch uses quickboot.
-adb -s emulator-5554 emu avd snapshot save default_boot
-
-# 4. From now on, the same launch command below loads the snapshot in ~2 s
-#    instead of running a full boot. Do NOT pass -no-snapshot or -no-snapshot-load.
-nohup setsid $ANDROID_HOME/emulator/emulator -avd Pixel_9_Pro -gpu host \
-    > /tmp/opencode/pixel9-emulator.log 2>&1 < /dev/null &
-disown
-```
-
-Stale snapshot symptoms — if the log shows `Failed to load snapshot
-'default_boot'` / `Error -1 from the snapshot callback`, the saved image no
-longer matches (typically after an emulator/system-image upgrade or a package
-install that broke the saved memory state). To recover:
-
-```bash
-rm -rf ~/.android/avd/Pixel_9_Pro.avd/snapshots/default_boot
-# then re-do steps 1–3 above.
-```
-
-Re-save the snapshot whenever you make persistent system-level changes inside
-the AVD (install debug APKs that touch system state, change `adb shell pm`
-defaults, etc.); a normal app `install -r` does not invalidate it.
-
-Wait for boot completion before continuing:
-```bash
-for i in $(seq 1 30); do
-    boot=$(adb -s emulator-5554 shell getprop sys.boot_completed | tr -d '\r\n')
-    [ "$boot" = "1" ] && { echo "boot in ${i}*5s"; break; }
-    sleep 5
-done
-adb devices  # expect `emulator-5554    device`
-```
-
-### Installing and launching the debug build
-The debug variant has `applicationIdSuffix = ".debug"`, so the package id is
-`org.vestifeed.debug` and the launchable component is
-`org.vestifeed.navigation.Activity`. The launcher query
-`cmd package resolve-activity --brief -c android.intent.category.LAUNCHER`
-often returns "No activity found" for the suffixed id; launch via `monkey`
-instead:
-
-```bash
-adb -s emulator-5554 install -r -t app/build/outputs/apk/debug/app-debug.apk
-adb -s emulator-5554 shell monkey -p org.vestifeed.debug \
-    -c android.intent.category.LAUNCHER 1
-adb -s emulator-5554 shell ps -A | grep vesti   # confirm process is alive
-```
-
-### Capturing a screenshot
-```bash
-adb -s emulator-5554 shell screencap -p /sdcard/vesti.png
-adb -s emulator-5554 pull /sdcard/vesti.png /tmp/opencode/vesti.png
-```
-
-### Stopping the emulator
-Always shut down via adb so the AVD lock files and GRPC server are released
-cleanly; raw `pkill` can leave the next boot slow:
-
-```bash
-adb -s emulator-5554 emu kill
-```
-
-If a previous launch was killed mid-startup, also clean the lock file under
-`/run/user/$UID/avd/running/pid_<pid>.ini` so the next start is not blocked.
+Cold boot is 12–30 s; quickboot from a saved `default_boot` snapshot is ~8 s.
+On the first launch the emulator has no snapshot and cold-boots. Once boot
+is clean and any first-run setup has finished, `./devtools emulator snapshot
+save` freezes that state for every subsequent start. If the log shows
+`Failed to load snapshot 'default_boot'` after an emulator or system-image
+upgrade, run `./devtools emulator snapshot delete` and re-save after the
+next cold boot. Logs land in `$VESTI_LOG_DIR/emulator.log` (default
+`/tmp/opencode/`).
 
 ## Dependency Upgrades
 

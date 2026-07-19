@@ -3,11 +3,15 @@
 # devtools — manage the Vesti Android dev environment.
 #
 # Usage:
-#   ./devtools emulator start    Boot the AVD (default_boot snapshot if present)
-#   ./devtools emulator stop     Shut the emulator down cleanly
-#   ./devtools emulator status   Show ADB device list and boot state
-#   ./devtools emulator doctor   Diagnose Wayland / GPU / Qt plugin issues
-#   ./devtools run [-- ...]      Assemble debug APK, install it on the emulator, launch it
+#   ./devtools emulator start                 Boot the AVD (default_boot snapshot if present)
+#   ./devtools emulator stop                  Shut the emulator down cleanly
+#   ./devtools emulator status                Show ADB device list and boot state
+#   ./devtools emulator doctor                Diagnose Wayland / GPU / Qt plugin issues
+#   ./devtools emulator screencap [path]      Capture the device screen to PATH
+#   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
+#   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
+#   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
+#   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
 #   ANDROID_HOME         Android SDK root             (default: $HOME/Android/Sdk)
@@ -65,7 +69,7 @@ log() { printf '==> %s\n' "$*"; }
 err() { printf 'error: %s\n' "$*" >&2; }
 
 usage() {
-  sed -n '2,16p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 usage_emulator() {
@@ -73,16 +77,20 @@ usage_emulator() {
 Usage: ./devtools emulator <command>
 
 Commands:
-  start    Boot the AVD (uses default_boot snapshot if present)
-  stop     Shut the emulator down cleanly via \`adb emu kill\`
-  status   Show ADB device list and boot state
-  doctor   Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
+  start                          Boot the AVD (uses default_boot snapshot if present)
+  stop                           Shut the emulator down cleanly via \`adb emu kill\`
+  status                         Show ADB device list and boot state
+  doctor                         Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
+  screencap [path]               Capture the device screen to PATH
+                                 (default: $VESTI_LOG_DIR/vesti.png)
+  snapshot save                  Save the current state as the default_boot quickboot snapshot
+  snapshot delete                Remove a stale default_boot snapshot
 
 Common tunables (env vars):
   VESTI_GPU_MODE=swiftshader_indirect  Force software GL (slower, but works around
                                        a broken host GPU context)
   VESTI_NO_WINDOW=1                   Run headless; eliminates Mutter ANR dialogs.
-                                       View screen via \`adb shell screencap\` or scrcpy.
+                                       View screen via \`./devtools emulator screencap\` or scrcpy.
   VESTI_CORES=N                       Cap QEMU cores (default: unset = all cores)
   VESTI_NO_AUDIO=1                    Disable audio emulation
   VESTI_NO_SNAPSHOT_SAVE=1            Don't save a snapshot on shutdown
@@ -275,14 +283,62 @@ emulator_doctor() {
   fi
 }
 
+emulator_screencap() {
+  local dest="${1:-$VESTI_LOG_DIR/vesti.png}"
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+    return 1
+  fi
+  mkdir -p "$(dirname "$dest")"
+  log "Capturing screen of $VESTI_DEVICE to $dest..."
+  "$ADB" -s "$VESTI_DEVICE" shell screencap -p /sdcard/vesti.png
+  "$ADB" -s "$VESTI_DEVICE" pull /sdcard/vesti.png "$dest"
+  log "Saved to $dest"
+}
+
+emulator_snapshot() {
+  local action="${1:-help}"
+  shift || true
+  case "$action" in
+    save)
+      if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+        err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+        return 1
+      fi
+      log "Saving snapshot default_boot on $VESTI_DEVICE..."
+      "$ADB" -s "$VESTI_DEVICE" emu avd snapshot save default_boot
+      log "Saved. Future starts will quickboot from this snapshot."
+      ;;
+    delete)
+      local snap_dir="$HOME/.android/avd/$VESTI_AVD.avd/snapshots/default_boot"
+      if [ -d "$snap_dir" ]; then
+        log "Removing stale snapshot: $snap_dir"
+        rm -rf "$snap_dir"
+        log "Removed. The next start will cold-boot."
+      else
+        log "No snapshot to remove at $snap_dir"
+      fi
+      ;;
+    help|-h|--help)
+      printf 'Usage: ./devtools emulator snapshot <save|delete>\n'
+      ;;
+    *)
+      err "Unknown snapshot action: $action"
+      return 1
+      ;;
+  esac
+}
+
 cmd_emulator() {
   local sub="${1:-help}"
   shift || true
   case "$sub" in
-    start)  emulator_start ;;
-    stop)   emulator_stop ;;
-    status) emulator_status ;;
-    doctor) emulator_doctor ;;
+    start)     emulator_start ;;
+    stop)      emulator_stop ;;
+    status)    emulator_status ;;
+    doctor)    emulator_doctor ;;
+    screencap) emulator_screencap "$@" ;;
+    snapshot)  emulator_snapshot "$@" ;;
     help|-h|--help) usage_emulator ;;
     *) err "Unknown emulator command: $sub"; usage_emulator; return 1 ;;
   esac
@@ -316,6 +372,30 @@ cmd_run() {
   "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
 }
 
+# === clean subcommand =======================================================
+
+cmd_clean() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+    return 1
+  fi
+
+  if ! "$ADB" -s "$VESTI_DEVICE" shell pm list packages "$VESTI_PACKAGE" 2>/dev/null \
+      | tr -d '\r' | grep -qx "package:$VESTI_PACKAGE"; then
+    log "$VESTI_PACKAGE is not installed on $VESTI_DEVICE. Nothing to do."
+    return 0
+  fi
+
+  log "Uninstalling $VESTI_PACKAGE from $VESTI_DEVICE..."
+  local result
+  if result=$("$ADB" -s "$VESTI_DEVICE" uninstall "$VESTI_PACKAGE" 2>&1); then
+    log "$result"
+  else
+    err "Uninstall failed: $result"
+    return 1
+  fi
+}
+
 # === dispatch ===============================================================
 
 main() {
@@ -324,6 +404,7 @@ main() {
   case "$cmd" in
     emulator) cmd_emulator "$@" ;;
     run)      cmd_run "$@" ;;
+    clean)    cmd_clean ;;
     help|-h|--help) usage ;;
     *) err "Unknown command: $cmd"; usage; return 1 ;;
   esac

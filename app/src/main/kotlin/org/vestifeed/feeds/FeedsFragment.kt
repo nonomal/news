@@ -84,7 +84,7 @@ class FeedsFragment : AppFragment() {
         }
 
     private val exportFeedsLauncher =
-        registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
+        registerForActivityResult(ActivityResultContracts.CreateDocument("text/x-opml")) { uri ->
             if (uri != null) {
                 exportOpml(requireContext().contentResolver.openOutputStream(uri)!!)
             }

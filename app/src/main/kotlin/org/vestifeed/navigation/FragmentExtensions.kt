@@ -11,7 +11,7 @@ import org.vestifeed.dialog.showErrorDialog
 
 fun Fragment.showKeyboard(view: View) {
     val inputManager = requireContext().getSystemService<InputMethodManager>()!!
-    inputManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+    inputManager.showSoftInput(view, 0)
 }
 
 fun Fragment.hideKeyboard(view: View) {

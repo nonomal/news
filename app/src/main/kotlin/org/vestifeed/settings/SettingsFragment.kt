@@ -172,7 +172,7 @@ class SettingsFragment : AppFragment() {
     }
 
     private fun createExportDbLauncher(): ActivityResultLauncher<String> {
-        return registerForActivityResult(ActivityResultContracts.CreateDocument()) { uri ->
+        return registerForActivityResult(ActivityResultContracts.CreateDocument("application/x-sqlite3")) { uri ->
             if (uri == null) {
                 return@registerForActivityResult
             }

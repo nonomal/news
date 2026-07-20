@@ -95,6 +95,8 @@ class MinifluxAuthFragment : AppFragment() {
                     )
                 }
 
+                AuthEvents.reset()
+
                 val syncScheduler = BackgroundSyncScheduler(requireContext())
                 syncScheduler.schedule()
 

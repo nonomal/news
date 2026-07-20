@@ -6,6 +6,7 @@ import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.vestifeed.BuildConfig
+import org.vestifeed.auth.AuthEvents
 import org.vestifeed.http.tokenAuthInterceptor
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -34,6 +35,11 @@ private fun errorInterceptor(): Interceptor {
         val response = chain.proceed(request)
 
         if (!response.isSuccessful) {
+            if (response.code == 401) {
+                AuthEvents.reportInvalidated()
+                throw MinifluxUnauthenticatedException(request.url.toString())
+            }
+
             val bodyString = response.body.string()
             val errorMessage = runCatching {
                 val json = Gson().fromJson(bodyString, JsonObject::class.java)

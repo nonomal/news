@@ -68,6 +68,8 @@ class AuthFragment : AppFragment() {
                 )
             }
 
+            AuthEvents.reset()
+
             syncScheduler.schedule()
 
             parentFragmentManager.commit {

@@ -6,17 +6,25 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.navigation.NavigationBarView.OnItemReselectedListener
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
+import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
+import org.vestifeed.auth.AuthEvents
+import org.vestifeed.auth.AuthFragment
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.databinding.ActivityBinding
 import org.vestifeed.entries.EntriesFilter
@@ -100,6 +108,38 @@ class Activity : AppCompatActivity() {
                 }
             }
         }
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                AuthEvents.invalidationCount
+                    .filter { it > 0 }
+                    .collect { logOut() }
+            }
+        }
+    }
+
+    private fun logOut() {
+        val db = (applicationContext as App).db
+
+        if (db.conf.select().backend == null) {
+            return
+        }
+
+        db.conf.delete()
+        db.transaction {
+            db.feed.deleteAll()
+            db.entry.deleteAll()
+        }
+
+        supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+
+        supportFragmentManager.commit {
+            replace(
+                R.id.fragmentContainerView, AuthFragment::class.java, null
+            )
+        }
+
+        binding.bottomNav.isVisible = false
     }
 
     override fun onStart() {

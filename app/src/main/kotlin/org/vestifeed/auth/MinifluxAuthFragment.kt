@@ -124,9 +124,13 @@ class MinifluxAuthFragment : AppFragment() {
             else -> null
         }
 
-        urlLayout.error = when (binding.url.text.toString().toHttpUrlOrNull()) {
-            null -> getString(R.string.invalid_url)
-            else -> null
+        if (urlLayout.error == null) {
+            val parsed = binding.url.text.toString().toHttpUrlOrNull()
+            urlLayout.error = when {
+                parsed == null -> getString(R.string.invalid_url)
+                !parsed.isHttps -> getString(R.string.invalid_url)
+                else -> null
+            }
         }
 
         if (binding.token.text.isNullOrEmpty()) {

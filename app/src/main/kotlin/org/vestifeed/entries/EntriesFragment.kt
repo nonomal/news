@@ -18,13 +18,11 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
-import org.vestifeed.BuildConfig
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.dialog.showErrorDialog
-import org.vestifeed.log.LogFragment
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.settings.SettingsFragment
 
@@ -115,7 +113,6 @@ class EntriesFragment : AppFragment() {
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.settings -> openFragment(SettingsFragment::class.java)
-                R.id.logs -> if (BuildConfig.DEBUG) openFragment(LogFragment::class.java) else false
                 else -> false
             }
         }

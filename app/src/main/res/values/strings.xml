@@ -76,9 +76,6 @@
     <string name="show_preview_text">Show preview text</string>
     <string name="enclosures">Enclosures</string>
     <string name="manage_enclosures">Manage enclosures</string>
-    <string name="logs" translatable="false">Logs</string>
-    <string name="clear_logs" translatable="false">Clear logs</string>
-    <string name="clear_logs_warning" translatable="false">Are you sure you want to clear all logs?</string>
     <string name="connect_to_miniflux">Connect to Miniflux</string>
     <string name="connect">Connect</string>
     <string name="invalid_url">Invalid URL</string>

@@ -3,8 +3,6 @@ package org.vestifeed.backend
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.vestifeed.db.Database
-import org.vestifeed.db.table.LogTable
-import org.vestifeed.log.LogLevel
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -153,32 +151,11 @@ internal class MinifluxSync(private val api: Miniflux, private val db: Database)
                     }
                 }
             }
-            db.log.insert(
-                LogTable.InsertArgs(
-                    level = LogLevel.INFO,
-                    tag = "miniflux_sync",
-                    message = "Syncing changed entries",
-                )
-            )
             var changedAfter =
                 OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
-            db.log.insert(
-                LogTable.InsertArgs(
-                    level = LogLevel.INFO,
-                    tag = "miniflux_sync",
-                    message = "changedAfter = $changedAfter",
-                )
-            )
             val batchSize = 100L
             while (true) {
                 val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
-                db.log.insert(
-                    LogTable.InsertArgs(
-                        level = LogLevel.INFO,
-                        tag = "miniflux_sync",
-                        message = "Got ${currentBatch.size} changed entries",
-                    )
-                )
                 if (currentBatch.isEmpty()) {
                     break
                 } else {
@@ -188,13 +165,6 @@ internal class MinifluxSync(private val api: Miniflux, private val db: Database)
                             db.entry.insertOrReplace(listOf(it.first))
                             db.link.insertForEntry(it.first.id, it.second)
                         }
-                        db.log.insert(
-                            LogTable.InsertArgs(
-                                level = LogLevel.INFO,
-                                tag = "miniflux_sync",
-                                message = "Bumping lastEntriesSyncDatetime to $newChangedAfter",
-                            )
-                        )
                         db.conf.update {
                             it.copy(
                                 minifluxIncrementalSyncTimestamp = newChangedAfter.toString(),

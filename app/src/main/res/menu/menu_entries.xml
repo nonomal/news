@@ -20,12 +20,6 @@
         app:showAsAction="never" />
 
     <item
-        android:id="@+id/logs"
-        android:icon="@drawable/ic_notes"
-        android:title="@string/logs"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/settings"
         android:title="@string/settings"
         app:showAsAction="never" />

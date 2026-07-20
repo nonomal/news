@@ -32,7 +32,6 @@ import org.vestifeed.databinding.FragmentSettingsBinding
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.enclosures.EnclosuresFragment
-import org.vestifeed.log.LogFragment
 import org.vestifeed.sync.BackgroundSyncScheduler
 import java.util.concurrent.TimeUnit
 
@@ -285,13 +284,6 @@ class SettingsFragment : AppFragment() {
         manageEnclosures.setOnClickListener {
             parentFragmentManager.commit {
                 replace(R.id.fragmentContainerView, EnclosuresFragment::class.java, null)
-                addToBackStack(null)
-            }
-        }
-
-        viewLogs.setOnClickListener {
-            parentFragmentManager.commit {
-                replace(R.id.fragmentContainerView, LogFragment::class.java, null)
                 addToBackStack(null)
             }
         }

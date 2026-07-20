@@ -16,9 +16,7 @@ import okhttp3.Request
 import org.jsoup.Jsoup
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.LogTable
 import org.vestifeed.http.await
-import org.vestifeed.log.LogLevel
 import org.vestifeed.parser.AtomLinkRel
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
@@ -69,15 +67,6 @@ class OpenGraphImageFetcher(
     }
 
     private suspend fun fetchEntryImage(entry: EntryTable.EntryWithoutContent): Boolean {
-        withContext(Dispatchers.IO) {
-            db.log.insert(
-                LogTable.InsertArgs(
-                    level = LogLevel.DEBUG,
-                    tag = "OpenGraphImageFetcher",
-                    message = "Trying to fetch an image for entry ${entry.id} (${entry.title})",
-                )
-            )
-        }
         val links = withContext(Dispatchers.IO) {
             db.link.selectByEntryId(entry.id)
         }

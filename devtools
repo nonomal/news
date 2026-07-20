@@ -46,7 +46,6 @@ VESTI_APK_PATH="${VESTI_APK_PATH:-$SCRIPT_DIR/app/build/outputs/apk/debug/app-de
 VESTI_RECORD_PATH="${VESTI_RECORD_PATH:-$SCRIPT_DIR/e2e.mp4}"
 VESTI_RECORD_PID_FILE="${VESTI_RECORD_PID_FILE:-$VESTI_LOG_DIR/e2e-screenrecord.pid}"
 VESTI_ENV_FILE="${VESTI_ENV_FILE:-$SCRIPT_DIR/.env}"
-VESTI_SEED_DB="${VESTI_SEED_DB:-$VESTI_LOG_DIR/vesti-seed.db}"
 
 VESTI_GPU_MODE="${VESTI_GPU_MODE:-host}"
 VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
@@ -653,154 +652,51 @@ ensure_env_in_gitignore() {
   printf '%s\n' "$entry" >> "$gi"
 }
 
-# Build a SQLite database at $VESTI_SEED_DB containing the full Vesti schema
-# and a single conf row configured for Miniflux. The user_version is set to 1
-# so the app's migrate() function treats the file as already-migrated.
-build_seed_db() {
+# Launch the freshly installed app once so Database.migrate() (App.kt:28 ->
+# Database.kt:23) creates the schema and vesti.db appears on disk, force-stop
+# the app to release the file, then INSERT OR REPLACE the Miniflux credentials
+# into the conf row via run-as + sqlite3.
+#
+# The 7 INTEGER NOT NULL columns mirror ConfTable.defaultConf() (ConfTable.kt:28)
+# because ConfTable.toConf() (ConfTable.kt:72) calls getInt(N) with no NULL
+# fallback, and update() (ConfTable.kt:123) does INSERT OR REPLACE on every
+# save — a row with NULLs there would throw on read or break a later settings
+# change.
+prime_conf_row() {
   local url="$1" token="$2"
-  local sqlite
-  sqlite="$(command -v sqlite3 || true)"
-  if [ -z "$sqlite" ]; then
-    err "sqlite3 not found on PATH; install it (apt install sqlite3) and retry"
+  local db_path="/data/data/$VESTI_PACKAGE/databases/vesti.db"
+
+  log "Launching $VESTI_PACKAGE so it can create the database schema..."
+  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null
+
+  log "Waiting for $db_path to appear on the device..."
+  local i
+  for i in $(seq 1 60); do
+    if "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'test -f $db_path && echo yes'" \
+        | tr -d '\r' | grep -qx yes; then
+      break
+    fi
+    sleep 1
+  done
+  if ! "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'test -f $db_path && echo yes'" \
+      | tr -d '\r' | grep -qx yes; then
+    err "$db_path was not created by the app after 60s"
     return 1
   fi
 
-  # Double single quotes per the SQL standard so user-supplied values can
-  # safely contain apostrophes. We deliberately avoid `\` escapes because
-  # SQLite does not interpret them inside string literals.
+  log "Force-stopping $VESTI_PACKAGE to release the database file..."
+  "$ADB" -s "$VESTI_DEVICE" shell am force-stop "$VESTI_PACKAGE" >/dev/null
+
+  # SQL standard: double single quotes so apostrophes in the URL/token don't
+  # break the literal. SQLite does not interpret `\` escapes inside string
+  # literals, so we avoid them on purpose.
   local url_lit token_lit
   url_lit="${url//\'/\'\'}"
   token_lit="${token//\'/\'\'}"
 
-  mkdir -p "$(dirname "$VESTI_SEED_DB")"
-  rm -f "$VESTI_SEED_DB"
-
-  log "Building seed database at $VESTI_SEED_DB..."
-
-  "$sqlite" "$VESTI_SEED_DB" <<SQL
-PRAGMA user_version = 1;
-
-CREATE TABLE feed (
-    id TEXT PRIMARY KEY NOT NULL,
-    title TEXT NOT NULL,
-    ext_open_entries_in_browser INTEGER,
-    ext_blocked_words TEXT,
-    ext_show_preview_images INTEGER
-) STRICT;
-
-CREATE TABLE entry (
-    content_type TEXT,
-    content_src TEXT,
-    content_text TEXT,
-    summary TEXT,
-    id TEXT PRIMARY KEY NOT NULL,
-    feed_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    published TEXT NOT NULL,
-    updated TEXT NOT NULL,
-    author_name TEXT NOT NULL,
-    ext_read INTEGER NOT NULL,
-    ext_read_synced INTEGER NOT NULL,
-    ext_bookmarked INTEGER NOT NULL,
-    ext_bookmarked_synced INTEGER NOT NULL,
-    ext_comments_url TEXT NOT NULL,
-    ext_og_image_checked INTEGER NOT NULL,
-    ext_og_image_url TEXT NOT NULL,
-    ext_og_image_width INTEGER NOT NULL,
-    ext_og_image_height INTEGER NOT NULL
-) STRICT;
-
-CREATE TABLE link (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    href TEXT NOT NULL,
-    rel TEXT,
-    type TEXT,
-    hreflang TEXT,
-    title TEXT,
-    length TEXT,
-    feed_id TEXT REFERENCES feed(id),
-    entry_id TEXT REFERENCES entry(id),
-    ext_enclosure_download_progress REAL,
-    ext_cache_uri TEXT,
-    UNIQUE(feed_id, href, rel),
-    UNIQUE(entry_id, href, rel),
-    CHECK ((feed_id IS NULL) <> (entry_id IS NULL))
-) STRICT;
-
-CREATE TABLE conf (
-    backend TEXT,
-    miniflux_url TEXT,
-    miniflux_token TEXT,
-    minifluxIncrementalSyncTimestamp TEXT,
-    show_preview_images INTEGER NOT NULL,
-    crop_preview_images INTEGER NOT NULL,
-    sync_on_startup INTEGER NOT NULL,
-    sync_in_background INTEGER NOT NULL,
-    background_sync_interval_millis INTEGER NOT NULL,
-    use_built_in_browser INTEGER NOT NULL,
-    show_preview_text INTEGER NOT NULL
-) STRICT;
-
-CREATE TABLE log (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    timestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%f', 'NOW')),
-    level TEXT NOT NULL CHECK(level IN ('trace', 'debug', 'info', 'warn', 'error')),
-    tag TEXT NOT NULL,
-    message TEXT NOT NULL,
-    data TEXT CHECK(json_valid(data))
-) STRICT;
-
-INSERT INTO conf (
-    backend,
-    miniflux_url,
-    miniflux_token,
-    minifluxIncrementalSyncTimestamp,
-    show_preview_images,
-    crop_preview_images,
-    sync_on_startup,
-    sync_in_background,
-    background_sync_interval_millis,
-    use_built_in_browser,
-    show_preview_text
-) VALUES (
-    'miniflux',
-    '$url_lit',
-    '$token_lit',
-    NULL,
-    1,
-    1,
-    1,
-    1,
-    10800000,
-    1,
-    1
-);
-SQL
-}
-
-# Copy $VESTI_SEED_DB into the app's databases directory via run-as so the
-# app boots with the seeded conf row instead of the auth picker.
-push_seed_db_to_device() {
-  if ! "$ADB" -s "$VESTI_DEVICE" shell pm list packages "$VESTI_PACKAGE" 2>/dev/null \
-      | tr -d '\r' | grep -qx "package:$VESTI_PACKAGE"; then
-    err "$VESTI_PACKAGE is not installed on $VESTI_DEVICE"
-    return 1
-  fi
-
-  log "Pushing seed database to $VESTI_DEVICE..."
-  "$ADB" -s "$VESTI_DEVICE" push "$VESTI_SEED_DB" /data/local/tmp/vesti-seed.db >/dev/null
-
-  local data_dir="/data/data/$VESTI_PACKAGE"
-  local db_dir="$data_dir/databases"
-  local target="$db_dir/vesti.db"
-
-  # The app creates the databases/ directory lazily on first DB access, so
-  # after a fresh install the directory may not exist yet. run-as can mkdir.
-  "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'mkdir -p $db_dir && cp /data/local/tmp/vesti-seed.db $target && chmod 600 $target'" \
-    || { err "Failed to install seed database on device"; return 1; }
-  "$ADB" -s "$VESTI_DEVICE" shell rm -f /data/local/tmp/vesti-seed.db >/dev/null 2>&1 || true
-
-  log "Seed database installed at $target"
+  log "Writing Miniflux credentials into $db_path..."
+  "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sqlite3 $db_path \"INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text) VALUES ('miniflux', '$url_lit', '$token_lit', NULL, 1, 1, 1, 1, 10800000, 1, 1);\"" \
+    || { err "Failed to write Miniflux credentials"; return 1; }
 }
 
 cmd_login() {
@@ -826,8 +722,7 @@ cmd_login() {
   local url token
   url=$(env_get MINIFLUX_URL)
   token=$(env_get MINIFLUX_TOKEN)
-  build_seed_db "$url" "$token"
-  push_seed_db_to_device
+  prime_conf_row "$url" "$token"
 
   log "Launching $VESTI_PACKAGE..."
   "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null

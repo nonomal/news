@@ -143,15 +143,21 @@ quirk). If a workflow you need isn't covered, add a subcommand to `devtools`
 rather than reaching for `adb` directly — the CLI is the only supported
 surface.
 
+The CLI keeps all transient state (emulator logs, screen recordings, seed
+SQLite databases, temporary build artefacts) inside the `.tmp/` directory at
+the repo root — never use `/tmp` for dev workflow artefacts. The directory is
+git-ignored.
+
 ```bash
 ./devtools emulator start                         # boot the AVD (loads default_boot snapshot if present)
 ./devtools emulator status                       # confirm the device is online and booted
 ./devtools emulator stop                         # shut down cleanly via `adb emu kill`
 ./devtools emulator doctor                       # diagnose Wayland / GPU / Qt-plugin freezes
-./devtools emulator screencap /tmp/foo.png       # capture a screenshot from the device
+./devtools emulator screencap .tmp/foo.png       # capture a screenshot from the device
 ./devtools emulator snapshot save                # freeze current state as the default_boot snapshot
 ./devtools emulator snapshot delete              # wipe a stale default_boot snapshot
 ./devtools run                                   # assemble debug APK, install it, launch it
+./devtools login                                 # fresh-install debug APK and seed Miniflux credentials from .env
 ./devtools clean                                 # uninstall the debug APK from a running emulator
 ```
 
@@ -175,7 +181,7 @@ save` freezes that state for every subsequent start. If the log shows
 `Failed to load snapshot 'default_boot'` after an emulator or system-image
 upgrade, run `./devtools emulator snapshot delete` and re-save after the
 next cold boot. Logs land in `$VESTI_LOG_DIR/emulator.log` (default
-`/tmp/opencode/`).
+`.tmp/`).
 
 ## Dependency Upgrades
 

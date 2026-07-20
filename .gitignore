@@ -3,6 +3,7 @@
 /local.properties
 /signing.properties
 /.idea
+/.tmp
 .DS_Store
 /build
 /captures
@@ -11,3 +12,4 @@
 /crowdin.properties
 /website/debug.apk
 /website/release.apk
+/.env

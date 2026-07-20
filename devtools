@@ -13,6 +13,7 @@
 #   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
+#   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
@@ -20,9 +21,10 @@
 #   VESTI_AVD            AVD name to launch           (default: Pixel_9_Pro)
 #   VESTI_DEVICE         ADB device id                (default: emulator-5554)
 #   VESTI_PACKAGE        Application id (debug build) (default: org.vestifeed.debug)
-#   VESTI_LOG_DIR        Where to write emulator logs (default: /tmp/opencode)
+#   VESTI_LOG_DIR        Where to write emulator logs (default: <repo>/.tmp)
 #   VESTI_APK_PATH       Debug APK to install         (default: <repo>/app/build/outputs/apk/debug/app-debug.apk)
 #   VESTI_RECORD_PATH    Output video for `e2e --record` (default: <repo>/e2e.mp4)
+#   VESTI_ENV_FILE       .env file with Miniflux creds (default: <repo>/.env)
 #
 # Emulator tuning (only relevant for `emulator start` / `run`):
 #   VESTI_GPU_MODE       host | swiftshader_indirect | guest | auto  (default: host)
@@ -39,10 +41,12 @@ ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 VESTI_AVD="${VESTI_AVD:-Pixel_9_Pro}"
 VESTI_DEVICE="${VESTI_DEVICE:-emulator-5554}"
 VESTI_PACKAGE="${VESTI_PACKAGE:-org.vestifeed.debug}"
-VESTI_LOG_DIR="${VESTI_LOG_DIR:-/tmp/opencode}"
+VESTI_LOG_DIR="${VESTI_LOG_DIR:-$SCRIPT_DIR/.tmp}"
 VESTI_APK_PATH="${VESTI_APK_PATH:-$SCRIPT_DIR/app/build/outputs/apk/debug/app-debug.apk}"
 VESTI_RECORD_PATH="${VESTI_RECORD_PATH:-$SCRIPT_DIR/e2e.mp4}"
 VESTI_RECORD_PID_FILE="${VESTI_RECORD_PID_FILE:-$VESTI_LOG_DIR/e2e-screenrecord.pid}"
+VESTI_ENV_FILE="${VESTI_ENV_FILE:-$SCRIPT_DIR/.env}"
+VESTI_SEED_DB="${VESTI_SEED_DB:-$VESTI_LOG_DIR/vesti-seed.db}"
 
 VESTI_GPU_MODE="${VESTI_GPU_MODE:-host}"
 VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
@@ -505,6 +509,331 @@ cmd_clean() {
   fi
 }
 
+# === login subcommand =======================================================
+#
+# Seeds the Miniflux backend into the app's `conf` table so a freshly installed
+# debug build boots straight into the synced entries list instead of the auth
+# picker. Credentials come from $VESTI_ENV_FILE; missing keys are prompted for
+# and the file is created on first run.
+
+# Strip matching single or double quotes from a .env value, then unescape the
+# two characters that have meaning inside a double-quoted string. The order
+# matters: backslashes must be unescaped before double quotes so we don't lose
+# the backslash that protects a literal `"` in the original value.
+env_strip_quotes() {
+  local v="$1"
+  if [ "${v:0:1}" = '"' ] && [ "${v: -1}" = '"' ] && [ "${#v}" -ge 2 ]; then
+    v="${v:1:${#v}-2}"
+    v="${v//\\\\/\\}"
+    v="${v//\\\"/\"}"
+  elif [ "${v:0:1}" = "'" ] && [ "${v: -1}" = "'" ] && [ "${#v}" -ge 2 ]; then
+    v="${v:1:${#v}-2}"
+  fi
+  printf '%s' "$v"
+}
+
+# Wrap a value in double quotes and escape the two characters that need it
+# inside a double-quoted .env value: backslash and double quote.
+env_quote() {
+  local v="$1"
+  v="${v//\\/\\\\}"
+  v="${v//\"/\\\"}"
+  printf '"%s"' "$v"
+}
+
+# Print the value of KEY from $VESTI_ENV_FILE on stdout, or nothing if absent.
+env_get() {
+  local key="$1" line k v
+  [ -f "$VESTI_ENV_FILE" ] || return 0
+  while IFS= read -r line; do
+    case "$line" in
+      ""|\#*) continue ;;
+    esac
+    k="${line%%=*}"
+    [ "$k" = "$key" ] || continue
+    v="${line#*=}"
+    env_strip_quotes "$v"
+    return 0
+  done < "$VESTI_ENV_FILE"
+}
+
+# Upsert KEY=VALUE into $VESTI_ENV_FILE, preserving other lines and comments.
+env_set() {
+  local key="$1" value="$2" tmp new_val
+  mkdir -p "$VESTI_LOG_DIR"
+  tmp="$(mktemp "$VESTI_LOG_DIR/.env.tmp.XXXXXX")"
+  new_val="$(env_quote "$value")"
+  if [ -f "$VESTI_ENV_FILE" ]; then
+    # NOTE: gawk only treats `VAR=value` as an env-var assignment when it
+    # appears before the awk invocation. After the program text it is
+    # misinterpreted as a filename argument.
+    NEW_VAL="$new_val" awk -v k="$key" -F= '
+      $0 ~ "^"k"=" {next}
+      {print}
+      END {print k"="ENVIRON["NEW_VAL"]}
+    ' "$VESTI_ENV_FILE" > "$tmp"
+  else
+    printf '%s\n' "# Vesti dev environment — consumed by ./devtools login." \
+      "# Treat these values as secrets; do not commit this file." \
+      "" \
+      "$key=$new_val" > "$tmp"
+  fi
+  mv "$tmp" "$VESTI_ENV_FILE"
+  chmod 600 "$VESTI_ENV_FILE"
+}
+
+# Read a single line from the controlling tty if there is one, otherwise from
+# stdin. Echoes the prompt to stderr so callers can capture the value cleanly
+# from stdout. `[ -t 0 ]` is the only reliable test here: `[ -r /dev/tty ]`
+# reports success based on file mode bits even when there is no controlling
+# terminal, which then makes `< /dev/tty` fail at redirect time.
+prompt_read() {
+  local __prompt="$1" __var="$2"
+  printf '%s' "$__prompt" >&2
+  if [ -t 0 ]; then
+    IFS= read -r "$__var" </dev/tty
+  else
+    IFS= read -r "$__var"
+  fi
+}
+
+prompt_read_secret() {
+  local __prompt="$1" __var="$2"
+  printf '%s' "$__prompt" >&2
+  if [ -t 0 ]; then
+    IFS= read -rs "$__var" </dev/tty
+  else
+    IFS= read -rs "$__var"
+  fi
+  printf '\n' >&2
+}
+
+# Make sure $VESTI_ENV_FILE has both MINIFLUX_URL and MINIFLUX_TOKEN. Stores
+# them via env_set so subsequent runs see them. Returns 0 on success.
+ensure_miniflux_env() {
+  local url="" token="" missing=0
+
+  url=$(env_get MINIFLUX_URL || true)
+  token=$(env_get MINIFLUX_TOKEN || true)
+
+  if [ -z "$url" ]; then
+    prompt_read "Miniflux URL (e.g. https://miniflux.example.com): " url
+    if [ -z "$url" ]; then
+      err "MINIFLUX_URL cannot be empty"
+      return 1
+    fi
+  fi
+
+  if [ -z "$token" ]; then
+    prompt_read_secret "Miniflux API token (input hidden): " token
+    if [ -z "$token" ]; then
+      err "MINIFLUX_TOKEN cannot be empty"
+      return 1
+    fi
+  fi
+
+  # Trim trailing slashes the same way the app does, so a URL pasted with
+  # `/` doesn't create a visible mismatch later.
+  url="${url%"${url##*[!/]}"}"
+
+  env_set MINIFLUX_URL "$url"
+  env_set MINIFLUX_TOKEN "$token"
+
+  log "Credentials written to $VESTI_ENV_FILE"
+}
+
+# Add .env to .gitignore so a freshly populated file isn't accidentally
+# committed. Idempotent.
+ensure_env_in_gitignore() {
+  local gi="$SCRIPT_DIR/.gitignore" entry='/.env'
+  if [ -f "$gi" ] && grep -qxF "$entry" "$gi"; then
+    return 0
+  fi
+  log "Adding $entry to .gitignore"
+  printf '%s\n' "$entry" >> "$gi"
+}
+
+# Build a SQLite database at $VESTI_SEED_DB containing the full Vesti schema
+# and a single conf row configured for Miniflux. The user_version is set to 1
+# so the app's migrate() function treats the file as already-migrated.
+build_seed_db() {
+  local url="$1" token="$2"
+  local sqlite
+  sqlite="$(command -v sqlite3 || true)"
+  if [ -z "$sqlite" ]; then
+    err "sqlite3 not found on PATH; install it (apt install sqlite3) and retry"
+    return 1
+  fi
+
+  # Double single quotes per the SQL standard so user-supplied values can
+  # safely contain apostrophes. We deliberately avoid `\` escapes because
+  # SQLite does not interpret them inside string literals.
+  local url_lit token_lit
+  url_lit="${url//\'/\'\'}"
+  token_lit="${token//\'/\'\'}"
+
+  mkdir -p "$(dirname "$VESTI_SEED_DB")"
+  rm -f "$VESTI_SEED_DB"
+
+  log "Building seed database at $VESTI_SEED_DB..."
+
+  "$sqlite" "$VESTI_SEED_DB" <<SQL
+PRAGMA user_version = 1;
+
+CREATE TABLE feed (
+    id TEXT PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    ext_open_entries_in_browser INTEGER,
+    ext_blocked_words TEXT,
+    ext_show_preview_images INTEGER
+) STRICT;
+
+CREATE TABLE entry (
+    content_type TEXT,
+    content_src TEXT,
+    content_text TEXT,
+    summary TEXT,
+    id TEXT PRIMARY KEY NOT NULL,
+    feed_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    published TEXT NOT NULL,
+    updated TEXT NOT NULL,
+    author_name TEXT NOT NULL,
+    ext_read INTEGER NOT NULL,
+    ext_read_synced INTEGER NOT NULL,
+    ext_bookmarked INTEGER NOT NULL,
+    ext_bookmarked_synced INTEGER NOT NULL,
+    ext_comments_url TEXT NOT NULL,
+    ext_og_image_checked INTEGER NOT NULL,
+    ext_og_image_url TEXT NOT NULL,
+    ext_og_image_width INTEGER NOT NULL,
+    ext_og_image_height INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE link (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    href TEXT NOT NULL,
+    rel TEXT,
+    type TEXT,
+    hreflang TEXT,
+    title TEXT,
+    length TEXT,
+    feed_id TEXT REFERENCES feed(id),
+    entry_id TEXT REFERENCES entry(id),
+    ext_enclosure_download_progress REAL,
+    ext_cache_uri TEXT,
+    UNIQUE(feed_id, href, rel),
+    UNIQUE(entry_id, href, rel),
+    CHECK ((feed_id IS NULL) <> (entry_id IS NULL))
+) STRICT;
+
+CREATE TABLE conf (
+    backend TEXT,
+    miniflux_url TEXT,
+    miniflux_token TEXT,
+    minifluxIncrementalSyncTimestamp TEXT,
+    show_preview_images INTEGER NOT NULL,
+    crop_preview_images INTEGER NOT NULL,
+    sync_on_startup INTEGER NOT NULL,
+    sync_in_background INTEGER NOT NULL,
+    background_sync_interval_millis INTEGER NOT NULL,
+    use_built_in_browser INTEGER NOT NULL,
+    show_preview_text INTEGER NOT NULL
+) STRICT;
+
+CREATE TABLE log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%f', 'NOW')),
+    level TEXT NOT NULL CHECK(level IN ('trace', 'debug', 'info', 'warn', 'error')),
+    tag TEXT NOT NULL,
+    message TEXT NOT NULL,
+    data TEXT CHECK(json_valid(data))
+) STRICT;
+
+INSERT INTO conf (
+    backend,
+    miniflux_url,
+    miniflux_token,
+    minifluxIncrementalSyncTimestamp,
+    show_preview_images,
+    crop_preview_images,
+    sync_on_startup,
+    sync_in_background,
+    background_sync_interval_millis,
+    use_built_in_browser,
+    show_preview_text
+) VALUES (
+    'miniflux',
+    '$url_lit',
+    '$token_lit',
+    NULL,
+    1,
+    1,
+    1,
+    1,
+    10800000,
+    1,
+    1
+);
+SQL
+}
+
+# Copy $VESTI_SEED_DB into the app's databases directory via run-as so the
+# app boots with the seeded conf row instead of the auth picker.
+push_seed_db_to_device() {
+  if ! "$ADB" -s "$VESTI_DEVICE" shell pm list packages "$VESTI_PACKAGE" 2>/dev/null \
+      | tr -d '\r' | grep -qx "package:$VESTI_PACKAGE"; then
+    err "$VESTI_PACKAGE is not installed on $VESTI_DEVICE"
+    return 1
+  fi
+
+  log "Pushing seed database to $VESTI_DEVICE..."
+  "$ADB" -s "$VESTI_DEVICE" push "$VESTI_SEED_DB" /data/local/tmp/vesti-seed.db >/dev/null
+
+  local data_dir="/data/data/$VESTI_PACKAGE"
+  local db_dir="$data_dir/databases"
+  local target="$db_dir/vesti.db"
+
+  # The app creates the databases/ directory lazily on first DB access, so
+  # after a fresh install the directory may not exist yet. run-as can mkdir.
+  "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'mkdir -p $db_dir && cp /data/local/tmp/vesti-seed.db $target && chmod 600 $target'" \
+    || { err "Failed to install seed database on device"; return 1; }
+  "$ADB" -s "$VESTI_DEVICE" shell rm -f /data/local/tmp/vesti-seed.db >/dev/null 2>&1 || true
+
+  log "Seed database installed at $target"
+}
+
+cmd_login() {
+  ensure_miniflux_env || return 1
+  ensure_env_in_gitignore
+
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    log "Emulator $VESTI_DEVICE is not running; starting it..."
+    emulator_start
+  fi
+
+  log "Assembling debug APK..."
+  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleDebug "$@"
+
+  if [ ! -f "$VESTI_APK_PATH" ]; then
+    err "APK not found at $VESTI_APK_PATH"
+    return 1
+  fi
+
+  cmd_clean
+  "$ADB" -s "$VESTI_DEVICE" install -r -t "$VESTI_APK_PATH"
+
+  local url token
+  url=$(env_get MINIFLUX_URL)
+  token=$(env_get MINIFLUX_TOKEN)
+  build_seed_db "$url" "$token"
+  push_seed_db_to_device
+
+  log "Launching $VESTI_PACKAGE..."
+  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null
+  "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
+}
+
 # === dispatch ===============================================================
 
 main() {
@@ -514,6 +843,7 @@ main() {
     emulator) cmd_emulator "$@" ;;
     run)      cmd_run "$@" ;;
     e2e)      cmd_e2e "$@" ;;
+    login)    cmd_login "$@" ;;
     clean)    cmd_clean ;;
     help|-h|--help) usage ;;
     *) err "Unknown command: $cmd"; usage; return 1 ;;

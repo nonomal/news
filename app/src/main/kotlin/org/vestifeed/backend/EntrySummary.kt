@@ -1,4 +1,4 @@
-package org.vestifeed.api.standalone
+package org.vestifeed.backend
 
 /**
  * Build the one-line summary shown in the entries list from a raw HTML

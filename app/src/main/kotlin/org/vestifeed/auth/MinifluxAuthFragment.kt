@@ -16,7 +16,8 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
-import org.vestifeed.api.miniflux.MinifluxApiBuilder
+import org.vestifeed.backend.Miniflux
+import org.vestifeed.backend.minifluxHttpClient
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentMinifluxAuthBinding
@@ -78,9 +79,10 @@ class MinifluxAuthFragment : AppFragment() {
                     return@launch
                 }
 
-                val api = MinifluxApiBuilder().build(
-                    url = url.toString().trim('/'),
-                    token = token,
+                val api = Miniflux(
+                    client = minifluxHttpClient(token = token),
+                    baseUrl = "${url.toString().trim('/')}/v1/".toHttpUrl(),
+                    db = db(),
                 )
 
                 api.getFeeds()

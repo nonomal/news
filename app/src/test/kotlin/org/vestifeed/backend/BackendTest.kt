@@ -1,4 +1,4 @@
-package org.vestifeed.api
+package org.vestifeed.backend
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -8,20 +8,20 @@ import org.junit.Test
 import org.vestifeed.db.db
 import org.vestifeed.db.table.ConfTable
 
-class ApiTest {
+class BackendTest {
 
     @Test
-    fun standaloneBackend() = runBlocking {
+    fun embeddedBackend() = runBlocking {
         val db = db()
 
         db.conf.update { it.copy(backend = ConfTable.Backend.Embedded) }
 
         var attempts = 0L
 
-        var api: Api? = null
+        var api: Backend? = null
         while (attempts < 20) {
             try {
-                api = api(db)
+                api = backend(db)
                 break
             } catch (_: Throwable) {
                 attempts += 1
@@ -29,7 +29,7 @@ class ApiTest {
             }
         }
 
-        assertTrue("expected Api.Standalone, got $api", api is Api.Standalone)
+        assertTrue("expected Embedded, got $api", api is Embedded)
         assertEquals(0, api!!.getFeeds().size)
     }
 }

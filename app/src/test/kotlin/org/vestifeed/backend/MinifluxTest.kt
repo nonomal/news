@@ -1,4 +1,4 @@
-package org.vestifeed.api.miniflux
+package org.vestifeed.backend
 
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.runBlocking
@@ -6,7 +6,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import org.junit.Before
 import org.junit.Test
-import org.vestifeed.api.Api
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
@@ -14,7 +13,7 @@ import org.vestifeed.db.table.LinkTable
 import org.vestifeed.parser.AtomLinkRel
 import java.time.OffsetDateTime
 
-class MinifluxSyncTest {
+class MinifluxTest {
     private lateinit var db: Database
 
     @Before
@@ -59,11 +58,12 @@ class MinifluxSyncTest {
                 extCacheUri = null,
             ),
         )
-        val api = object : Api.Miniflux(
+        val api = object : Miniflux(
             client = OkHttpClient(),
             baseUrl = "http://localhost".toHttpUrl(),
+            db = db,
         ) {
-            override suspend fun addFeed(url: okhttp3.HttpUrl): Api.AddFeedResult =
+            override suspend fun addFeed(url: okhttp3.HttpUrl): Backend.AddFeedResult =
                 throw NotImplementedError()
 
             override suspend fun updateFeedTitle(feedId: String, newTitle: String): Result<Unit> =
@@ -93,8 +93,7 @@ class MinifluxSyncTest {
                 bookmarked: Boolean,
             ) = Unit
         }
-        val sync = MinifluxSync(db, api)
-        runBlocking { sync.syncFeeds() }
+        runBlocking { api.sync(initial = true) }
         val cacheFeeds = db.feed.selectAll()
         val cacheFeed1 = cacheFeeds.first()
         assert(cacheFeed1.id == freshFeed.id)
@@ -103,7 +102,7 @@ class MinifluxSyncTest {
         assert(cacheFeed1Links.size == 2)
         assert(cacheFeed1Links.singleOrNull { it.href == freshLinks[0].href } != null)
         assert(cacheFeed1Links.singleOrNull { it.href == freshLinks[1].href } != null)
-        runBlocking { sync.syncFeeds() }
+        runBlocking { api.sync(initial = true) }
         val cacheFeed1Links2 = db.link.selectByFeedId(freshFeed.id)
         assert(cacheFeed1Links2.size == 2)
         assert(cacheFeed1Links2.singleOrNull { it.href == freshLinks[0].href } != null)

@@ -1,4 +1,4 @@
-package org.vestifeed.api.standalone
+package org.vestifeed.backend
 
 import org.junit.Test
 

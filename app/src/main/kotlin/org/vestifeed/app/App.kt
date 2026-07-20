@@ -9,8 +9,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import org.vestifeed.api.Api
-import org.vestifeed.api.api
+import org.vestifeed.backend.Backend
+import org.vestifeed.backend.backend
 import org.vestifeed.db.Database
 import org.vestifeed.og.OpenGraphImageFetcher
 import org.vestifeed.sync.Sync
@@ -23,7 +23,7 @@ class App : Application() {
 
     val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
 
-    val api by lazy { api(db) }
+    val api by lazy { backend(db) }
 
     val db by lazy {
         Database(
@@ -57,7 +57,7 @@ fun Context.ogFetcher(): OpenGraphImageFetcher = (applicationContext as App).ogF
 
 fun Fragment.api() = requireContext().api()
 
-fun Context.api(): Api = (applicationContext as App).api
+fun Context.api(): Backend = (applicationContext as App).api
 
 fun Fragment.db() = requireContext().db()
 

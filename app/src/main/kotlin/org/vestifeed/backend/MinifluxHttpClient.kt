@@ -1,11 +1,13 @@
-package org.vestifeed.api.miniflux
+package org.vestifeed.backend
 
 import com.google.gson.Gson
+import com.google.gson.JsonObject
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.vestifeed.BuildConfig
 import org.vestifeed.http.tokenAuthInterceptor
+import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 fun minifluxHttpClient(token: String): OkHttpClient {
@@ -34,7 +36,7 @@ private fun errorInterceptor(): Interceptor {
         if (!response.isSuccessful) {
             val bodyString = response.body.string()
             val errorMessage = runCatching {
-                val json = Gson().fromJson(bodyString, com.google.gson.JsonObject::class.java)
+                val json = Gson().fromJson(bodyString, JsonObject::class.java)
                 if (json != null && json.has("error_message")) {
                     json["error_message"].asString
                 } else {
@@ -44,7 +46,7 @@ private fun errorInterceptor(): Interceptor {
                 "Endpoint ${request.url} failed with response code ${response.code}"
             }
 
-            throw java.io.IOException(errorMessage)
+            throw IOException(errorMessage)
         }
 
         response

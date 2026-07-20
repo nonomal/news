@@ -1,18 +1,14 @@
-package org.vestifeed.api.miniflux
+package org.vestifeed.backend
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.vestifeed.api.Api
 import org.vestifeed.db.Database
-import org.vestifeed.db.table.EntryTable
-import org.vestifeed.db.table.FeedTable
-import org.vestifeed.db.table.LinkTable
 import org.vestifeed.db.table.LogTable
 import org.vestifeed.log.LogLevel
 import java.time.Instant
 import java.time.OffsetDateTime
 
-class MinifluxSync(val db: Database, val api: Api.Miniflux) {
+internal class MinifluxSync(private val api: Miniflux, private val db: Database) {
 
     suspend fun syncFeeds() {
         val freshFeedPairs = api.getFeedsWithLinks()

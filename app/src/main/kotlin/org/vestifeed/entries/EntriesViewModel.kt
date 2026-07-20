@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -12,11 +13,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.db.Database
 import org.vestifeed.parser.AtomLinkRel
 import org.vestifeed.sync.Sync
+import java.time.OffsetDateTime
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Owns all data loading, mutation and intent routing for the entries screen.
@@ -42,6 +46,13 @@ class EntriesViewModel(
     )
     val actions: SharedFlow<EntriesItemAction> = _actions.asSharedFlow()
 
+    /**
+     * High-water mark for the OG-image poll. Set right after the initial load
+     * so we only count entries whose OG image was fetched after this screen
+     * was opened. Updated after each successful poll-driven reload.
+     */
+    private var ogImageFetchedSince: OffsetDateTime? = null
+
     init {
         // Reload whenever a sync finishes.
         viewModelScope.launch {
@@ -59,9 +70,27 @@ class EntriesViewModel(
             }
         }
 
-        // Kick off an initial load so we don't sit on "Loading" forever if no
-        // sync ever runs.
-        viewModelScope.launch { reload() }
+        // Initial load plus the OG-image poll. The watermark is captured
+        // before the first query so we don't miss anything fetched during
+        // the initial load itself.
+        viewModelScope.launch {
+            ogImageFetchedSince = OffsetDateTime.now()
+            reloadInternal()
+
+            while (isActive) {
+                delay(OG_IMAGE_POLL_INTERVAL)
+                val watermark = ogImageFetchedSince ?: continue
+                val count = withContext(Dispatchers.IO) {
+                    db.entry.countByOgImageFetchedAfter(watermark)
+                }
+                if (count > 0L) {
+                    ogImageFetchedSince = OffsetDateTime.now()
+                    if (!sync.running.value) {
+                        reload()
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -91,13 +120,6 @@ class EntriesViewModel(
     /** Pull-to-refresh / swipe-refresh handler. */
     fun refresh() {
         sync.runInBackground()
-    }
-
-    /** Re-load after an open-graph image download finishes, if no sync is running. */
-    fun onOpenGraphImageDownloaded() {
-        if (!sync.running.value) {
-            reload()
-        }
     }
 
     /**
@@ -161,6 +183,11 @@ class EntriesViewModel(
             }
             sync.runInBackground()
         }
+    }
+
+    private companion object {
+        /** How often the entries list asks the DB if any new OG images arrived. */
+        val OG_IMAGE_POLL_INTERVAL = 5.seconds
     }
 }
 

@@ -8,6 +8,8 @@
 #   ./devtools emulator status                Show ADB device list and boot state
 #   ./devtools emulator doctor                Diagnose Wayland / GPU / Qt plugin issues
 #   ./devtools emulator screencap [path]      Capture the device screen to PATH
+#   ./devtools emulator logcat [-n N] [--tag TAG] [--pid PID]
+#                                            Dump recent logcat lines (default: $VESTI_PACKAGE only)
 #   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
 #   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
 #   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
@@ -91,8 +93,12 @@ Commands:
   doctor                         Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
   screencap [path]               Capture the device screen to PATH
                                  (default: $VESTI_LOG_DIR/vesti.png)
+  logcat [-n N] [--tag TAG] [--pid PID]
+                                 Dump recent logcat lines (default: $VESTI_PACKAGE only,
+                                 last 200 lines). With no --tag/--pid the ring buffer is
+                                 filtered to the app's pid so crashes and ANRs surface fast.
   snapshot save                  Save the current state as the default_boot quickboot snapshot
-  snapshot delete                Remove a stale default_boot snapshot
+  snapshot delete                Remove a stale default_boot quickboot snapshot
 
 Common tunables (env vars):
   VESTI_GPU_MODE=swiftshader_indirect  Force software GL (slower, but works around
@@ -304,6 +310,53 @@ emulator_screencap() {
   log "Saved to $dest"
 }
 
+# Dump recent logcat. Defaults to the current $VESTI_PACKAGE pid so crashes
+# and ANRs surface immediately. Pass --tag to filter by tag, --pid to filter
+# by pid, or omit both to see the whole ring buffer.
+emulator_logcat() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+    return 1
+  fi
+
+  local lines=200
+  local tag=""
+  local pid=""
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      -n) lines="${2:-200}"; shift 2 ;;
+      -n=*) lines="${1#-n=}"; shift ;;
+      --tag) tag="${2:-}"; shift 2 ;;
+      --tag=*) tag="${1#--tag=}"; shift ;;
+      --pid) pid="${2:-}"; shift 2 ;;
+      --pid=*) pid="${1#--pid=}"; shift ;;
+      -h|--help)
+        printf 'Usage: ./devtools emulator logcat [-n N] [--tag TAG] [--pid PID]\n'
+        return 0
+        ;;
+      *) err "Unknown logcat flag: $1"; return 1 ;;
+    esac
+  done
+
+  local filter_args=("-d" "-t" "$lines")
+  if [ -n "$pid" ]; then
+    filter_args+=("--pid" "$pid")
+  elif [ -n "$tag" ]; then
+    filter_args+=("-s" "$tag")
+  else
+    # Default: scope to the running app pid so a crash is visible without
+    # sifting through the entire ring buffer.
+    pid=$("$ADB" -s "$VESTI_DEVICE" shell pidof "$VESTI_PACKAGE" 2>/dev/null | tr -d '\r\n' || true)
+    if [ -n "$pid" ]; then
+      filter_args+=("--pid" "$pid")
+    else
+      log "(process $VESTI_PACKAGE not running; dumping the whole ring buffer)"
+    fi
+  fi
+
+  "$ADB" -s "$VESTI_DEVICE" logcat "${filter_args[@]}"
+}
+
 emulator_snapshot() {
   local action="${1:-help}"
   shift || true
@@ -346,6 +399,7 @@ cmd_emulator() {
     status)    emulator_status ;;
     doctor)    emulator_doctor ;;
     screencap) emulator_screencap "$@" ;;
+    logcat)    emulator_logcat "$@" ;;
     snapshot)  emulator_snapshot "$@" ;;
     help|-h|--help) usage_emulator ;;
     *) err "Unknown emulator command: $sub"; usage_emulator; return 1 ;;

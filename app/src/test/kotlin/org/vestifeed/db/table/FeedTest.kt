@@ -205,5 +205,6 @@ class FeedTest {
         extOpenGraphImageUrl = "",
         extOpenGraphImageWidth = 0,
         extOpenGraphImageHeight = 0,
+        extOpenGraphImageFetchedAt = null,
     )
 }

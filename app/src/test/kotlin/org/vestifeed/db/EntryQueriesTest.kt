@@ -176,6 +176,47 @@ class EntryQueriesTest {
         assertEquals("Entry 2", feed1Entries.find { it.id == entries[1].id }?.title)
         assertEquals("Entry 3", feed2Entries.find { it.id == entries[2].id }?.title)
     }
+
+    @Test
+    fun countByOgImageFetchedAfter() {
+        val now = OffsetDateTime.now()
+        val longAgo = now.minusSeconds(3600)
+        val recent = now.minusSeconds(60)
+
+        db.entry.insertOrReplace(
+            listOf(
+                entry().copy(extOpenGraphImageFetchedAt = null),
+                entry().copy(extOpenGraphImageFetchedAt = longAgo),
+                entry().copy(extOpenGraphImageFetchedAt = recent),
+                entry().copy(extOpenGraphImageFetchedAt = now),
+            ),
+        )
+
+        assertEquals(0L, db.entry.countByOgImageFetchedAfter(now.plusSeconds(1)))
+        assertEquals(0L, db.entry.countByOgImageFetchedAfter(now))
+        assertEquals(1L, db.entry.countByOgImageFetchedAfter(recent))
+        assertEquals(2L, db.entry.countByOgImageFetchedAfter(longAgo))
+    }
+
+    @Test
+    fun updateOgImageWritesFetchedAt() {
+        val now = OffsetDateTime.now()
+        val inserted = entry()
+        db.entry.insertOrReplace(listOf(inserted))
+
+        db.entry.updateOgImage(
+            extOgImageUrl = "https://example.com/og.png",
+            extOgImageWidth = 800L,
+            extOgImageHeight = 600L,
+            extOgImageFetchedAt = now,
+            id = inserted.id,
+        )
+
+        val updated = db.entry.selectById(inserted.id)
+        assertEquals("https://example.com/og.png", updated?.extOpenGraphImageUrl)
+        assertEquals(now, updated?.extOpenGraphImageFetchedAt)
+        assertEquals(1L, db.entry.countByOgImageFetchedAfter(now.minusSeconds(1)))
+    }
 }
 
 fun EntryTable.insertOrReplace(): EntryTable.Entry {
@@ -204,6 +245,7 @@ fun entry() = EntryTable.Entry(
     extOpenGraphImageUrl = "",
     extOpenGraphImageWidth = 0,
     extOpenGraphImageHeight = 0,
+    extOpenGraphImageFetchedAt = null,
 )
 
 fun entryWithoutContent() = EntryTable.EntryWithoutContent(
@@ -223,6 +265,7 @@ fun entryWithoutContent() = EntryTable.EntryWithoutContent(
     extOpenGraphImageUrl = "",
     extOpenGraphImageWidth = 0,
     extOpenGraphImageHeight = 0,
+    extOpenGraphImageFetchedAt = null,
 )
 
 fun EntryTable.Entry.withoutContent() = EntryTable.EntryWithoutContent(
@@ -242,6 +285,7 @@ fun EntryTable.Entry.withoutContent() = EntryTable.EntryWithoutContent(
     extOpenGraphImageUrl = extOpenGraphImageUrl,
     extOpenGraphImageWidth = extOpenGraphImageWidth,
     extOpenGraphImageHeight = extOpenGraphImageHeight,
+    extOpenGraphImageFetchedAt = extOpenGraphImageFetchedAt,
 )
 
 fun EntryTable.EntryWithoutContent.toEntry(): EntryTable.Entry {
@@ -265,6 +309,7 @@ fun EntryTable.EntryWithoutContent.toEntry(): EntryTable.Entry {
         extOpenGraphImageUrl = extOpenGraphImageUrl,
         extOpenGraphImageWidth = extOpenGraphImageWidth,
         extOpenGraphImageHeight = extOpenGraphImageHeight,
+        extOpenGraphImageFetchedAt = extOpenGraphImageFetchedAt,
     )
 }
 

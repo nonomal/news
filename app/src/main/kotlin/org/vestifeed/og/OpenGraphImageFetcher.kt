@@ -8,8 +8,6 @@ import coil3.request.SuccessResult
 import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -18,6 +16,7 @@ import org.vestifeed.db.Database
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.http.await
 import org.vestifeed.parser.AtomLinkRel
+import java.time.OffsetDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
@@ -25,8 +24,6 @@ class OpenGraphImageFetcher(
     private val db: Database,
     private val imageContext: PlatformContext,
 ) {
-    val lastDownload = MutableStateFlow<EntryTable.EntryWithoutContent?>(null)
-
     private val httpClient = OkHttpClient.Builder()
         .callTimeout(10, TimeUnit.SECONDS)
         .build()
@@ -43,9 +40,7 @@ class OpenGraphImageFetcher(
             if (uncheckedEntries.isEmpty()) {
                 delay(1.seconds)
             } else {
-                if (fetchEntryImages(uncheckedEntries).isNotEmpty()) {
-                    lastDownload.update { uncheckedEntries.first() }
-                }
+                fetchEntryImages(uncheckedEntries)
             }
         }
     }
@@ -137,6 +132,7 @@ class OpenGraphImageFetcher(
             extOgImageUrl = imageUrl,
             extOgImageWidth = bitmap.width.toLong(),
             extOgImageHeight = bitmap.height.toLong(),
+            extOgImageFetchedAt = OffsetDateTime.now(),
             id = entry.id,
         )
 

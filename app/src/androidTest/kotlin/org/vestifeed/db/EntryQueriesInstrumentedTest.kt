@@ -76,4 +76,5 @@ private fun entry() = Entry(
     extOpenGraphImageUrl = "",
     extOpenGraphImageWidth = 0,
     extOpenGraphImageHeight = 0,
+    extOpenGraphImageFetchedAt = null,
 )

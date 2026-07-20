@@ -29,7 +29,8 @@ class EntryTable(private val conn: SQLiteConnection) {
                 ext_og_image_checked INTEGER NOT NULL,
                 ext_og_image_url TEXT NOT NULL,
                 ext_og_image_width INTEGER NOT NULL,
-                ext_og_image_height INTEGER NOT NULL
+                ext_og_image_height INTEGER NOT NULL,
+                ext_og_image_fetched_at TEXT NOT NULL DEFAULT ''
             ) STRICT;
         """
     }
@@ -54,6 +55,7 @@ class EntryTable(private val conn: SQLiteConnection) {
         val extOpenGraphImageUrl: String,
         val extOpenGraphImageWidth: Int,
         val extOpenGraphImageHeight: Int,
+        val extOpenGraphImageFetchedAt: OffsetDateTime?,
     )
 
     private fun SQLiteStatement.toEntry(): Entry {
@@ -76,7 +78,10 @@ class EntryTable(private val conn: SQLiteConnection) {
             extOpenGraphImageChecked = this.getInt(15) == 1,
             extOpenGraphImageUrl = this.getText(16),
             extOpenGraphImageWidth = this.getInt(17),
-            extOpenGraphImageHeight = this.getInt(18)
+            extOpenGraphImageHeight = this.getInt(18),
+            extOpenGraphImageFetchedAt = this.getTextOrNull(19)?.let {
+                runCatching { OffsetDateTime.parse(it) }.getOrNull()
+            },
         )
     }
 
@@ -98,6 +103,7 @@ class EntryTable(private val conn: SQLiteConnection) {
             extOpenGraphImageUrl = extOpenGraphImageUrl,
             extOpenGraphImageWidth = extOpenGraphImageWidth,
             extOpenGraphImageHeight = extOpenGraphImageHeight,
+            extOpenGraphImageFetchedAt = extOpenGraphImageFetchedAt,
         )
     }
 
@@ -105,8 +111,8 @@ class EntryTable(private val conn: SQLiteConnection) {
         conn.prepare(
             """
             INSERT OR REPLACE INTO
-            entry (content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            entry (content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height, ext_og_image_fetched_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             entries.forEach { entry ->
@@ -129,6 +135,7 @@ class EntryTable(private val conn: SQLiteConnection) {
                 stmt.bindText(17, entry.extOpenGraphImageUrl)
                 stmt.bindInt(18, entry.extOpenGraphImageWidth)
                 stmt.bindInt(19, entry.extOpenGraphImageHeight)
+                stmt.bindText(20, entry.extOpenGraphImageFetchedAt?.toString() ?: "")
                 stmt.step()
                 stmt.reset()
             }
@@ -165,7 +172,7 @@ class EntryTable(private val conn: SQLiteConnection) {
     fun selectById(entryId: String): Entry? {
         conn.prepare(
             """
-            SELECT content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height
+            SELECT content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height, ext_og_image_fetched_at
             FROM entry
             WHERE id = ?;
             """
@@ -342,20 +349,21 @@ class EntryTable(private val conn: SQLiteConnection) {
         val extOpenGraphImageUrl: String,
         val extOpenGraphImageWidth: Int,
         val extOpenGraphImageHeight: Int,
+        val extOpenGraphImageFetchedAt: OffsetDateTime?,
     )
 
     fun selectByReadSynced(extReadSynced: Boolean): List<EntryWithoutContent> {
         conn.prepare(
             """
-            SELECT 
+            SELECT
                 summary,
                 id,
-                feed_id, 
-                title, 
-                published, 
-                updated, 
+                feed_id,
+                title,
+                published,
+                updated,
                 author_name,
-                ext_read, 
+                ext_read,
                 ext_read_synced,
                 ext_bookmarked,
                 ext_bookmarked_synced,
@@ -363,7 +371,8 @@ class EntryTable(private val conn: SQLiteConnection) {
                 ext_og_image_checked,
                 ext_og_image_url,
                 ext_og_image_width,
-                ext_og_image_height
+                ext_og_image_height,
+                ext_og_image_fetched_at
             FROM entry
             WHERE ext_read_synced = ?
             ORDER BY published DESC;
@@ -397,7 +406,8 @@ class EntryTable(private val conn: SQLiteConnection) {
                 ext_og_image_checked,
                 ext_og_image_url,
                 ext_og_image_width,
-                ext_og_image_height
+                ext_og_image_height,
+                ext_og_image_fetched_at
             FROM entry
             WHERE ext_bookmarked_synced = ?
             ORDER BY published DESC;
@@ -424,16 +434,35 @@ class EntryTable(private val conn: SQLiteConnection) {
         extOgImageUrl: String,
         extOgImageWidth: Long,
         extOgImageHeight: Long,
+        extOgImageFetchedAt: OffsetDateTime,
         id: String
     ) {
-        conn.prepare("UPDATE entry SET ext_og_image_url = ?, ext_og_image_width = ?, ext_og_image_height = ?, ext_og_image_checked = 1 WHERE id = ?;")
+        conn.prepare("UPDATE entry SET ext_og_image_url = ?, ext_og_image_width = ?, ext_og_image_height = ?, ext_og_image_fetched_at = ?, ext_og_image_checked = 1 WHERE id = ?;")
             .use { stmt ->
                 stmt.bindText(1, extOgImageUrl)
                 stmt.bindLong(2, extOgImageWidth)
                 stmt.bindLong(3, extOgImageHeight)
-                stmt.bindText(4, id)
+                stmt.bindText(4, extOgImageFetchedAt.toString())
+                stmt.bindText(5, id)
                 stmt.step()
             }
+    }
+
+    /**
+     * Returns the number of entries whose `ext_og_image_fetched_at` is greater
+     * than [since] (and not the empty default). Used by the entries view to
+     * poll for newly-downloaded OG images without subscribing to a callback.
+     */
+    fun countByOgImageFetchedAfter(since: OffsetDateTime): Long {
+        conn.prepare(
+            """
+            SELECT COUNT(*) FROM entry
+            WHERE ext_og_image_fetched_at > ? AND ext_og_image_fetched_at != ''
+            """,
+        ).use { stmt ->
+            stmt.bindText(1, since.toString())
+            return if (stmt.step()) stmt.getLong(0) else 0L
+        }
     }
 
     fun updateReadSynced(extReadSynced: Boolean, id: String) {
@@ -470,7 +499,7 @@ class EntryTable(private val conn: SQLiteConnection) {
             SELECT summary, id, feed_id, title, published, updated, author_name,
                    ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced,
                    ext_comments_url, ext_og_image_checked, ext_og_image_url,
-                   ext_og_image_width, ext_og_image_height
+                   ext_og_image_width, ext_og_image_height, ext_og_image_fetched_at
             FROM entry WHERE ext_og_image_checked = ? ORDER BY published DESC LIMIT ?
         """
         ).use { stmt ->
@@ -569,7 +598,10 @@ class EntryTable(private val conn: SQLiteConnection) {
             extOpenGraphImageChecked = stmt.getInt(12) == 1,
             extOpenGraphImageUrl = stmt.getTextOrNull(13) ?: "",
             extOpenGraphImageWidth = stmt.getInt(14),
-            extOpenGraphImageHeight = stmt.getInt(15)
+            extOpenGraphImageHeight = stmt.getInt(15),
+            extOpenGraphImageFetchedAt = stmt.getTextOrNull(16)?.let {
+                runCatching { OffsetDateTime.parse(it) }.getOrNull()
+            },
         )
     }
 

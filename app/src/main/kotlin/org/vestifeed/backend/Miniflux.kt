@@ -284,6 +284,7 @@ open class Miniflux(
                 extOpenGraphImageUrl = "",
                 extOpenGraphImageWidth = 0,
                 extOpenGraphImageHeight = 0,
+                extOpenGraphImageFetchedAt = null,
             ), links
         )
     }

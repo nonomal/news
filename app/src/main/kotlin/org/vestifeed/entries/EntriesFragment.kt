@@ -91,13 +91,6 @@ class EntriesFragment : AppFragment() {
         _binding = null
     }
 
-    override fun onOpenGraphImageDownloaded() {
-        super.onOpenGraphImageDownloaded()
-        if (filter != null) {
-            viewModel.onOpenGraphImageDownloaded()
-        }
-    }
-
     private fun isViewAlive(): Boolean = _binding != null
 
     private fun applyStatusBarInsets() {

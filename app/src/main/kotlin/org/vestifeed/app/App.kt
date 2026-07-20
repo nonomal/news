@@ -51,10 +51,6 @@ fun Fragment.sync() = requireContext().sync()
 
 fun Context.sync(): Sync = (applicationContext as App).sync
 
-fun Fragment.ogFetcher() = requireContext().ogFetcher()
-
-fun Context.ogFetcher(): OpenGraphImageFetcher = (applicationContext as App).ogFetcher
-
 fun Fragment.api() = requireContext().api()
 
 fun Context.api(): Backend = (applicationContext as App).api

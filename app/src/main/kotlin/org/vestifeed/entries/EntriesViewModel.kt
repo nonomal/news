@@ -119,7 +119,14 @@ class EntriesViewModel(
 
     /** Pull-to-refresh / swipe-refresh handler. */
     fun refresh() {
-        sync.runInBackground()
+        _state.update { it.copy(pullToRefreshInProgress = true) }
+        viewModelScope.launch {
+            try {
+                sync.runInForeground()
+            } finally {
+                _state.update { it.copy(pullToRefreshInProgress = false) }
+            }
+        }
     }
 
     /**

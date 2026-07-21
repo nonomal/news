@@ -10,6 +10,14 @@ data class EntriesScreenState(
     val title: TitleState = TitleState.Loading,
     val items: ItemsState = ItemsState.Loading,
     val running: Boolean = false,
+    /**
+     * True only while a user-initiated pull-to-refresh is in flight. The
+     * swipe-refresh spinner must reflect this, not [running], so that
+     * background syncs triggered by [org.vestifeed.entries.EntriesViewModel.setRead]
+     * or [org.vestifeed.entries.EntriesViewModel.setBookmarked] don't flash
+     * the indicator.
+     */
+    val pullToRefreshInProgress: Boolean = false,
 )
 
 sealed class TitleState {

@@ -145,7 +145,7 @@ class EntriesFragment : AppFragment() {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.state.collect { state ->
                     renderTitle(state.title)
-                    binding.swipeRefresh.isRefreshing = state.running
+                    binding.swipeRefresh.isRefreshing = state.pullToRefreshInProgress
                     renderItems(state.items)
                 }
             }

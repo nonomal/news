@@ -110,9 +110,20 @@ class EntryTable(private val conn: SQLiteConnection) {
     fun insertOrReplace(entries: List<Entry>) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO
+            INSERT INTO
             entry (content_type, content_src, content_text, summary, id, feed_id, title, published, updated, author_name, ext_read, ext_read_synced, ext_bookmarked, ext_bookmarked_synced, ext_comments_url, ext_og_image_checked, ext_og_image_url, ext_og_image_width, ext_og_image_height, ext_og_image_fetched_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+                content_type = excluded.content_type,
+                content_src = excluded.content_src,
+                content_text = excluded.content_text,
+                summary = excluded.summary,
+                feed_id = excluded.feed_id,
+                title = excluded.title,
+                published = excluded.published,
+                updated = excluded.updated,
+                author_name = excluded.author_name,
+                ext_comments_url = excluded.ext_comments_url;
             """
         ).use { stmt ->
             entries.forEach { entry ->

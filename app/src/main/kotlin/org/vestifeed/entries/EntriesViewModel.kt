@@ -137,6 +137,7 @@ class EntriesViewModel(
                         extReadSynced = false,
                     )
                 }
+                reload()
 
                 if (item.openInBrowser) {
                     val links = withContext(Dispatchers.IO) { db.link.selectByEntryId(item.id) }
@@ -167,6 +168,7 @@ class EntriesViewModel(
                     extReadSynced = false,
                 )
             }
+            reload()
             sync.runInBackground()
         }
     }
@@ -181,6 +183,7 @@ class EntriesViewModel(
                     extBookmarkedSynced = false,
                 )
             }
+            reload()
             sync.runInBackground()
         }
     }

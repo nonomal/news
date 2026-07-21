@@ -124,7 +124,7 @@ class SearchFragment : AppFragment() {
         )
 
         binding.query.requestFocus()
-        showKeyboard(binding.query)
+        binding.query.postDelayed({ showKeyboard(binding.query) }, 300)
 
         binding.clear.setOnClickListener { binding.query.setText("") }
     }
@@ -144,9 +144,21 @@ class SearchFragment : AppFragment() {
 
         when (state) {
             is State.QueryIsEmpty,
-            is State.QueryIsTooShort -> listOf(toolbar).forEach { it.isVisible = true }
+            is State.QueryIsTooShort -> {
+                listOf(toolbar).forEach { it.isVisible = true }
+                message.isVisible = true
+                message.setText(R.string.type_at_least_3_characters_to_search)
+            }
+
             is State.RunningQuery -> listOf(toolbar, progress).forEach { it.isVisible = true }
-            is State.ShowingQueryResults -> listOf(toolbar, list).forEach { it.isVisible = true }
+
+            is State.ShowingQueryResults -> {
+                listOf(toolbar, list).forEach { it.isVisible = true }
+                if (state.items.isEmpty()) {
+                    message.isVisible = true
+                    message.setText(R.string.no_results)
+                }
+            }
         }
 
         if (state is State.ShowingQueryResults) {

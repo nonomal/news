@@ -44,6 +44,8 @@
     <string name="bookmarked">W zakładkach</string>
     <string name="search">Szukaj</string>
     <string name="clear_search_input">Wyczyść dane wyszukiwania</string>
+    <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
+    <string name="no_results">No results</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">Nie masz aplikacji, które mogą odtwarzać ten podcast.</string>
     <string name="import_feeds_from_opml_file">Importuj z pliku OPML file</string>
     <string name="export_feeds_to_opml_file">Eksportuj do pliku OPML file</string>

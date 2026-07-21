@@ -5,7 +5,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import androidx.core.widget.addTextChangedListener
 import org.vestifeed.navigation.AppFragment
 import androidx.fragment.app.commit
@@ -111,9 +114,20 @@ class SearchFragment : AppFragment() {
     }
 
     private fun initToolbar() {
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).let {
+                v.updatePadding(top = it.top)
+            }
+            insets
+        }
+
         binding.toolbar.setNavigationOnClickListener {
             hideKeyboard(binding.query)
             parentFragmentManager.popBackStack()
+        }
+
+        binding.toolbar.post {
+            disableNavigationIconFocus(binding.toolbar)
         }
 
         binding.query.addTextChangedListener(
@@ -123,10 +137,20 @@ class SearchFragment : AppFragment() {
             }
         )
 
-        binding.query.requestFocus()
+        binding.query.post { binding.query.requestFocus() }
         binding.query.postDelayed({ showKeyboard(binding.query) }, 300)
 
         binding.clear.setOnClickListener { binding.query.setText("") }
+    }
+
+    private fun disableNavigationIconFocus(toolbar: ViewGroup) {
+        for (i in 0 until toolbar.childCount) {
+            val child = toolbar.getChildAt(i)
+            if (child is android.widget.ImageButton) {
+                child.isFocusable = false
+                child.isFocusableInTouchMode = false
+            }
+        }
     }
 
     private fun initList() {

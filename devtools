@@ -29,7 +29,6 @@
 #   VESTI_ENV_FILE       .env file with Miniflux creds (default: <repo>/.env)
 #
 # Emulator tuning (only relevant for `emulator start` / `run`):
-#   VESTI_GPU_MODE       host | swiftshader_indirect | guest | auto  (default: host)
 #   VESTI_NO_WINDOW      1 to run headless (no Mutter window, no ANR dialogs) (default: 0)
 #   VESTI_CORES          Cap QEMU to N cores — helps when ANR trips on overload  (default: unset)
 #   VESTI_NO_AUDIO       1 to disable audio  (default: 0)
@@ -49,7 +48,6 @@ VESTI_RECORD_PATH="${VESTI_RECORD_PATH:-$SCRIPT_DIR/e2e.mp4}"
 VESTI_RECORD_PID_FILE="${VESTI_RECORD_PID_FILE:-$VESTI_LOG_DIR/e2e-screenrecord.pid}"
 VESTI_ENV_FILE="${VESTI_ENV_FILE:-$SCRIPT_DIR/.env}"
 
-VESTI_GPU_MODE="${VESTI_GPU_MODE:-host}"
 VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
 VESTI_CORES="${VESTI_CORES:-}"
 VESTI_NO_AUDIO="${VESTI_NO_AUDIO:-0}"
@@ -70,9 +68,8 @@ fi
 # Qt will refuse to load it. Native Wayland for the emulator requires
 # the SDK to ship a Wayland plugin itself, which it doesn't. The Qt
 # platform ends up being xcb (XWayland) on Wayland sessions, which is
-# what triggers the ANR loop. The real workarounds are:
+# what triggers the ANR loop. The real workaround is:
 #   - VESTI_NO_WINDOW=1 to run headless (no Mutter window)
-#   - VESTI_GPU_MODE=swiftshader_indirect to force software host GL
 # Leave VESTI_QT_PLATFORM unset to accept the emulator's default.
 
 log() { printf '==> %s\n' "$*"; }
@@ -101,8 +98,6 @@ Commands:
   snapshot delete                Remove a stale default_boot quickboot snapshot
 
 Common tunables (env vars):
-  VESTI_GPU_MODE=swiftshader_indirect  Force software GL (slower, but works around
-                                       a broken host GPU context)
   VESTI_NO_WINDOW=1                   Run headless; eliminates Mutter ANR dialogs.
                                        View screen via \`./devtools emulator screencap\` or scrcpy.
   VESTI_CORES=N                       Cap QEMU cores (default: unset = all cores)
@@ -165,11 +160,11 @@ emulator_start() {
   extra=$(emulator_extra_args)
 
   log "Starting AVD $VESTI_AVD (logs: $VESTI_LOG_DIR/emulator.log)"
-  log "  -gpu $VESTI_GPU_MODE${extra:+ $extra}"
+  log "  -gpu host${extra:+ $extra}"
   # Detach from the shell so the script can exit cleanly while the
   # emulator keeps running.
   # shellcheck disable=SC2086
-  nohup setsid "$EMU" -avd "$VESTI_AVD" -gpu "$VESTI_GPU_MODE" \
+  nohup setsid "$EMU" -avd "$VESTI_AVD" -gpu host \
     ${extra:+$extra} \
     > "$VESTI_LOG_DIR/emulator.log" 2>&1 < /dev/null &
   disown
@@ -241,7 +236,7 @@ emulator_doctor() {
       printf '  ABIs differ (%s vs %s) — system libqwayland.so will be rejected by the\n' "$emu_minor" "$sys_minor"
       printf '  emulator Qt at load time. Native Wayland for the emulator requires the\n'
       printf '  SDK to ship a Wayland plugin itself, which it currently does not.\n'
-      printf '  Workarounds: VESTI_NO_WINDOW=1 (headless) or VESTI_GPU_MODE=swiftshader_indirect.\n'
+      printf '  Workaround: VESTI_NO_WINDOW=1 (headless).\n'
     fi
   fi
 

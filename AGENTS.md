@@ -164,11 +164,6 @@ git-ignored.
 ### Useful tunables
 Set these env vars before `./devtools emulator start` or `./devtools run`:
 
-- `VESTI_GPU_MODE=swiftshader_indirect` — fall back to software host GL
-  when the default `-gpu host` is unstable on this machine (recent emulator
-  builds ≥ 36.x probe the host GPU and self-disable rendering on
-  AMD/Intel drivers they don't recognise, which is what triggers the
-  Mutter "app is unresponsive" loop)
 - `VESTI_NO_WINDOW=1` — run headless; suppresses the Mutter ANR dialogs
   the wedged emulator Qt/XCB thread otherwise triggers under Wayland
 - `VESTI_CORES=N` — cap QEMU cores when ANRs trip on overload

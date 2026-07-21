@@ -24,6 +24,7 @@ import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.navigation.AppFragment
+import org.vestifeed.search.SearchFragment
 import org.vestifeed.settings.SettingsFragment
 
 /**
@@ -105,6 +106,7 @@ class EntriesFragment : AppFragment() {
     private fun initToolbarMenu() {
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
+                R.id.search -> openFragment(SearchFragment::class.java)
                 R.id.settings -> openFragment(SettingsFragment::class.java)
                 else -> false
             }

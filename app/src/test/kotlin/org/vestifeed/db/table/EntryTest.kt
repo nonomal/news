@@ -117,6 +117,39 @@ class EntryTest {
         assertEquals(OffsetDateTime.parse("2026-07-15T10:00:00Z"), result.extOpenGraphImageFetchedAt)
     }
 
+    /**
+     * When the row's `ext_read_synced` / `ext_bookmarked_synced` are already
+     * `1` (local state matches the server), a re-sync that brings the
+     * server's flipped values must overwrite them. Otherwise the unread
+     * counter would keep showing entries the user has read on the server
+     * (e.g. via the Miniflux web UI) and never converge with the server
+     * count.
+     */
+    @Test
+    fun entryQueries_insertOrReplace_overwritesSyncedStateFromServer() {
+        val original = createEntry(
+            extRead = false,
+            extReadSynced = true,
+            extBookmarked = false,
+            extBookmarkedSynced = true,
+        )
+        db.entry.insertOrReplace(listOf(original))
+
+        val fromServer = original.copy(
+            extRead = true,
+            extReadSynced = true,
+            extBookmarked = true,
+            extBookmarkedSynced = true,
+        )
+        db.entry.insertOrReplace(listOf(fromServer))
+
+        val result = db.entry.selectById(original.id)!!
+        assertTrue(result.extRead)
+        assertEquals(true, result.extReadSynced)
+        assertTrue(result.extBookmarked)
+        assertEquals(true, result.extBookmarkedSynced)
+    }
+
     @Test
     fun entryQueries_insertOrReplace_emptyList() {
         db.entry.insertOrReplace(emptyList())

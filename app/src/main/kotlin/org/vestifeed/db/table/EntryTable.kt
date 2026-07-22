@@ -123,7 +123,11 @@ class EntryTable(private val conn: SQLiteConnection) {
                 published = excluded.published,
                 updated = excluded.updated,
                 author_name = excluded.author_name,
-                ext_comments_url = excluded.ext_comments_url;
+                ext_comments_url = excluded.ext_comments_url,
+                ext_read = CASE WHEN ext_read_synced = 1 THEN excluded.ext_read ELSE ext_read END,
+                ext_read_synced = CASE WHEN ext_read_synced = 1 THEN excluded.ext_read_synced ELSE ext_read_synced END,
+                ext_bookmarked = CASE WHEN ext_bookmarked_synced = 1 THEN excluded.ext_bookmarked ELSE ext_bookmarked END,
+                ext_bookmarked_synced = CASE WHEN ext_bookmarked_synced = 1 THEN excluded.ext_bookmarked_synced ELSE ext_bookmarked_synced END;
             """
         ).use { stmt ->
             entries.forEach { entry ->

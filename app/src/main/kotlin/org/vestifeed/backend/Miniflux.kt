@@ -186,6 +186,13 @@ open class Miniflux(
         val urlBuilder = baseUrl.newBuilder().addPathSegment("entries")
         urlBuilder.addQueryParameter("changed_after", changedAfter.toEpochSecond().toString())
         urlBuilder.addQueryParameter("limit", limit.toString())
+        // The Miniflux API defaults to the user's preferred sort order
+        // (e.g. `published_at desc`), which means `changed_after` pagination
+        // skips entries whose `published_at` is older even though their
+        // `changed_at` is newer than the cursor. Pin the order to
+        // `changed_at asc` so the cursor walks the change log chronologically.
+        urlBuilder.addQueryParameter("order", "changed_at")
+        urlBuilder.addQueryParameter("direction", "asc")
         val req = Request.Builder().url(urlBuilder.build()).get().build()
         val res = client.newCall(req).executeAsync()
         return if (res.isSuccessful) {

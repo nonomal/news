@@ -196,7 +196,7 @@ class EntriesFragment : AppFragment() {
 
             is ItemsState.Empty -> {
                 binding.progress.isVisible = false
-                binding.swipeRefresh.isVisible = false
+                binding.swipeRefresh.isVisible = true
                 binding.message.isVisible = true
                 binding.message.text = getString(items.messageRes, *items.args.toTypedArray())
             }

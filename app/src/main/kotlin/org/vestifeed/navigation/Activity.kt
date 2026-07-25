@@ -10,6 +10,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.updatePadding
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
@@ -54,10 +55,26 @@ class Activity : AppCompatActivity() {
         }
     }
 
+    private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
+        override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+            updateBottomNavVisibility()
+        }
+    }
+
+    private fun updateBottomNavVisibility() {
+        val top = supportFragmentManager.fragments.lastOrNull { it.isVisible }
+        binding.bottomNav.isVisible = supportFragmentManager.backStackEntryCount == 0 &&
+            (top is EntriesFragment || top is FeedsFragment)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        supportFragmentManager.registerFragmentLifecycleCallbacks(
+            fragmentLifecycleCallbacks,
+            false,
+        )
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNav) { v, insets ->
             insets.getInsets(WindowInsetsCompat.Type.navigationBars()).let {
@@ -199,5 +216,10 @@ R.id.newsFragment -> {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
     }
 }

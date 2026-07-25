@@ -199,6 +199,7 @@ class EntriesFragment : AppFragment() {
                 binding.swipeRefresh.isVisible = true
                 binding.message.isVisible = true
                 binding.message.text = getString(items.messageRes, *items.args.toTypedArray())
+                adapter.submitList(emptyList())
             }
         }
     }

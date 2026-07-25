@@ -55,6 +55,10 @@ class Activity : AppCompatActivity() {
         }
     }
 
+    private val onBackStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        updateBottomNavVisibility()
+    }
+
     private val fragmentLifecycleCallbacks = object : FragmentManager.FragmentLifecycleCallbacks() {
         override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
             updateBottomNavVisibility()
@@ -62,7 +66,7 @@ class Activity : AppCompatActivity() {
     }
 
     private fun updateBottomNavVisibility() {
-        val top = supportFragmentManager.fragments.lastOrNull { it.isVisible }
+        val top = supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
         binding.bottomNav.isVisible = supportFragmentManager.backStackEntryCount == 0 &&
             (top is EntriesFragment || top is FeedsFragment)
     }
@@ -71,6 +75,7 @@ class Activity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        supportFragmentManager.addOnBackStackChangedListener(onBackStackChangedListener)
         supportFragmentManager.registerFragmentLifecycleCallbacks(
             fragmentLifecycleCallbacks,
             false,
@@ -218,8 +223,14 @@ R.id.newsFragment -> {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        updateBottomNavVisibility()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        supportFragmentManager.removeOnBackStackChangedListener(onBackStackChangedListener)
         supportFragmentManager.unregisterFragmentLifecycleCallbacks(fragmentLifecycleCallbacks)
     }
 }

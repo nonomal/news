@@ -3,48 +3,92 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vesti - Web Feed Reader</title>
+  <meta name="description" content="Vesti is an open source RSS and Atom feed reader for Android, built for direct publishing without ads, algorithms, or unnecessary intermediaries.">
+  <title>Vesti — A direct line to what you read</title>
   <link rel="stylesheet" href="styles.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📰</text></svg>">
 </head>
 <body>
-  <main>
-    <header>
-      <nav>
-        <a href="https://github.com/bubelov/vesti" class="nav-link">GitHub</a>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Vesti home">
+        <img class="brand-logo" src="logo.svg" alt="">
+        <span>Vesti</span>
+      </a>
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="https://matrix.to/#/#vesti:matrix.org">Matrix <span aria-hidden="true">↗</span></a>
+        <a href="https://github.com/bubelov/vesti">GitHub <span aria-hidden="true">↗</span></a>
       </nav>
     </header>
 
-    <section class="hero">
-      <h1>Vesti</h1>
-      <p class="tagline">Web feed reader for Android</p>
-      <div class="cta">
-        <a href="release.apk" class="btn btn-release">Latest Release APK</a>
-        <a href="debug.apk" class="btn btn-preview">Preview APK</a>
-        <a href="https://f-droid.org/packages/co.appreactor.news/" class="f-droid-badge">
-          <img src="https://fdroid.gitlab.io/artwork/badge/get-it-on-en.svg" alt="Get it on F-Droid">
-        </a>
-      </div>
-    </section>
+    <main>
+      <section class="hero">
+        <div class="hero-copy">
+          <h1>Direct Publishing.<br><em>Direct Reading.</em></h1>
+          <p class="lede">Social platforms put ads, algorithms, and gatekeepers between publishers and their audience. Vesti brings RSS and Atom feeds back to their original promise: simple, direct publishing for everyone.</p>
+          <div class="actions">
+            <a class="button button-primary" href="releases/0.4.3.apk">Download APK</a>
+            <a class="f-droid-badge" href="https://f-droid.org/packages/co.appreactor.news/">
+              <img src="fdroid-badge.svg" alt="Get it on F-Droid">
+            </a>
+          </div>
+        </div>
+        <div class="device-wrap" aria-label="Preview of the Vesti app">
+          <div class="glow"></div>
+          <div class="phone">
+            <img class="app-screenshot" src="screenshot.png" alt="Vesti showing an unread feed with article previews">
+          </div>
+        </div>
+      </section>
 
-    <section class="features">
-      <div class="feature">
-        <h2>Fast</h2>
-        <p>Smooth and snappy even on the older and cheaper devices</p>
-      </div>
-      <div class="feature">
-        <h2>Clean</h2>
-        <p>Enjoy modern and minimalistic Material Design</p>
-      </div>
-      <div class="feature">
-        <h2>Open</h2>
-        <p>This is a free and open source app</p>
-      </div>
-    </section>
+      <section class="nightly">
+        <h2>Try the Nightly Build</h2>
+        <p>You can access all the cutting-edge but unreleased features, and also join our <a href="https://matrix.to/#/#vesti:matrix.org">Matrix Space</a> to connect, help, leave your feedback, and shape the direction of the project.</p>
+        <a class="button button-primary" href="debug.apk">Download Nightly APK</a>
+      </section>
 
-    <footer>
-      <p>Released under GPL-3.0 License</p>
-    </footer>
-  </main>
+      <section class="principles" aria-labelledby="principles-title">
+        <h2 id="principles-title">Why Vesti Exists</h2>
+        <div class="principle-grid">
+          <article><span class="principle-number">01</span><h3>No gatekeepers</h3><p>Follow publishers directly through open RSS and Atom standards, instead of relying on a social platform to decide what reaches you.</p></article>
+          <article><span class="principle-number">02</span><h3>No distractions</h3><p>Read without ad-heavy timelines, engagement loops, fake news, or propaganda competing for your attention.</p></article>
+          <article><span class="principle-number">03</span><h3>Fully independent</h3><p>Vesti is built and primarily maintained by its creator as a small, open source project for people who value a freer web.</p></article>
+        </div>
+      </section>
+
+      <section class="recommended-feeds" aria-labelledby="recommended-feeds-title">
+        <h2 id="recommended-feeds-title">Recommended Feeds</h2>
+        <p class="section-lede">A handful of independent, ad-free publications worth subscribing to. Add them to Vesti and skip the algorithm entirely.</p>
+        <ul class="feed-list">
+          <li>
+            <a class="feed-name" href="https://standardebooks.org/feeds/atom/new-releases">Standard Ebooks New Releases</a>
+            <a class="feed-url" href="https://standardebooks.org/feeds/atom/new-releases">standardebooks.org/feeds/atom/new-releases</a>
+            <p class="feed-desc">The fifteen latest Standard Ebooks, most-recently-released first.</p>
+          </li>
+          <li>
+            <a class="feed-name" href="https://www.scmp.com/rss/91/feed">South China Morning Post</a>
+            <a class="feed-url" href="https://www.scmp.com/rss/91/feed">scmp.com/rss/91/feed</a>
+            <p class="feed-desc">A news feed with beautiful images that translates Asian and Chinese perspectives on world events — a useful counterbalance to BBC and Guardian-style publications.</p>
+          </li>
+          <li>
+            <a class="feed-name" href="https://hnrss.org/frontpage">Hacker News</a>
+            <a class="feed-url" href="https://hnrss.org/frontpage">hnrss.org/frontpage</a>
+            <p class="feed-desc">Random tech-related news with funny comments from the Hacker News community.</p>
+          </li>
+          <li>
+            <a class="feed-name" href="https://mastodon.social/@Mastodon.rss">Mastodon (Official Account)</a>
+            <a class="feed-url" href="https://mastodon.social/@Mastodon.rss">mastodon.social/@Mastodon.rss</a>
+            <p class="feed-desc">Updates from the official Mastodon account on mastodon.social. You can subscribe to any Mastodon account as an RSS feed — something you cannot do with Twitter.</p>
+          </li>
+          <li>
+            <a class="feed-name" href="https://bsky.app/profile/bsky.app/rss">Bluesky (Official Account)</a>
+            <a class="feed-url" href="https://bsky.app/profile/bsky.app/rss">bsky.app/profile/bsky.app/rss</a>
+            <p class="feed-desc">Updates from the official Bluesky account — another solid Twitter alternative with full webfeed support for individual accounts.</p>
+          </li>
+        </ul>
+      </section>
+
+      </main>
+
+    </div>
 </body>
 </html>

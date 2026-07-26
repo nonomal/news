@@ -12,7 +12,7 @@
 #                                            Dump recent logcat lines (default: $VESTI_PACKAGE only)
 #   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
 #   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
-#   ./devtools run [-- ...]                   Assemble debug APK, install it on the emulator, launch it
+#   ./devtools website run                  Open the website in a local browser tab
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
 #   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
@@ -778,6 +778,35 @@ cmd_login() {
   "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
 }
 
+# === website subcommand ======================================================
+
+cmd_website() {
+  local sub="${1:-help}"
+  shift || true
+  case "$sub" in
+    run)
+      if [ $# -gt 0 ]; then
+        err "Unknown website argument: $1"
+        return 1
+      fi
+      if ! command -v xdg-open >/dev/null 2>&1; then
+        err "xdg-open not found"
+        return 1
+      fi
+      log "Opening the local website in the default browser..."
+      xdg-open "$SCRIPT_DIR/website/index.html" >/dev/null 2>&1 &
+      ;;
+    help|-h|--help)
+      printf 'Usage: ./devtools website run\n'
+      ;;
+    *)
+      err "Unknown website command: $sub"
+      printf 'Usage: ./devtools website run\n'
+      return 1
+      ;;
+  esac
+}
+
 # === dispatch ===============================================================
 
 main() {
@@ -785,6 +814,7 @@ main() {
   shift || true
   case "$cmd" in
     emulator) cmd_emulator "$@" ;;
+    website)  cmd_website "$@" ;;
     run)      cmd_run "$@" ;;
     e2e)      cmd_e2e "$@" ;;
     login)    cmd_login "$@" ;;

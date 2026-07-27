@@ -34,6 +34,7 @@ import org.vestifeed.parser.AtomLinkRel
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.enclosures.EnclosuresAdapter
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -182,9 +183,18 @@ class EntryFragment : AppFragment() {
         binding.date.text =
             DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).format(entry.published)
 
+        val baseUrl = entryLinks
+            .firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
+            ?.href
+            ?.toHttpUrlOrNull()
+
         val parsedContent = parseEntryContent(
             entry.contentText ?: "",
-            TextViewImageGetter(binding.summaryView),
+            TextViewImageGetter(
+                textView = binding.summaryView,
+                scope = viewLifecycleOwner.lifecycleScope,
+                baseUrl = baseUrl,
+            ),
         )
         parsedContent.applyStyle(binding.summaryView)
         binding.summaryView.text = parsedContent
@@ -205,13 +215,13 @@ class EntryFragment : AppFragment() {
                 }
         )
 
-        val firstHtmlLink =
-            entryLinks.firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
+        val firstHtmlLink = entryLinks
+            .firstOrNull { it.rel is AtomLinkRel.Alternate && it.type == "text/html" }
 
         if (firstHtmlLink != null) {
             binding.fab.show()
             binding.fab.setOnClickListener {
-                openUrl(firstHtmlLink.href.toString(), conf.useBuiltInBrowser)
+                openUrl(firstHtmlLink.href, conf.useBuiltInBrowser)
             }
         }
     }
@@ -430,9 +440,5 @@ class EntryFragment : AppFragment() {
             val bottomGap = if (position == (parent.adapter?.itemCount ?: 0) - 1) gapInPixels else 0
             outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
         }
-    }
-
-    private class TextViewImageGetter(private val textView: TextView) : Html.ImageGetter {
-        override fun getDrawable(source: String): android.graphics.drawable.Drawable? = null
     }
 }

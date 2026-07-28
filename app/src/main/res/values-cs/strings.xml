@@ -64,6 +64,9 @@
     <string name="background_sync_interval">Interval synchronizace na pozadí</string>
     <string name="mark_all_as_read">Označit vše jako přečtené</string>
     <string name="unread_news">Nepřečtené zprávy</string>
+    <string name="notification_permission_required_title">Notification permission</string>
+    <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>
+    <string name="notification_permission_required_content_description">Notifications are disabled</string>
     <string name="got_exception_of_class_s">Máte %1$s. Podrobnosti naleznete v logu výjimek</string>
     <string name="you_have_no_feeds">Nemáte žádné kanály</string>
     <string name="export_database">Exportovat databázi</string>

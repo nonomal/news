@@ -64,6 +64,9 @@
     <string name="background_sync_interval">Intervalo de sinc. em segundo plano</string>
     <string name="mark_all_as_read">Marcar tudo como lido</string>
     <string name="unread_news">Notícias não lidas</string>
+    <string name="notification_permission_required_title">Notification permission</string>
+    <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>
+    <string name="notification_permission_required_content_description">Notifications are disabled</string>
     <string name="got_exception_of_class_s">Tem %1$s. Veja o log de exceções para mais detalhes</string>
     <string name="you_have_no_feeds">Nenhum feed disponível</string>
     <string name="export_database">Exportar base de dados</string>

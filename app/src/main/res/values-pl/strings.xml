@@ -64,6 +64,9 @@
     <string name="background_sync_interval">Interwał synchronizacji w tle</string>
     <string name="mark_all_as_read">Oznacz wszystko jako przeczytane</string>
     <string name="unread_news">Nie przeczytane</string>
+    <string name="notification_permission_required_title">Notification permission</string>
+    <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>
+    <string name="notification_permission_required_content_description">Notifications are disabled</string>
     <string name="got_exception_of_class_s">Pobrano w %1$s. Szczegóły wyjątków w dzienniku</string>
     <string name="you_have_no_feeds">Nie masz kanałów</string>
     <string name="export_database">Eksportuj bazę danych</string>

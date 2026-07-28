@@ -4,7 +4,9 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -16,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import org.vestifeed.R
@@ -24,6 +27,8 @@ import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentEntriesBinding
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.navigation.AppFragment
+import org.vestifeed.notifications.NotificationPermissionAccess
+import org.vestifeed.notifications.NotificationPermissionPrefs
 import org.vestifeed.search.SearchFragment
 import org.vestifeed.settings.SettingsFragment
 
@@ -60,6 +65,18 @@ class EntriesFragment : AppFragment() {
 
     private val touchHelper by lazy { createTouchHelper() }
 
+    private val notificationPrefs by lazy { NotificationPermissionPrefs(requireContext()) }
+
+    private val notificationPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+            if (granted) {
+                notificationPrefs.reset()
+            } else {
+                notificationPrefs.markRequestedOnce()
+            }
+            updateNotificationWarningVisibility()
+        }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -81,10 +98,16 @@ class EntriesFragment : AppFragment() {
 
         applyStatusBarInsets()
         initToolbarMenu()
+        updateNotificationWarningVisibility()
         initList()
         initSwipeRefresh()
         observeState()
         observeActions()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateNotificationWarningVisibility()
     }
 
     override fun onDestroyView() {
@@ -108,8 +131,40 @@ class EntriesFragment : AppFragment() {
             when (item.itemId) {
                 R.id.search -> openFragment(SearchFragment::class.java)
                 R.id.settings -> openFragment(SettingsFragment::class.java)
+                R.id.notificationPermissionWarning -> {
+                    onNotificationWarningClicked()
+                    true
+                }
                 else -> false
             }
+        }
+    }
+
+    private fun onNotificationWarningClicked() {
+        if (_binding == null) return
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle(R.string.notification_permission_required_title)
+            .setMessage(R.string.notification_permission_required_message)
+            .setPositiveButton(android.R.string.ok) { _, _ ->
+                notificationPrefs.markRequestedOnce()
+                notificationPermissionLauncher.launch(NotificationPermissionAccess.permission)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+    }
+
+    private fun updateNotificationWarningVisibility() {
+        val item = binding.toolbar.menu.findItem(R.id.notificationPermissionWarning) ?: return
+        val shouldShow = filter is EntriesFilter.Unread &&
+            NotificationPermissionAccess.shouldShowWarning(
+                context = requireContext(),
+                fragment = this,
+                prefs = notificationPrefs,
+            )
+        item.isVisible = shouldShow
+        if (shouldShow) {
+            val color = ContextCompat.getColor(requireContext(), R.color.warning)
+            item.icon = item.icon?.mutate()?.apply { setTint(color) }
         }
     }
 

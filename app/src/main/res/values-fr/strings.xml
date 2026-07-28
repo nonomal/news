@@ -64,6 +64,9 @@
     <string name="background_sync_interval">Intervalle de la sync en tâche de fond</string>
     <string name="mark_all_as_read">Tout marquer comme lu</string>
     <string name="unread_news">Non lu</string>
+    <string name="notification_permission_required_title">Notification permission</string>
+    <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>
+    <string name="notification_permission_required_content_description">Notifications are disabled</string>
     <string name="got_exception_of_class_s">Erreur %1$s. Voir le détail dans les logs.</string>
     <string name="you_have_no_feeds">Vous n’êtes abonné à aucun flux</string>
     <string name="export_database">Exporter la base de données</string>

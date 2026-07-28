@@ -64,6 +64,9 @@
     <string name="background_sync_interval">Interval de sincronizare în fundal</string>
     <string name="mark_all_as_read">Marchează toate ca fiind citite</string>
     <string name="unread_news">Știri necitite</string>
+    <string name="notification_permission_required_title">Notification permission</string>
+    <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>
+    <string name="notification_permission_required_content_description">Notifications are disabled</string>
     <string name="got_exception_of_class_s">Răspuns %1$s. Consultă jurnalul de excepții pentru detalii</string>
     <string name="you_have_no_feeds">Nu ai niciun feed</string>
     <string name="export_database">Exportă baza de date</string>

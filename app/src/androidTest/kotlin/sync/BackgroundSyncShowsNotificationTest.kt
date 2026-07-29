@@ -11,6 +11,7 @@ import androidx.work.testing.TestWorkerBuilder
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -51,11 +52,13 @@ class BackgroundSyncShowsNotificationTest {
             app.db.feed.deleteAll()
         }
 
+        app.sync.unreadScreenVisible = false
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
     }
 
     @After
     fun tearDown() {
+        app.sync.unreadScreenVisible = false
         NotificationManagerCompat.from(app).cancel(NOTIFICATION_ID)
     }
 
@@ -151,6 +154,63 @@ class BackgroundSyncShowsNotificationTest {
                 lines.none { it == "News $i" },
             )
         }
+    }
+
+    @Test
+    fun backgroundSyncSkipsNotificationWhenUnreadScreenVisible() {
+        val feedId = "notification-suppression-feed-${UUID.randomUUID()}"
+        app.db.feed.insertOrReplace(
+            FeedTable.Feed(
+                id = feedId,
+                title = "Suppression Test Feed",
+                extOpenEntriesInBrowser = null,
+                extBlockedWords = "",
+                extShowPreviewImages = null,
+            ),
+        )
+
+        val now = OffsetDateTime.now()
+        val entry = EntryTable.Entry(
+            contentType = "",
+            contentSrc = "",
+            contentText = "",
+            summary = "",
+            id = "notification-suppression-entry-${UUID.randomUUID()}",
+            feedId = feedId,
+            title = "News 1",
+            published = now.minusMinutes(1),
+            updated = now.minusMinutes(1),
+            authorName = "Author",
+            extRead = false,
+            extReadSynced = true,
+            extBookmarked = false,
+            extBookmarkedSynced = true,
+            extCommentsUrl = "",
+            extOpenGraphImageChecked = true,
+            extOpenGraphImageUrl = "",
+            extOpenGraphImageWidth = 0,
+            extOpenGraphImageHeight = 0,
+            extOpenGraphImageFetchedAt = null,
+        )
+        app.db.entry.insertOrReplace(listOf(entry))
+
+        app.sync.unreadScreenVisible = true
+
+        val worker = TestWorkerBuilder.from(app, SyncWorker::class.java).build()
+        val result = worker.doWork()
+
+        assertTrue(
+            "SyncWorker should succeed but was $result",
+            result is ListenableWorker.Result.Success,
+        )
+        assertEquals(1, app.db.entry.selectUnreadCount())
+
+        val active = NotificationManagerCompat.from(app).activeNotifications
+        val posted = active.firstOrNull { it.id == NOTIFICATION_ID }
+        assertNull(
+            "Expected no unread news notification while the unread screen is foregrounded",
+            posted,
+        )
     }
 
     private companion object {

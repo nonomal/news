@@ -29,6 +29,7 @@ import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.notifications.NotificationPermissionAccess
 import org.vestifeed.notifications.NotificationPermissionPrefs
+import org.vestifeed.notifications.UnreadEntriesNotification
 import org.vestifeed.search.SearchFragment
 import org.vestifeed.settings.SettingsFragment
 
@@ -108,7 +109,18 @@ class EntriesFragment : AppFragment() {
 
     override fun onResume() {
         super.onResume()
+        if (filter is EntriesFilter.Unread) {
+            sync().unreadScreenVisible = true
+            UnreadEntriesNotification.cancel(requireContext())
+        }
         updateNotificationWarningVisibility()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (filter is EntriesFilter.Unread) {
+            sync().unreadScreenVisible = false
+        }
     }
 
     override fun onDestroyView() {

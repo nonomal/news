@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
+import org.vestifeed.db.table.EntryTable.EntriesAdapterRow
 
 class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(context, workerParams) {
 
@@ -26,8 +27,8 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         try {
             sync.runInForeground()
             val unreadEntries =
-                applicationContext.db().entry.selectUnreadCount()
-            if (unreadEntries > 0) {
+                applicationContext.db().entry.selectUnread()
+            if (unreadEntries.isNotEmpty()) {
                 showUnreadEntriesNotification(unreadEntries, applicationContext)
             }
             return Result.success()
@@ -36,7 +37,10 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         }
     }
 
-    private fun showUnreadEntriesNotification(unreadEntries: Int, context: Context) {
+    private fun showUnreadEntriesNotification(
+        unreadEntries: List<EntriesAdapterRow>,
+        context: Context,
+    ) {
         createNotificationChannel(context)
 
         val intent = Intent(context, Activity::class.java).apply {
@@ -46,16 +50,24 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
         val pendingIntent =
             PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
+        val count = unreadEntries.size
+        val title = context.resources.getQuantityString(
+            R.plurals.you_have_d_unread_news,
+            count,
+            count,
+        )
+
+        val mostRecent = unreadEntries.take(MAX_NOTIFICATION_LINES)
+
+        val inboxStyle = NotificationCompat.InboxStyle()
+        inboxStyle.setBigContentTitle(title)
+        mostRecent.forEach { inboxStyle.addLine(it.title) }
+
         val builder = NotificationCompat.Builder(context, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_baseline_list_alt_24)
-            .setContentTitle(context.getString(R.string.app_name))
-            .setContentText(
-                context.resources.getQuantityString(
-                    R.plurals.you_have_d_unread_news,
-                    unreadEntries,
-                    unreadEntries,
-                )
-            )
+            .setContentTitle(title)
+            .setContentText(mostRecent.firstOrNull()?.title.orEmpty())
+            .setStyle(inboxStyle)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setContentIntent(pendingIntent)
             .setAutoCancel(true)
@@ -81,5 +93,6 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
     companion object {
         private const val CHANNEL_ID = "unread_entries"
         private const val NOTIFICATION_ID = 1
+        private const val MAX_NOTIFICATION_LINES = 10
     }
 }

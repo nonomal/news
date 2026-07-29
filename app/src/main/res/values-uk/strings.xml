@@ -100,4 +100,17 @@
         <item quantity="many">У вас %d непрочитанных новостей</item>
         <item quantity="other">У вас %d непрочитанных новостей</item>
     </plurals>
+    <string name="time_just_now">Щойно</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="few">%d хвилини тому</item>
+        <item quantity="many">%d хвилин тому</item>
+        <item quantity="one">%d хвилину тому</item>
+        <item quantity="other">%d хвилин тому</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="few">%d години тому</item>
+        <item quantity="many">%d годин тому</item>
+        <item quantity="one">%d годину тому</item>
+        <item quantity="other">%d годин тому</item>
+    </plurals>
 </resources>

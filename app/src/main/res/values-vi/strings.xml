@@ -94,4 +94,11 @@
     <plurals name="you_have_d_unread_news">
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Vừa xong</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d phút trước</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d giờ trước</item>
+    </plurals>
 </resources>

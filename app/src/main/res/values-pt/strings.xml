@@ -98,4 +98,13 @@
         <item quantity="many">Você tem %d noticias não lidas</item>
         <item quantity="other">Você tem %d noticias não lidas</item>
     </plurals>
+    <string name="time_just_now">Agora mesmo</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">há %d minuto</item>
+        <item quantity="other">há %d minutos</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">há %d hora</item>
+        <item quantity="other">há %d horas</item>
+    </plurals>
 </resources>

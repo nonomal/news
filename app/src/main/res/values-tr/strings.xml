@@ -96,4 +96,13 @@
         <item quantity="one">You have %d unread news</item>
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Şimdi</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d dakika önce</item>
+        <item quantity="other">%d dakika önce</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d saat önce</item>
+        <item quantity="other">%d saat önce</item>
+    </plurals>
 </resources>

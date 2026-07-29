@@ -96,4 +96,13 @@
         <item quantity="one">Je hebt %d ongelezen nieuws</item>
         <item quantity="other">Je hebt %d ongelezen nieuws</item>
     </plurals>
+    <string name="time_just_now">Zojuist</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d minuut geleden</item>
+        <item quantity="other">%d minuten geleden</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d uur geleden</item>
+        <item quantity="other">%d uur geleden</item>
+    </plurals>
 </resources>

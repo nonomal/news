@@ -1,5 +1,6 @@
 package org.vestifeed.entries
 
+import android.content.res.Resources
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -34,6 +35,7 @@ class EntriesViewModel(
     val filter: EntriesFilter,
     private val db: Database,
     private val sync: Sync,
+    private val resources: Resources,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(EntriesScreenState())
@@ -102,11 +104,12 @@ class EntriesViewModel(
     }
 
     private suspend fun reloadInternal() {
+        val now = OffsetDateTime.now()
         val rows = withContext(Dispatchers.IO) { filter.loadEntries(db) }
         val feedCount = withContext(Dispatchers.IO) { db.feed.selectAll().size }
         val conf = withContext(Dispatchers.IO) { db.conf.select() }
 
-        val items = rows.map { EntryRowMapper.toItem(it, conf) }
+        val items = rows.map { EntryRowMapper.toItem(it, conf, now, resources) }
         val title = filter.resolveTitle(db)
         val itemsState = if (items.isEmpty()) {
             ItemsState.Empty(filter.emptyMessageRes(feedCount))
@@ -214,12 +217,13 @@ class EntriesViewModelFactory(
     private val filter: EntriesFilter,
     private val db: Database,
     private val sync: Sync,
+    private val resources: Resources,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         require(modelClass == EntriesViewModel::class.java) {
             "Unknown ViewModel class ${modelClass.name}"
         }
-        return EntriesViewModel(filter, db, sync) as T
+        return EntriesViewModel(filter, db, sync, resources) as T
     }
 }

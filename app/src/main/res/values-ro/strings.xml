@@ -98,4 +98,15 @@
         <item quantity="few">Ai %d știri necitite</item>
         <item quantity="other">Ai %d știri necitite</item>
     </plurals>
+    <string name="time_just_now">Chiar acum</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="few">acum %d minute</item>
+        <item quantity="one">acum %d minut</item>
+        <item quantity="other">acum %d minute</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="few">acum %d ore</item>
+        <item quantity="one">acum %d oră</item>
+        <item quantity="other">acum %d ore</item>
+    </plurals>
 </resources>

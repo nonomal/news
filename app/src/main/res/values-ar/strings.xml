@@ -104,4 +104,21 @@
         <item quantity="many">لديك d% أخبار غير مقروءة</item>
         <item quantity="other">لديك d% أخبار غير مقروءة</item>
     </plurals>
+    <string name="time_just_now">الآن</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="few">قبل %d دقيقة</item>
+        <item quantity="many">قبل %d دقيقة</item>
+        <item quantity="one">قبل %d دقيقة</item>
+        <item quantity="other">قبل %d دقيقة</item>
+        <item quantity="two">قبل %d دقيقة</item>
+        <item quantity="zero">قبل %d دقيقة</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="few">قبل %d ساعة</item>
+        <item quantity="many">قبل %d ساعة</item>
+        <item quantity="one">قبل %d ساعة</item>
+        <item quantity="other">قبل %d ساعة</item>
+        <item quantity="two">قبل %d ساعة</item>
+        <item quantity="zero">قبل %d ساعة</item>
+    </plurals>
 </resources>

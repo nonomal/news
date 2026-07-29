@@ -96,4 +96,13 @@
         <item quantity="one">You have %d unread news</item>
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Netnou</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d min gelede</item>
+        <item quantity="other">%d min gelede</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d uur gelede</item>
+        <item quantity="other">%d uur gelede</item>
+    </plurals>
 </resources>

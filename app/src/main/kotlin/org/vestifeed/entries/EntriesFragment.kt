@@ -53,6 +53,7 @@ class EntriesFragment : AppFragment() {
             },
             db = db(),
             sync = sync(),
+            resources = resources,
         )
     }
 

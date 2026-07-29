@@ -98,4 +98,15 @@
         <item quantity="few">You have %d unread news</item>
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Upravo sada</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="few">pre %d minuta</item>
+        <item quantity="one">pre %d minut</item>
+        <item quantity="other">pre %d minuta</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="few">pre %d sata</item>
+        <item quantity="one">pre %d sat</item>
+        <item quantity="other">pre %d sati</item>
+    </plurals>
 </resources>

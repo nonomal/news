@@ -96,4 +96,13 @@
         <item quantity="one">You have %d unread news</item>
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Μόλις τώρα</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">πριν %d λεπτό</item>
+        <item quantity="other">πριν %d λεπτά</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">πριν %d ώρα</item>
+        <item quantity="other">πριν %d ώρες</item>
+    </plurals>
 </resources>

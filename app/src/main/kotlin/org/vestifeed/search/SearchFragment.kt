@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.OffsetDateTime
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -77,7 +78,9 @@ class SearchFragment : AppFragment() {
 
                 val rows = withContext(Dispatchers.IO) { db().entry.selectByQuery(args.query) }
                 val conf = withContext(Dispatchers.IO) { db().conf.select() }
-                val items = rows.map { EntryRowMapper.toItem(it, conf) }
+                val items = rows.map {
+                    EntryRowMapper.toItem(it, conf, OffsetDateTime.now(), resources)
+                }
 
                 _state.update { State.ShowingQueryResults(items) }
             }

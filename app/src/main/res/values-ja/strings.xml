@@ -94,4 +94,11 @@
     <plurals name="you_have_d_unread_news">
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">たった今</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="other">%d 分前</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="other">%d 時間前</item>
+    </plurals>
 </resources>

@@ -96,4 +96,13 @@
         <item quantity="one">شما %d خبر خوانده نشده دارید</item>
         <item quantity="other">شما %d خبر خوانده نشده دارید</item>
     </plurals>
+    <string name="time_just_now">هم اکنون</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="one">%d دقیقه پیش</item>
+        <item quantity="other">%d دقیقه پیش</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="one">%d ساعت پیش</item>
+        <item quantity="other">%d ساعت پیش</item>
+    </plurals>
 </resources>

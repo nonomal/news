@@ -1,10 +1,9 @@
 package org.vestifeed.entries
 
+import android.content.res.Resources
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
 import java.time.OffsetDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 /**
  * Anything that can be turned into an [EntriesAdapter.Item]. Both
@@ -28,7 +27,18 @@ interface EntryRowMappable {
 
 object EntryRowMapper {
 
-    fun toItem(row: EntryRowMappable, conf: ConfTable.Conf): EntriesAdapter.Item {
+    /**
+     * @param now the reference point used by [EntryTimeFormatter] to decide
+     *   between "just now", relative and strict formatting. Callers should
+     *   capture a single value per list build so all rows in one render see
+     *   the same clock reading.
+     */
+    fun toItem(
+        row: EntryRowMappable,
+        conf: ConfTable.Conf,
+        now: OffsetDateTime,
+        resources: Resources,
+    ): EntriesAdapter.Item {
         return EntriesAdapter.Item(
             id = row.id,
             showImage = row.extShowPreviewImages || conf.showPreviewImages,
@@ -37,16 +47,11 @@ object EntryRowMapper {
             imageWidth = row.extOpenGraphImageWidth,
             imageHeight = row.extOpenGraphImageHeight,
             title = row.title,
-            subtitle = "${row.feedTitle} · ${DATE_TIME_FORMAT.format(row.published)}",
+            subtitle = "${row.feedTitle} · ${EntryTimeFormatter.format(now, row.published, resources)}",
             summary = row.summary ?: "",
             read = row.extRead,
             openInBrowser = row.extOpenEntriesInBrowser,
             useBuiltInBrowser = conf.useBuiltInBrowser,
         )
     }
-
-    private val DATE_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofLocalizedDateTime(
-        FormatStyle.MEDIUM,
-        FormatStyle.SHORT,
-    )
 }

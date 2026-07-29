@@ -105,4 +105,21 @@
         <item quantity="many">You have %d unread news</item>
         <item quantity="other">You have %d unread news</item>
     </plurals>
+    <string name="time_just_now">Just now</string>
+    <plurals name="time_minutes_ago">
+        <item quantity="zero">%d mins ago</item>
+        <item quantity="one">%d min ago</item>
+        <item quantity="two">%d mins ago</item>
+        <item quantity="few">%d mins ago</item>
+        <item quantity="many">%d mins ago</item>
+        <item quantity="other">%d mins ago</item>
+    </plurals>
+    <plurals name="time_hours_ago">
+        <item quantity="zero">%d hours ago</item>
+        <item quantity="one">%d hour ago</item>
+        <item quantity="two">%d hours ago</item>
+        <item quantity="few">%d hours ago</item>
+        <item quantity="many">%d hours ago</item>
+        <item quantity="other">%d hours ago</item>
+    </plurals>
 </resources>

@@ -8,7 +8,10 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-val RFC_822 = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US)
+private val RFC_822_FORMATS = listOf(
+    SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US),
+    SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss X", Locale.US),
+)
 
 data class RssFeed(
     // Mandatory attribute that specifies the version of RSS that the document conforms to
@@ -198,11 +201,9 @@ fun rssItems(document: Document): Result<List<Result<RssItem>>> {
         val rawPubDate = element.getElementsByTagName("pubDate").item(0)?.textContent?.trim()
 
         val pubDate = if (rawPubDate != null) {
-            runCatching {
-                RFC_822.parse(rawPubDate)
-            }.getOrElse {
-                return@map Result.failure(Exception("Failed to parse pubDate as date"))
-            }
+            RFC_822_FORMATS.firstNotNullOfOrNull { format ->
+                runCatching { format.parse(rawPubDate) }.getOrNull()
+            } ?: return@map Result.failure(Exception("Failed to parse pubDate as date"))
         } else {
             null
         }

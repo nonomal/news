@@ -1,0 +1,1130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<rss xmlns:a10="http://www.w3.org/2005/Atom" version="2.0">
+  <channel xml:base="https://hvg.hu/rss/" xmlns:media="http://search.yahoo.com/mrss/">
+    <title>HVG</title>
+    <description>Friss hírek a HVG.hu hírportálról.</description>
+    <language>hu-HU</language>
+    <copyright>Copyright © 2026 HVG Kiadó Zrt.</copyright>
+    <lastBuildDate>Sun, 02 Aug 2026 13:21:15 Z</lastBuildDate>
+    <generator>HVG RSS Feed</generator>
+    <ttl>1</ttl>
+    <link>https://hvg.hu</link>
+    <pubDate>Sun, 02 Aug 2026 13:21:15 Z</pubDate>
+    <image>
+      <url>https://cdn.hvg.hu/assets/hvghu/images/hvg-logo.png</url>
+      <title>HVG</title>
+      <link>https://hvg.hu</link>
+    </image>
+    <item>
+      <guid isPermaLink="false">57bee984-eee1-4180-91a3-6da42babbb70</guid>
+      <author>szerzo@hvg.hu (Csernátony Csaba)</author>
+      <category>hvg360</category>
+      <category>gazdaság</category>
+      <category>Lidl</category>
+      <category>hr</category>
+      <category>kiskereskedelem</category>
+      <category>bér</category>
+      <title>Versenyképes jövedelmet kínálunk, ezért hatékony munkát várunk el – interjú a Lidl HR-vezetőjével</title>
+      <description>A magyar Lidlhöz évente 130 ezren jelentkeznek, ami megfelel Pécs teljes lakosságának. Takács Dorottya HR-igazgatóval többek között a bérekről, a fluktuációról, a generációs különbségekről beszélgettünk, szóba került az is, milyen munkatempót vár el a cég a versenyképes juttatásokért cserébe. Kiderül továbbá, hogyan alakította át a munkát az önkiszolgáló kasszák terjedése. </description>
+      <pubDate>Sun, 02 Aug 2026 13:16:00 Z</pubDate>
+      <a10:updated>2026-08-02T13:16:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/bb02a17b-b736-4315-9a64-7643c91d1396.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/bb02a17b-b736-4315-9a64-7643c91d1396.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/360/20260802_takacs-dorottya-lidl-magyarorszag-hr-vezeto-interju-kiskereskedelem-fizetes-ber-mesterseges-intelligencia-onkiszolgalo-kassza</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">680733cd-880a-40f7-9a10-0f84c95611d7</guid>
+      <a10:author>
+        <a10:email>szerzo@hvg.hu (HVG)</a10:email>
+      </a10:author>
+      <a10:author>
+        <a10:email>szerzo@hvg.hu (MTI)</a10:email>
+      </a10:author>
+      <category>Itthon</category>
+      <category>időjárás</category>
+      <category>hőség</category>
+      <category>energiaválság</category>
+      <category>kánikula</category>
+      <category>Paks</category>
+      <title>Hatezer ember maradhat melegvíz nélkül Pakson, zuhanykonténereket állítanak a lakótelepek mellé</title>
+      <description>Pakson a leálló atomerőmű működteti a távhő- és melegvíz szolgáltatást is 2771 lakótelepi lakásban és 181 intézményben. Közben országszerte 10-20 településen vannak problémák az ivóvíz-ellátással.</description>
+      <pubDate>Sun, 02 Aug 2026 13:07:00 Z</pubDate>
+      <a10:updated>2026-08-02T13:07:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/eac12016-0c7e-4000-af7e-6d9955e0c85d.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/eac12016-0c7e-4000-af7e-6d9955e0c85d.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/itthon/20260802_hatezer-ember-melegviz-nelkul-paks</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">670dc35d-6adf-4ab8-bda4-d869b0d12e5d</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>hvg360</category>
+      <category>világ</category>
+      <category>nemzetközi lapszemle</category>
+      <category>Európai Unió</category>
+      <category>klímaváltozás</category>
+      <category>Robert Fico</category>
+      <title>Fel van adva a lecke az EU-nak, mert macska-egér harcra kényszerül Moszkvával</title>
+      <description>Brüsszel az egyik büntető csomagot hozza a másik után Oroszország ellen, de Putyin elnök mindig talál kiskaput. Erdőtüzek sújtják Európát, a szárazságra figyelmeztet Ürge-Vorsatz Diána, vége a német autómítosznak és Robert Ficóig érhetnek egy korrupciós ügy szálai Szlovákiában. Nemzetközi lapszemle.</description>
+      <pubDate>Sun, 02 Aug 2026 12:53:00 Z</pubDate>
+      <a10:updated>2026-08-02T12:53:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/af83c1b5-6988-4a62-8721-95516e25a4fe.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/af83c1b5-6988-4a62-8721-95516e25a4fe.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/360/20260802_eu-moszkva-fico-auto-klimavaltozas-nemzetkozi-lapszemle</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">fddde254-4e61-4a8e-8d5f-96bd9d327104</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Világ</category>
+      <category>világ</category>
+      <category>Ceuta</category>
+      <category>menekültek</category>
+      <category>migráció</category>
+      <category>Marokkó</category>
+      <category>Spanyolország</category>
+      <title>72 holttestet emeltek ki eddig Ceutánál a tengerből</title>
+      <description>Az áldozatok akkor vesztették életüket, amikor megpróbáltak átúszni Marokkóból a spanyolokhoz tartozó területre. </description>
+      <pubDate>Sun, 02 Aug 2026 12:06:12 Z</pubDate>
+      <a10:updated>2026-08-02T12:06:12Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/6f2cdbd8-9188-434d-99ca-f2ee59ed76a3.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/6f2cdbd8-9188-434d-99ca-f2ee59ed76a3.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/vilag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/vilag/20260802_ceuta-aldozatok-holttestek-tenger-marokko-spanyolorszag</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4aa37252-ff77-4210-ae95-18f5e7753e32</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tech</category>
+      <category>AI</category>
+      <category>mesterséges intelligencia karbonlábnyoma</category>
+      <category>mesterséges intelligencia</category>
+      <category>vízfogyasztás</category>
+      <category>adatközpont hűtése</category>
+      <category>adatközpont</category>
+      <title>Óránként akár 1 millió liter víz: ennyit fogyasztanak az amerikai adatközpontok, és ez csak rosszabb lesz</title>
+      <description>Falják az energiát, elkapkodják az elektronikai alkatrészeket és – messze nem utolsósorban – elképesztő mennyiségű vizet fogyasztanak a mesterséges intelligencia térnyerésével megszaporodott adatközpontok. Egy amerikai kutatás érdekes hasonlatot tárt fel, hogy érzékeltesse, mit is jelent vízmennyiségben az, hogy ezek az adatközpontok működhetnek.</description>
+      <pubDate>Sun, 02 Aug 2026 12:03:00 Z</pubDate>
+      <a10:updated>2026-08-02T12:03:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/921ceb43-dca1-4d86-a98a-63b6c6df7ff9.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/921ceb43-dca1-4d86-a98a-63b6c6df7ff9.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/tudomany/20260802_mennyi-az-amerikai-adatkozpontok-vizfogyasztasa</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4ca1e5ff-8805-4c06-9e0d-01673a7f4204</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>baleset</category>
+      <category>hőség</category>
+      <category>öngyilkosság</category>
+      <category>Ozora Fesztivál</category>
+      <title>Néhány órán belül két ember halt meg az Ozora Fesztiválon</title>
+      <description>Egy 39 éves magyar nő és egy 45 éves amerikai férfi az áldozat. A szervezők közölték: vasárnap éjfélkor valamennyi zenei program véget ér a fesztiválon.</description>
+      <pubDate>Sun, 02 Aug 2026 10:51:00 Z</pubDate>
+      <a10:updated>2026-08-02T10:51:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/457a0770-2daf-4dc5-811d-e040febec9ee.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/457a0770-2daf-4dc5-811d-e040febec9ee.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/itthon/20260802_halaleset-ozora-fesztival</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">df17099d-b80d-49fe-80b2-44991924f060</guid>
+      <author>a.nemeth@hvg.hu (Németh András)</author>
+      <category>hvg360</category>
+      <category>gazdaság</category>
+      <category>Timofij Milovanov</category>
+      <category>Ukrajna</category>
+      <category>Európai Unió</category>
+      <category>orosz-ukrán háború</category>
+      <category>ukrán-magyar viszony</category>
+      <title>„Az ukránoknak nincs bajuk a magyarokkal, és amennyire meg tudom ítélni, a magyaroknak sincs bajuk velünk”</title>
+      <description>Mi a magyarázat arra, hogy Ukrajna a pusztítás ellenére is működik? – erről is kérdezte a HVG a Kijevi Gazdasági Egyetem elnökét, Timofij Milovanovot, aki a háború előtt volt gazdasági miniszter. „Az ukrán emberek meghalnak az európai értékekért” – fogalmazott az expolitikus, aki kiszámolta, hogy országa gazdasága 2032-ig életképes. Beszélt a korrupció elleni harcról, az ukrán társadalom lehetséges radikalizálódásáról és arról is, milyennek látja a mostani orosz helyzetet.</description>
+      <pubDate>Sun, 02 Aug 2026 10:32:00 Z</pubDate>
+      <a10:updated>2026-08-02T10:32:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/ff792596-7e73-4761-9933-673b45be8d3f.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/ff792596-7e73-4761-9933-673b45be8d3f.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>30</rank>
+      <link>https://hvg.hu/360/20260802_timofij-milovanov-volt-ukran-gazdasagi-miniszter-haboru-eu-interju</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">522d143c-0830-43c1-a18b-304ad5490fda</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>belpolitika</category>
+      <category>Magyar Péter</category>
+      <category>paksi atomerőmű</category>
+      <category>hőség</category>
+      <category>energiaválság</category>
+      <title>Magyar Péter az energiaválság-helyzetről: „A legkritikusabb öt nap előtt állunk”</title>
+      <description>A miniszterelnök a Paksi Atomerőmű leállításáról és az energiarendszer stabilitásáról adott tájékoztatást, Kapitány István gazdasági és energetikai miniszter pedig megnevezte azokat a vállalatokat, akik jelentősen mérsékelték a fogyasztásukat. </description>
+      <pubDate>Sun, 02 Aug 2026 10:19:00 Z</pubDate>
+      <a10:updated>2026-08-02T10:19:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/471c3052-1de8-4a30-8510-0204d8b63ed7.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/471c3052-1de8-4a30-8510-0204d8b63ed7.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/itthon/20260802_magyar-peter-paksi-atomeromu-leallitas-duna-vizszint-hoseg-energiavalsag</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">f68fab3b-fbec-4307-952c-5c81c00420fe</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tech</category>
+      <category>heti top</category>
+      <title>Ez történt: A Lidl tulajdonosa elhatározta, hogy „visszaállítja Európa cselekvőképességét”</title>
+      <description>Összegyűjtöttük egy cikkbe a hét legérdekesebb, legolvasottabb technológiai és tudományos témáit.</description>
+      <pubDate>Sun, 02 Aug 2026 10:00:00 Z</pubDate>
+      <a10:updated>2026-08-02T10:00:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/fc01664b-473c-4639-ab6f-5d0ad5410858.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/fc01664b-473c-4639-ab6f-5d0ad5410858.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/tudomany/20260802_lidl-felho-revolut-chatgpt-go-szemaglutid-alkoholizmus-jetzero-windows-telepites-felhobol</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">ee9c2e42-9231-463d-bc90-7c354c58aa2c</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Itthon</category>
+      <category>belpolitika</category>
+      <category>Forsthoffer Ágnes</category>
+      <category>hőség</category>
+      <category>kánikula</category>
+      <category>Magyar Péter</category>
+      <category>energiaválság</category>
+      <title>Az államfő egyeztetésre hívja a válsághelyzet miatt Magyar Pétert és a frakcióvezetőket</title>
+      <description>A köztársasági elnök jogköreit gyakorló házelnök sürgős, soron kívüli tájékoztatást kért a miniszterelnöktől a kánikula és az energiaválság kormányzati kezeléséről. </description>
+      <pubDate>Sun, 02 Aug 2026 09:44:00 Z</pubDate>
+      <a10:updated>2026-08-02T09:44:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/98ef9003-5af3-4837-8ddb-69de674797af.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/98ef9003-5af3-4837-8ddb-69de674797af.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260802_forsthoffer-agnes-egyeztetes-rendkivuli-hoseg-kanikula-kormanyzat-partok-parlament</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5b75486b-2a8f-4a1d-a4d3-f70a9e18e5e0</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>energiaválság</category>
+      <category>Auchan</category>
+      <category>bevásárlás</category>
+      <title>Ha vásarolni megy az Auchanba, ne lepődjön meg, rendkívüli intézkedéseket léptettek életbe</title>
+      <description>Csökkentett üzemmódra kapcsolnak a hipermarketek az energiaválság miatt.</description>
+      <pubDate>Sun, 02 Aug 2026 09:29:00 Z</pubDate>
+      <a10:updated>2026-08-02T09:29:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a57cbc85-2255-46f6-8696-9e4029b88266.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a57cbc85-2255-46f6-8696-9e4029b88266.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260802_ha-vasarolni-megy-az-auchanba-ne-lepodjon-meg-rendkivuli-intezkedeseket-leptettek-eletbe</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">f95a0e1f-6973-407d-b31d-a1ff886c6702</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Autó</category>
+      <category>baleset</category>
+      <category>karambol</category>
+      <title>Hármas karambol volt Bicskénél </title>
+      <description>A vasárnap reggeli balesetnek összesen hét érintettje van.</description>
+      <pubDate>Sun, 02 Aug 2026 09:11:55 Z</pubDate>
+      <a10:updated>2026-08-02T09:11:55Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/b183e8a1-b07d-43e7-b101-988241496edf.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/b183e8a1-b07d-43e7-b101-988241496edf.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/cegauto">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/cegauto/20260802_harmas-karambol-bicske-kozlekedes-baleset</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">e685519b-8ed0-4a2f-801c-7cae46fe8b81</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>egészségügy</category>
+      <category>Hegedűs Zsolt</category>
+      <category>hőség</category>
+      <category>kánikula</category>
+      <category>energiaválság</category>
+      <title>Hegedűs Zsolt is a kánikula egészségügyi veszélyeire figyelmeztet</title>
+      <description>Az egészségügyi miniszter összefoglalta, mit tehetünk extrém hőség idején a saját és mások épsége védelmében.</description>
+      <pubDate>Sun, 02 Aug 2026 09:02:00 Z</pubDate>
+      <a10:updated>2026-08-02T09:02:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/8b30cc35-6c86-4594-8eff-74e21f3803bc.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/8b30cc35-6c86-4594-8eff-74e21f3803bc.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260802_hegedus-zsolt-egeszsegugyi-miniszter-kanikula-hoseg-figyelmeztetes-tanacsok</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4c9d1c7c-01aa-47cb-8dca-4aa3c2f8c90f</guid>
+      <author>balogh.csaba@hvg.hu (Balogh Csaba)</author>
+      <category>hvg360</category>
+      <category>tech</category>
+      <category>okosszemüveg</category>
+      <category>Pócs János</category>
+      <title>Mi lesz velünk, ha mindenki szemüvege képes lesz videózni? És mi más képesség jöhet még?</title>
+      <description>Pócs János Budapesten, a Samsung Londonban hozta lázba az okosszemüveg iránt érdeklődőket. A techvállalatok évek óta próbálnak rájönni, hogy ezek az érdeklődők vajon itt vannak-e most velünk a szobában.</description>
+      <pubDate>Sun, 02 Aug 2026 08:31:00 Z</pubDate>
+      <a10:updated>2026-08-02T08:31:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/8294d5fc-bc33-407c-b78b-094d5042ea79.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/8294d5fc-bc33-407c-b78b-094d5042ea79.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>30</rank>
+      <link>https://hvg.hu/360/20260802_hvg-okosszemuvegek-samsung-meta</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">e572164b-db17-4556-8446-7c4f605e7c3c</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tech</category>
+      <category>Google</category>
+      <category>akkumulátor</category>
+      <category>adatközpont</category>
+      <category>megújuló energia</category>
+      <category>napenergia</category>
+      <title>Rozsda is hajtja majd az új Google-adatközpontot</title>
+      <description>Minnesotában épít új adatközpontot a Google, méghozzá igencsak környezettudatosan, szinte teljes egészében megújuló energiával. A létesítmény különlegessége, hogy az energiaellátásba még a rozsdásodás folyamatát is bevonják.</description>
+      <pubDate>Sun, 02 Aug 2026 08:03:00 Z</pubDate>
+      <a10:updated>2026-08-02T08:03:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/5c22b1ac-0701-44e8-b0ee-7ee3c86c5e85.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/5c22b1ac-0701-44e8-b0ee-7ee3c86c5e85.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/tudomany/20260802_vas-levego-akkumulator-google-minnesotai-adatkozpont</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">7b78c0d7-056c-42e2-839f-94ec92e512f5</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>hvg360</category>
+      <category>világ</category>
+      <category>Donald Trump</category>
+      <category>Amerikai Egyesült Államok</category>
+      <category>timothy Garton Ash</category>
+      <title>Timothy Garton Ash: Az amerikai demokratáknak Magyar Péter kell utánozniuk, ha meg akarják tartani a demokráciát</title>
+      <description>Már alig 100 nap van a választásokig, és Trump győzni akar: átalakította a szavazókörzetek határait, és próbálja több csoporttól is megvonni a szavazati jogot.</description>
+      <pubDate>Sun, 02 Aug 2026 07:58:27 Z</pubDate>
+      <a10:updated>2026-08-02T07:58:27Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2826dce1-eebb-4a1f-9bad-5aff08e64fef.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2826dce1-eebb-4a1f-9bad-5aff08e64fef.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/360/20260802_timothy-garton-ash-amerika-demokratak-magyar-peter-demokracia-donald-trump</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">edc1e9cf-439e-431b-851d-2eba0e707aab</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>időjárás</category>
+      <category>kánikula</category>
+      <title>Rekordmeleg hajnal után jön a 40 fok, néhol zivatarokkal</title>
+      <description>Az előrejelzés szerint késő estére is csak 32 fokig „hűlhet le” a levegő. A szombatról vasárnapra virradó hajnalon volt, ahol 26 fokot mértek. </description>
+      <pubDate>Sun, 02 Aug 2026 07:40:00 Z</pubDate>
+      <a10:updated>2026-08-02T07:40:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/db869551-f881-40b2-baf4-3ebe5ebd89a4.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/db869551-f881-40b2-baf4-3ebe5ebd89a4.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260802_idojaras-hetvege-vasarnap-40-fok-zapor-zivatar</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">1f614d25-ada8-430f-b2a0-c0cb7c55728a</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Világ</category>
+      <category>világ</category>
+      <category>Donald Trump</category>
+      <category>Amerikai Egyesült Államok</category>
+      <category>amerikai-iráni konfliktus</category>
+      <category>Hormuzi-szoros</category>
+      <title>Trump egyelőre elhalasztotta az Irán elleni újabb támadást</title>
+      <description>Az ok: úgy tűnik, küszöbön egy megállapodás.</description>
+      <pubDate>Sun, 02 Aug 2026 07:25:25 Z</pubDate>
+      <a10:updated>2026-08-02T07:25:25Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a4afc320-1217-4656-a84a-5423823de25c.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a4afc320-1217-4656-a84a-5423823de25c.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/vilag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/vilag/20260802_trump-egyelore-elhalasztotta-az-iran-elleni-ujabb-tamadast</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">b2bd182a-30a2-4395-9f33-5a0f0c33cfd8</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>mozi - film - sorozatok</category>
+      <title>Meghalt Vincent Pastore, a Maffiózók sztárja</title>
+      <description>A színész, aki Salvatore Bonpensiero karakterét játszotta, 80 éves volt.</description>
+      <pubDate>Sun, 02 Aug 2026 06:41:39 Z</pubDate>
+      <a10:updated>2026-08-02T06:41:39Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0ac9474e-a6bc-48e7-a386-e749cf7e5b80.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0ac9474e-a6bc-48e7-a386-e749cf7e5b80.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260802_vincent-pastore-szinesz-sopranos-maffiozok-meghalt</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5725a964-e496-4969-9121-6f3bd7ecc2c9</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>gazdaság</category>
+      <category>Paks</category>
+      <category>paksi atomerőmű</category>
+      <category>energiaválság</category>
+      <category>villamosenergia</category>
+      <category>Magyar Péter</category>
+      <title>Már csak 10 százalékos teljesítményen a paksi atomerőmű, ma teljesen le is kapcsolják</title>
+      <description>Egymás után állnak le a turbinagenerátorok, már csak egy blokk működik, az is csak félgőzzel, és hamarosan azt is leállítják. Ezzel 44 év óta először áll elő olyan helyzet, hogy egyszerre áll le a Paksi Atomerőmű mind a négy blokkja.</description>
+      <pubDate>Sun, 02 Aug 2026 06:30:25 Z</pubDate>
+      <a10:updated>2026-08-02T06:30:25Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/4fe6450e-2e42-421d-af80-9431ecadbae7.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/4fe6450e-2e42-421d-af80-9431ecadbae7.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/itthon/20260802_10-szazalek-paksi-atomeromu-teljes-lekapcsolas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4d34d94a-7f05-41fc-9a63-c0bb12528083</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tudomány</category>
+      <category>hőség</category>
+      <category>forróság</category>
+      <category>extrém meleg</category>
+      <category>extrém forróság</category>
+      <title>Az extrém hőség ennyire brutálisan megterheli a szervezetet – halálos vége lehet, ha nem veszi komolyan</title>
+      <description>A forróság senkit nem kímél. Azt sem, aki mindig rávágja, hogy ő jól bírja – a szervezet ugyanis folyamatosan küzd, és ha túlterhelődik, annak maradandó károsodás lehet a vége. Vagy annál is rosszabb.</description>
+      <pubDate>Sun, 02 Aug 2026 06:03:00 Z</pubDate>
+      <a10:updated>2026-08-02T06:03:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/15b4de47-3c63-4d61-ad2e-2063d20611a2.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/15b4de47-3c63-4d61-ad2e-2063d20611a2.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/tudomany/20260802_extrem-forrosag-hatasok-emberi-szervezet-veszely</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">653f8713-8041-4c7a-9c78-100b7aa65134</guid>
+      <author>szerzo@hvg.hu (László Ferenc)</author>
+      <category>Autó</category>
+      <category>autóteszt</category>
+      <category>Lego</category>
+      <category>McLaren</category>
+      <category>Forma-1</category>
+      <category>versenyautó</category>
+      <category>játék</category>
+      <category>autómodell</category>
+      <title>Világbajnok McLaren díszeleghet a nappalinkban: összeépítettük a Lego hatalmas új F1-autóját</title>
+      <description>365 oldalnyi dokumentáció jó néhány órán át tartó lapozgatása során 1675 kisebb-nagyobb Lego elemből megépítettük a McLaren MCL39 rendkívül élethű kicsinyített mását, melynek nemcsak a váltója, hanem a DRS-e is működőképes.</description>
+      <pubDate>Sun, 02 Aug 2026 05:59:00 Z</pubDate>
+      <a10:updated>2026-08-02T05:59:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0ae90db7-b789-478b-884c-5c0696a03c64.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0ae90db7-b789-478b-884c-5c0696a03c64.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/cegauto">HVG</source>
+      <rank>50</rank>
+      <link>https://hvg.hu/cegauto/20260802_vilagbajnok-f1-auto-a-nappalinkban-lego-mclaren-mcl39-teszt-velemeny</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">33ebdb54-b8f9-4ea5-b3e7-7d1560ffb2fb</guid>
+      <author>szerzo@hvg.hu (Sztojcsev Iván)</author>
+      <category>Gazdaság</category>
+      <category>Magyarország</category>
+      <category>és akkor</category>
+      <category>hőség</category>
+      <category>energia</category>
+      <category>GDP</category>
+      <title>És akkor a forróság elhozta a Tisza-kormány első igazi erőpróbáját</title>
+      <description>Extrém hőség érte el az országot, ami az energiarendszerünket is soha nem látott módon terheli; az energiaválságot a nemzetközi helyzet is súlyosbítja; kiderült, hogy ha nem is parádésan, de egész elfogadhatóan nőtt a magyar GDP. Ez a HVG heti gazdasági összefoglalója.</description>
+      <pubDate>Sun, 02 Aug 2026 04:58:00 Z</pubDate>
+      <a10:updated>2026-08-02T04:58:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/d79f98c3-fe75-4d8a-9117-0bfe9d37d74d.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/d79f98c3-fe75-4d8a-9117-0bfe9d37d74d.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>30</rank>
+      <link>https://hvg.hu/gazdasag/20260802_es-akkor-forrosag-aszaly-energia-paks-aram-viz-gdp-novekedes-uzemanyag-ebx</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">f4687d32-72a6-44c4-b553-912449064903</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>energiaválság</category>
+      <category>Robert Fico</category>
+      <category>Szlovákia</category>
+      <category>paksi atomerőmű</category>
+      <category>szomszédok és V4</category>
+      <title>Robert Fico: Szlovákia kész árammal segíteni Magyarországnak</title>
+      <description>A szlovák kormányfő szerint Paks leállítása példatlan energiakrízist eredményezne.</description>
+      <pubDate>Sat, 01 Aug 2026 19:59:19 Z</pubDate>
+      <a10:updated>2026-08-01T19:59:19Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c2bfe391-8c2a-48f1-b908-34c10ac52d33.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c2bfe391-8c2a-48f1-b908-34c10ac52d33.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/gazdasag/20260801_robert-fico-szlovakia-kesz-arammal-segiteni-magyarorszagnak</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4659b901-f30b-4687-841f-36ad23a80236</guid>
+      <a10:author>
+        <a10:email>szerzo@hvg.hu (HVG)</a10:email>
+      </a10:author>
+      <a10:author>
+        <a10:email>szerzo@hvg.hu (MTI)</a10:email>
+      </a10:author>
+      <category>Világ</category>
+      <category>baleset</category>
+      <category>Oroszország</category>
+      <category>Moszkva</category>
+      <category>robbanás</category>
+      <title>Robbanás történt egy moszkvai étteremben, hárman meghaltak</title>
+      <description>Az étterem az orosz főváros egyik emblematikus toronyházában található.</description>
+      <pubDate>Sat, 01 Aug 2026 19:46:04 Z</pubDate>
+      <a10:updated>2026-08-01T19:46:04Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a06591fc-8345-40c7-aa7c-48c71839f808.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a06591fc-8345-40c7-aa7c-48c71839f808.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/vilag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/vilag/20260801_oroszorszag-moszkva-etterem-robbanas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">bd39cbfc-cfbc-4aca-b5db-fcc616de5bea</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>időjárás</category>
+      <category>melegrekord</category>
+      <category>hőség</category>
+      <category>János-hegy</category>
+      <category>kánikula</category>
+      <title>Megdőlt a hajnali országos és fővárosi melegrekord szombaton</title>
+      <description>Tippeljen, mennyire volt meleg hajnalban a János-hegyen.</description>
+      <pubDate>Sat, 01 Aug 2026 19:29:44 Z</pubDate>
+      <a10:updated>2026-08-01T19:29:44Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/35a2a8df-e727-41db-ba26-bbff51fae81f.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/35a2a8df-e727-41db-ba26-bbff51fae81f.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_megdolt-a-hajnali-orszagos-es-fovarosi-melegrekord-szombaton</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">737c86c7-09b7-45f3-ae08-6f444f889898</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>élhető környezet</category>
+      <category>Balaton</category>
+      <category>Keszthely</category>
+      <category>vízszennyezés</category>
+      <title>Mintha nem lenne elég bajunk: emberi ürülék miatt kellett lezárni egy keszthelyi strandot</title>
+      <description>A polgármester ismeretlen tettes ellen tett feljelentést.</description>
+      <pubDate>Sat, 01 Aug 2026 19:18:14 Z</pubDate>
+      <a10:updated>2026-08-01T19:18:14Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e400f434-f942-47e4-ba19-b52ee069e727.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e400f434-f942-47e4-ba19-b52ee069e727.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_balaton-keszthely-emberi-urulek-vizszennyezes-helikon-strand-lezaras</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">8c741d3c-03ac-46e4-b170-732849b11eb2</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>energiaválság</category>
+      <category>Forsthoffer Ágnes</category>
+      <title>Forsthoffer Ágnes: Magyarország nehéz, kritikus napok előtt áll</title>
+      <description>Közös cselekvésre szólított fel a köztársasági elnök jogköreit gyakorló házelnök.</description>
+      <pubDate>Sat, 01 Aug 2026 18:43:52 Z</pubDate>
+      <a10:updated>2026-08-01T18:43:52Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/9cedba3f-1eb0-441d-b100-56e1fa968b53.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/9cedba3f-1eb0-441d-b100-56e1fa968b53.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/itthon/20260801_energiavalsag-forsthoffer-agnes-videouzenet</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">859d8599-8d7e-49f9-a972-cafc1ab2eefd</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>játék</category>
+      <category>ötös lottó</category>
+      <category>Szerencsejáték Zrt.</category>
+      <title>Ötös lottó: ha hatvan feletti számokkal játszik, meg se nézze az eredményt</title>
+      <description>Amúgy se volt senkinek ötöse.</description>
+      <pubDate>Sat, 01 Aug 2026 18:34:33 Z</pubDate>
+      <a10:updated>2026-08-01T18:34:33Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/712b134c-c406-44ab-9378-daa3ab703115.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/712b134c-c406-44ab-9378-daa3ab703115.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_otos-lotto-nyeroszamok-31-het</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">17fce890-4a30-4539-924d-35eb11b7a3b3</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>energiaválság</category>
+      <category>energiatakarékosság</category>
+      <title>Lekapcsolt díszkivilágítások, bezárt autómosók, kihúzott hűtők – így reagált az ország az energiaválságra szombaton</title>
+      <description>A vállalatok, az önkormányzatok és a különböző intézmények is léptek.</description>
+      <pubDate>Sat, 01 Aug 2026 18:25:40 Z</pubDate>
+      <a10:updated>2026-08-01T18:25:40Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e8234459-21db-4b85-b0a6-0c1bfa8a6a9a.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e8234459-21db-4b85-b0a6-0c1bfa8a6a9a.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/gazdasag/20260801_energiavalsag-energiatakarekossag-intezkedesek</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4194d938-2e8a-4408-95ee-ba0c5b734de1</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>élhető környezet</category>
+      <category>Szeged</category>
+      <category>porördög</category>
+      <title>Látványos porördög kavargott Szeged felett – fotók</title>
+      <description>A porördögök akkor alakulnak ki, amikor a homokos talajt a napsugárzás erősen felmelegíti. </description>
+      <pubDate>Sat, 01 Aug 2026 17:42:58 Z</pubDate>
+      <a10:updated>2026-08-01T17:42:58Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/cf8f1ad4-fad7-43cb-83fe-008cfac92f86.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/cf8f1ad4-fad7-43cb-83fe-008cfac92f86.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_szeged-porordog-meteorologiai-jelenseg-fotok</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">9461679d-df06-4c78-878c-58b910aebe3e</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>oktatás</category>
+      <category>hőség</category>
+      <category>óvodák</category>
+      <category>bölcsődék</category>
+      <category>Lannert Judit</category>
+      <title>A bölcsődék és óvodák zárva tartását javasolja az oktatási minisztérium</title>
+      <description>Valamennyi bölcsőde és óvoda számára megfontolásra ajánlja az Oktatási és Gyermekügyi Minisztérium a hőségriadó idejére a zárvatartás lehetőségét, erről tájékoztatott Lannert Judit oktatási és gyermekügyi miniszter Facebook-oldalán szombaton.</description>
+      <pubDate>Sat, 01 Aug 2026 17:38:24 Z</pubDate>
+      <a10:updated>2026-08-01T17:38:24Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/84543736-1d19-4548-ae60-079433344a69.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/84543736-1d19-4548-ae60-079433344a69.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260801_a-bolcsodek-es-ovodak-zarva-tartasat-javasolja-az-oktatasi-miniszterium</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5b921e1b-b302-4576-a5c3-1166e0a84dc9</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>energiaválság</category>
+      <category>kormányrendelet</category>
+      <category>ipari nagyfogyasztók</category>
+      <category>Magyar Közlöny</category>
+      <category>Magyar Péter</category>
+      <title>Hatályba lépett a nagyfogyasztók lekapcsolását lehetővé tevő kormányrendelet</title>
+      <description>A rendelet szerint a 0,5 megawatt felett fogyasztók válsághelyzetben kötelezhetők lesznek a fogyasztásuk csökkentésére.</description>
+      <pubDate>Sat, 01 Aug 2026 17:33:12 Z</pubDate>
+      <a10:updated>2026-08-01T17:33:12Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c041470a-675f-4ce8-bba6-9437d898058a.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c041470a-675f-4ce8-bba6-9437d898058a.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>60</rank>
+      <link>https://hvg.hu/gazdasag/20260801_energiavalsag-kormanyrendelet-nagyfogyasztok-magyar-peter</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5c4577cb-3b99-4b5a-8387-f1dcc297bccd</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>energiaválság</category>
+      <category>Magyar Kereskedelmi és Iparkamara</category>
+      <category>spórolás</category>
+      <category>energetika</category>
+      <title>A szombati munkanap elhalasztása, rugalmas nyitvatartás – íme az iparkamara spórolási ötletei</title>
+      <description>Összefoglaló javaslatokat fogalmazott meg a Magyar Kereskedelmi és Iparkamara az energiaválság lehetséges enyhítése érdekében.</description>
+      <pubDate>Sat, 01 Aug 2026 17:29:11 Z</pubDate>
+      <a10:updated>2026-08-01T17:29:11Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/414d68dc-34ee-4220-a458-0cda0238168e.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/414d68dc-34ee-4220-a458-0cda0238168e.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/gazdasag/20260801_a-szombati-munkanap-elhalasztasa-rugalmas-nyitvatartas-ime-az-iparkamara-sporolasi-otletei</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">d7669ada-2cd2-4b29-938e-c7685fd10211</guid>
+      <author>szerzo@hvg.hu (HVG Könyvek  )</author>
+      <category>HVG Könyvek</category>
+      <category>gasztronómia</category>
+      <title>Small plate: Amikor az asztalnál összeérnek a világok</title>
+      <description>Krasznai Norbert számára a jó étel az egyensúlyról szól. Főzését a letisztultság és a zöldségek iránti szeretet határozza meg. Konyhája egyre közelebb került ahhoz a világhoz, amely talán a legjobban illik hozzá: a letisztult, izgalmas és őszinte small plate-ekhez. Szerkesztett részlet a Small plate című könyvből.</description>
+      <pubDate>Sat, 01 Aug 2026 17:15:00 Z</pubDate>
+      <a10:updated>2026-08-01T17:15:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0a949f7d-c9c2-4621-b603-f443aefe7bb7.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0a949f7d-c9c2-4621-b603-f443aefe7bb7.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/hvgkonyvek">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/hvgkonyvek/20260801_small-plate-amikor-az-asztalnal-osszeernek-a-vilagok</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">7c8d7dba-55a7-4a81-a713-81f16915564f</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>baleset</category>
+      <category>Országos Mentőszolgálat</category>
+      <category>mentők</category>
+      <title>Négyéves kisfiú hívott mentőt a kertben összeesett anyjához</title>
+      <description>Miközben a gyerek a mentőt hívta, testvérei próbálták magához téríteni anyjukat.</description>
+      <pubDate>Sat, 01 Aug 2026 17:00:59 Z</pubDate>
+      <a10:updated>2026-08-01T17:00:59Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/fbc8e8bb-baa4-4734-8b27-97e0063c8d7b.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/fbc8e8bb-baa4-4734-8b27-97e0063c8d7b.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260801_orszagos-mentoszolgalat-mentok-rosszullet-gyerekek</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">36f286f3-29db-4938-936e-34ce7cacfd3d</guid>
+      <author>szerzo@hvg.hu (Csernátony Csaba)</author>
+      <category>Gazdaság</category>
+      <category>időjárás</category>
+      <category>Lidl</category>
+      <category>mobilklíma</category>
+      <category>kiskereskelem</category>
+      <title>A Lidl alaposan beletrafált a hőkupolába </title>
+      <description>A többi hasonló készülékhez képest lényegében féláron adta az elmúlt hetekben a mobilklimáit a Lidl, ki is merült a készlet, utánpótlás pedig nem várható. </description>
+      <pubDate>Sat, 01 Aug 2026 16:34:44 Z</pubDate>
+      <a10:updated>2026-08-01T16:34:44Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/9c937b23-6437-41df-867d-e7b5402cfe13.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/9c937b23-6437-41df-867d-e7b5402cfe13.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/gazdasag/20260801_lidl-mobilklima-elfogyott-idojaras-diszkont-hoseg-meleg</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">6915f61c-dba7-4766-ba24-2642a20c4ccb</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Világ</category>
+      <category>menekültügy</category>
+      <category>Afganisztán</category>
+      <category>Irán</category>
+      <category>szomjhalál</category>
+      <title>Szomjan halt a sivatagban tizennégy afgán férfi, akik Iránba akartak átjutni</title>
+      <description>A „halál sivatagaként” is emlegetett délnyugat-afganisztáni területen több embercsempészek által használt útvonal is áthalad.</description>
+      <pubDate>Sat, 01 Aug 2026 16:05:08 Z</pubDate>
+      <a10:updated>2026-08-01T16:05:08Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/d3376ebe-596e-41b6-adea-0a639b14cbb4.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/d3376ebe-596e-41b6-adea-0a639b14cbb4.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/vilag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/vilag/20260801_afganisztan-iran-szomjhalal</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">2d9e54a1-ad15-4f49-9777-c70a132149a6</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>energiaválság</category>
+      <category>Dunamenti Erőmű</category>
+      <category>Magyar Péter</category>
+      <title>Magyar Péter: Újra teljes kapacitással üzemel a Dunamenti Erőmű</title>
+      <description>Ez 360 megawatt plusz kapacitást jelent.</description>
+      <pubDate>Sat, 01 Aug 2026 15:44:52 Z</pubDate>
+      <a10:updated>2026-08-01T15:44:52Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/bd904fc1-acf3-448f-aedb-3ad2d1632f87.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/bd904fc1-acf3-448f-aedb-3ad2d1632f87.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/gazdasag/20260801_energiavalsag-magyar-peter-dunamenti-eromu-teljes-kapacitas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">99d166bd-22cb-4ba9-99ac-df9168f91e95</guid>
+      <author>m.nyusztay@hvg.hu (Nyusztay Máté)</author>
+      <category>Tech</category>
+      <category>tudomány</category>
+      <category>SpaceX</category>
+      <category>Starship</category>
+      <category>űrhajó</category>
+      <category>landolás</category>
+      <title>Kuss, mi így szállunk le! – szürreális videón a Starship űrhajó „landolása” </title>
+      <description>Egy hét után sem sikerült még kihalászni a vízből a SpaceX „bálnáját”, egy 52 méteres űrhajót. </description>
+      <pubDate>Sat, 01 Aug 2026 15:43:54 Z</pubDate>
+      <a10:updated>2026-08-01T15:43:54Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0fe8baa7-3673-4ea1-87d5-5b3746687922.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/0fe8baa7-3673-4ea1-87d5-5b3746687922.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/tudomany/20260801_spacey-starship-urhajo-landolasa-video</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">20c253cc-786c-40e2-9065-390bfd0ef298</guid>
+      <author>szerzo@hvg.hu (Kertész Zsanett)</author>
+      <category>hvg360</category>
+      <category>gasztronómia</category>
+      <category>cukrászat</category>
+      <category>édesség</category>
+      <category>desszert</category>
+      <category>fine dining</category>
+      <title>Miért lesz egyre drágább egy szelet krémes úgy, hogy egyre kevesebb helyen kapni jót belőle? – a vasárnapi sütizés nyomában II. rész</title>
+      <description>Miért van az, hogy miközben Budapesten sorra nyílnak a francia technikákat idéző cukrászműhelyek, egy átlagos vidéki cukrászdában még mindig margarinnal és kakaóbevonóval találkozni a süteményekben? Hogyan esett szét a vasárnapi süteményezés rítusa, amely fél évszázadon át szinte változatlan intézményként kísérte a családi ebédeket? A magyar cukrászat történetéről mesélünk a szocializmustól napjainkig.</description>
+      <pubDate>Sat, 01 Aug 2026 15:33:00 Z</pubDate>
+      <a10:updated>2026-08-01T15:33:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/4c5bb8e9-7802-4630-a1ec-cb7ed69c1433.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/4c5bb8e9-7802-4630-a1ec-cb7ed69c1433.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>20</rank>
+      <link>https://hvg.hu/360/20260801_cukraszat-desszert-gasztronomia-kremes-fine-dining-margarin-csokolade</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">1d0fcacc-514b-4590-80f5-e9d22cee6bb9</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Gazdaság</category>
+      <category>belpolitika</category>
+      <category>Nemzeti Adó- és Vámhivatal (NAV)</category>
+      <category>NAV-elnök</category>
+      <category>pályázat</category>
+      <category>Kármán András</category>
+      <title>Csaknem ötvenen jelentkeztek a NAV elnöki posztjára</title>
+      <description>A beadott pályázatokat augusztus végéig bírálják el.</description>
+      <pubDate>Sat, 01 Aug 2026 15:24:48 Z</pubDate>
+      <a10:updated>2026-08-01T15:24:48Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/028e526d-da65-4aca-9cb9-6d09dee664d3.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/028e526d-da65-4aca-9cb9-6d09dee664d3.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/gazdasag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/gazdasag/20260801_nemzeti-ado-es-vamhivatal-nav-elnoki-poszt-jelentkezes-karman-andras</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">9255ed91-818f-436a-a20a-0fecbb710285</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>politika</category>
+      <category>Ceuta</category>
+      <category>Pedro Sánchez</category>
+      <category>Magyar Péter</category>
+      <category>illegális bevándorlás</category>
+      <title>Magyar Péter is aláírta a spanyol miniszterelnök migrációs politikáját bíráló levelet</title>
+      <description>A levelet a ceutai helyzet miatt fogalmazta meg huszonkét európai uniós állam- és kormányfő.</description>
+      <pubDate>Sat, 01 Aug 2026 14:49:52 Z</pubDate>
+      <a10:updated>2026-08-01T14:49:52Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e10b2be0-3ac9-4fc3-b3e3-d0ffc60ad606.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e10b2be0-3ac9-4fc3-b3e3-d0ffc60ad606.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260801_spanyolorszag-ceuta-pedro-sanchez-migracios-politika-biralat-level-magyar-peter-alairas-orban-anita</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">0793e690-5e37-4998-a39a-d32a60dff471</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Sport</category>
+      <category>életmód</category>
+      <category>Balaton-átúszás</category>
+      <category>Balaton</category>
+      <category>úszás</category>
+      <title>Egyetlen résztvevő tudta egy órán belül átúszni a Balatont</title>
+      <description>A férfiaknál Nagy Nándor, a nőknél Békési Eszter volt a leggyorsabb a szombati 44. Lidl Balaton-átúszáson.</description>
+      <pubDate>Sat, 01 Aug 2026 14:45:04 Z</pubDate>
+      <a10:updated>2026-08-01T14:45:04Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2928c93c-ab91-4293-a58b-d70714e7be52.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2928c93c-ab91-4293-a58b-d70714e7be52.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/sport">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/sport/20260801_egyetlen-resztvevo-tudta-egy-oran-belul-atuszni-a-balaton</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">a1a04eee-380a-4c80-8119-ac9b0a16e547</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Itthon</category>
+      <category>belpolitika</category>
+      <category>Budai Gyula</category>
+      <category>Fidesz</category>
+      <category>Országgyűlés</category>
+      <category>Fidesz-frakció</category>
+      <title>ATV: Budai Gyula is otthagyja a Fidesz-frakciót</title>
+      <description>Két új arc is helyet kaphat Orbán Viktor pártjának parlamenti képviselőcsoportjában.</description>
+      <pubDate>Sat, 01 Aug 2026 14:38:38 Z</pubDate>
+      <a10:updated>2026-08-01T14:38:38Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2e06eb03-33b6-45ce-ae3d-bb3563a82ce6.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2e06eb03-33b6-45ce-ae3d-bb3563a82ce6.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/itthon">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/itthon/20260801_orszaggyules-fidesz-frakcio-budai-gyula-tavozas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">d0e9121b-4b45-4e5a-a9ee-01f910a8a198</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>energiaválság</category>
+      <category>Dunabogdány</category>
+      <category>vízhiány</category>
+      <category>Fővárosi Vízművek</category>
+      <title>Dunabogdányi katarzis: hatottak a felszólítások, csökkent a vízfogyasztás</title>
+      <description>A Fővárosi Vízművek megköszönte a településen élők együttműködését.</description>
+      <pubDate>Sat, 01 Aug 2026 14:13:42 Z</pubDate>
+      <a10:updated>2026-08-01T14:13:42Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2bbc8ed2-3220-474a-b11b-e38341da28cc.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/2bbc8ed2-3220-474a-b11b-e38341da28cc.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_dunabogdany-fovarosi-vizmuvek-vizfogyasztas-csokkenes</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">dfebaa11-b8cf-4f68-a4ab-1fb4c9f66d49</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tudomány</category>
+      <category>vakság</category>
+      <category>skizofrénia</category>
+      <title>Miért védhet a skizofrénia ellen a vakság? Ha megtudjuk a választ, az egész emberiségnek hasznos lehet</title>
+      <description>Sem a veleszületett vakság, sem a hasonlóan jelentkező skizofrénia nem ritka a világban. Együtt viszont nem nagyon fordulnak elő, ritkábban, mint amit a valószínűség diktálna. </description>
+      <pubDate>Sat, 01 Aug 2026 14:03:00 Z</pubDate>
+      <a10:updated>2026-08-01T14:03:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a4cff234-31cd-40ce-b302-d899e3b72fe9.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/a4cff234-31cd-40ce-b302-d899e3b72fe9.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/tudomany/20260801_veleszuletett-skizofrenia-vaksag-egyuttes-elofordulasa-magyarazat</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">de3fbff7-8864-4af0-adc2-ab958c5bf882</guid>
+      <author>szerzo@hvg.hu (Kurucz-Gáspár Tünde)</author>
+      <category>hvg360</category>
+      <category>oktatás</category>
+      <category>felsőoktatás</category>
+      <category>felvételi</category>
+      <category>felvételi ponthatárok</category>
+      <category>egyetemek</category>
+      <title>Egyetemre kettes érettségivel? Ember legyen a talpán, aki eligazodik a felvételi rendszerben</title>
+      <description>Az idei felvételi is megmutatta, milyen hatalmas különbségek lehetnek az egyes szakok között: van olyan képzés, ahova a maximális 500 pont kellett, máshova elég volt 102 is. A rendszer ráadásul olyan összetett, hogy még sok diák sem tudja jól kiszámolni a saját pontjait. Íme a legfurcsább adatok az idei felvételiről.</description>
+      <pubDate>Sat, 01 Aug 2026 13:59:00 Z</pubDate>
+      <a10:updated>2026-08-01T13:59:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/b4c1a8bf-f2b0-4443-ac38-2c38372f4f9b.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/b4c1a8bf-f2b0-4443-ac38-2c38372f4f9b.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>30</rank>
+      <link>https://hvg.hu/360/20260801_egyetemi-felveteli-ponthatarok-rekordok-furcsasagok-pontszamitas-hvg</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">c8bf3245-be3b-4296-a3e3-7b903e9a0a48</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Élet+Stílus</category>
+      <category>itthon</category>
+      <category>hőség</category>
+      <category>strand</category>
+      <title>Több strand is meghosszabbította nyitvatartási idejét</title>
+      <description>Néhány városban ingyenes vagy kedvezményes esti fürdőzést is biztosítanak a hőség miatt.</description>
+      <pubDate>Sat, 01 Aug 2026 13:41:18 Z</pubDate>
+      <a10:updated>2026-08-01T13:41:18Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/f28a2318-1152-4172-a472-309b4d28234a.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/f28a2318-1152-4172-a472-309b4d28234a.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_strand-hoseg-meghosszabbitott-nyitvatartas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">bcfb30ba-ee36-4e6d-84b0-1ba33f14912c</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Sport</category>
+      <category>foci</category>
+      <category>FC Barcelona</category>
+      <category>Yaakobishvili Áron</category>
+      <title>Videón, ahogy a Barcelona magyar kapusa két tizenegyest hárít a bemutatkozó meccsén</title>
+      <description>Yaakobishvili Áron először balra, majd jobbra vetődve védett.</description>
+      <pubDate>Sat, 01 Aug 2026 13:41:10 Z</pubDate>
+      <a10:updated>2026-08-01T13:41:10Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c06ca7ed-21f9-4f72-8292-ad89ed00dc6b.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/c06ca7ed-21f9-4f72-8292-ad89ed00dc6b.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/sport">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/sport/20260801_labdarugas-barcelona-yaakobishvili-aron-buntetoparbaj-tizenegyes-vedes</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">67787719-457d-4ddd-a921-4ceac5936da3</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>életmód</category>
+      <category>NÉBIH</category>
+      <category>áramszünet</category>
+      <category>hűtőszekrény</category>
+      <category>élelmiszerbiztonság</category>
+      <title>Áramszünet idején mi legyen a hűtőben tárolt ételekkel?</title>
+      <description>Tippek és trükkök egy nem is olyan valószerűtlen helyzetre a kánikula és az energiaválság közepette.</description>
+      <pubDate>Sat, 01 Aug 2026 13:16:16 Z</pubDate>
+      <a10:updated>2026-08-01T13:16:16Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/79f72ec4-4106-4194-b13d-da5671af51c7.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/79f72ec4-4106-4194-b13d-da5671af51c7.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_kanikula-aramszunet-huto-etelek-elelmiszerbiztonsag-tanacsok</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">d7d13abb-5385-4bfc-b56f-0b795c90c766</guid>
+      <author>i.keresztes@hvg.hu (Keresztes Imre)</author>
+      <category>hvg360</category>
+      <category>világ</category>
+      <category>Mahmúd Ahmadinedzsád</category>
+      <category>Mahmud Ahmadizsenád</category>
+      <category>Izrael</category>
+      <category>Moszad</category>
+      <category>Irán</category>
+      <category>amerikai támadás Irán ellen</category>
+      <title>Tudhat valamit a Moszad, hogy a Csizmás Kandúr akcióban beszervezte a holokauszttagadó iráni exelnököt</title>
+      <description>Részben Budapesten hálózhatta be az izraeli titkosszolgálat a kegyvesztett teheráni politikust, hogy egy új rezsim élére álljon. A szinte hihetetlen sztori kulcsa talán Ahmadinedzsád élettörténetében rejtőzik.</description>
+      <pubDate>Sat, 01 Aug 2026 13:02:00 Z</pubDate>
+      <a10:updated>2026-08-01T13:02:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/ccf0120d-0bfa-484d-b428-66b1d2e1e480.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/ccf0120d-0bfa-484d-b428-66b1d2e1e480.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/360/20260801_hvg-kontur-mahmud-ahmadinedzsad-volt-irani-elnok-moszad-beszervezes</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">dc9af68c-475c-4c55-a0a9-20c3ad818105</guid>
+      <author>szerzo@hvg.hu (MTI)</author>
+      <category>Sport</category>
+      <category>foci</category>
+      <category>energiaválság</category>
+      <category>Magyar Labdarúgó-szövetség (MLSZ)</category>
+      <title>Az MLSZ módosította a bajnoki meccsek időpontjait az energiaválság miatt</title>
+      <description>A Kispest és az MTK szombati mérkőzése is előbb kezdődik.</description>
+      <pubDate>Sat, 01 Aug 2026 12:57:43 Z</pubDate>
+      <a10:updated>2026-08-01T12:57:43Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/3e35f0b7-0531-4d60-8622-1074c236374a.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/3e35f0b7-0531-4d60-8622-1074c236374a.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/sport">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/sport/20260801_labdarugas-energiavalsag-mlsz-bajnoki-merkozesek-idopont-valtozas</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">01efbedc-d7cf-41d8-b7dd-e39e302a635d</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>sport</category>
+      <category>Broad Peak</category>
+      <category>lavina</category>
+      <category>hegymászó</category>
+      <title>Meghalt a pakisztáni lavinában a neves hegymászó, Nirmal Purja</title>
+      <description>A tíztagú expedícióból senki sem élte túl a balesetet a Broad Peaken a Himalájában.</description>
+      <pubDate>Sat, 01 Aug 2026 12:40:32 Z</pubDate>
+      <a10:updated>2026-08-01T12:40:32Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/328e95ce-cd44-432c-8cbd-f3654519e31f.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/328e95ce-cd44-432c-8cbd-f3654519e31f.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_meghalt-a-pakisztani-lavinaban-a-neves-hegymaszo-nirmal-purja</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">a60083ce-7d91-45a2-b4f5-f8e7ddaa7816</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Élet+Stílus</category>
+      <category>bűnügyek</category>
+      <category>Duna</category>
+      <category>lőfegyver</category>
+      <category>rendőrség</category>
+      <title>Egy órán belül két Dunába dobott pisztolyt találtak a Margit híd közelében</title>
+      <description>Az egyiket a budai Duna-partról, a másikat a Margitszigetről „fogták ki” mágneshorgászok.</description>
+      <pubDate>Sat, 01 Aug 2026 12:29:33 Z</pubDate>
+      <a10:updated>2026-08-01T12:29:33Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/648622e2-3a98-456b-ade2-9dd380781085.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/648622e2-3a98-456b-ade2-9dd380781085.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/elet">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/elet/20260801_duna-magneshorgaszat-pisztoly-rendorseg</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5b071ed8-9f7c-4b9f-b647-d6e195a7ecb8</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>hvg360</category>
+      <category>lapszemle</category>
+      <category>Ceuta</category>
+      <category>migráció</category>
+      <category>terrorizmus</category>
+      <category>Németország</category>
+      <category>Magyar Péter</category>
+      <title>A ceutai ostromból Európa megértheti, milyen sors vár rá?</title>
+      <description>Van, aki Magyar Péter politikájában fedez fel baljós jeleket, és van, aki szerint Németország totális kudarcot vallot a terrorizmus elleni küzdelemben. Nemzetközi lapszemle.</description>
+      <pubDate>Sat, 01 Aug 2026 12:26:48 Z</pubDate>
+      <a10:updated>2026-08-01T12:26:48Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/308a8468-5a4b-4975-b558-c4c3360696a3.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/308a8468-5a4b-4975-b558-c4c3360696a3.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/360">HVG</source>
+      <rank>40</rank>
+      <link>https://hvg.hu/360/20260801_a-ceutai-ostrombol-europa-megertheti-milyen-sors-var-ra</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">5d07a4b8-e1af-4989-b1e5-8d3b4c9b5a28</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Világ</category>
+      <category>menekültügy</category>
+      <category>Spanyolország</category>
+      <category>Ceuta</category>
+      <category>schengeni övezet</category>
+      <category>migránsok</category>
+      <title>Nyugati hírszerzési források szerint Marokkó „megkönnyítette” a migránsok átjutását Spanyolországba</title>
+      <description>Az észak-afrikai ország 60 ezer embernek segített átjutni a szomszédos Ceuta területére. A spanyol belügyminiszter közben arra emlékeztet, hogy Ceuta nem része a schengeni övezetnek, így a schengeni egyezmény felfüggesztése leginkább politikai célokat szolgál, nem a megoldást.</description>
+      <pubDate>Sat, 01 Aug 2026 12:10:40 Z</pubDate>
+      <a10:updated>2026-08-01T12:10:40Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e10b2be0-3ac9-4fc3-b3e3-d0ffc60ad606.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/e10b2be0-3ac9-4fc3-b3e3-d0ffc60ad606.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/vilag">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/vilag/20260801_marroko-migransok-ceuta-spanyolorszag-valsagertekezlet-schengen</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">e807a358-24a7-4c48-b76e-34ffc95bc943</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Tech</category>
+      <category>tech</category>
+      <category>analóg</category>
+      <category>MIT</category>
+      <category>hulladékhő hasznosítása</category>
+      <title>Számoljon a hulladékhővel! Merthogy már azt is lehet, szó szerint</title>
+      <description>A számítástechnikában általában meg akarnak szabadulni a felszabaduló hőtől. Amerikai kutatók viszont az ellenkező megközelítést alkalmazva bizonyították, hogy a hulladékhő is lehet információhordozó.</description>
+      <pubDate>Sat, 01 Aug 2026 12:03:00 Z</pubDate>
+      <a10:updated>2026-08-01T12:03:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/baf7b584-208d-41ee-83f8-b55594e87669.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/baf7b584-208d-41ee-83f8-b55594e87669.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/tudomany">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/tudomany/20260801_hulladekho-felhasznalasa-analog-szamitasokban</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">4180348f-fff1-42e0-856a-bd6c57ab3ea2</guid>
+      <author>szerzo@hvg.hu (László Ferenc)</author>
+      <category>Autó</category>
+      <category>autóteszt</category>
+      <category>Baltikum</category>
+      <category>villanyautó</category>
+      <category>Litvánia</category>
+      <category>Lettország</category>
+      <category>Észtország</category>
+      <category>utazás</category>
+      <category>nyaralás</category>
+      <category>Mercedes</category>
+      <category>Mercedes GLC</category>
+      <title>4400 kilométert villanyautóztunk a Baltikumban – fotókon mutatjuk a hűs és zöldellő Litvánia, Lettország és Észtország szépségeit</title>
+      <description>Az egykor Szovjetunió Nyugatjának tartott Baltikum a nyári kánikulában frissítően hideg és alig sós tengervízzel, gyönyörűen zöldellő természettel és megannyi történelmi, kulturális értékkel várja a turistákat. Kiderült: a három országon átívelő túra ma akár már elektromos autóval is fájdalommentesen megtehető. </description>
+      <pubDate>Sat, 01 Aug 2026 12:00:00 Z</pubDate>
+      <a10:updated>2026-08-01T12:00:00Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/1c9925bb-9267-41e5-829b-21b7638ce844.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/1c9925bb-9267-41e5-829b-21b7638ce844.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/cegauto">HVG</source>
+      <rank>50</rank>
+      <link>https://hvg.hu/cegauto/20260801_4400-km-elektromos-auto-baltikum-litvania-lettorszag-esztorszag-uti-beszamolo-mercedes-glc-electric-teszt-velemeny</link>
+    </item>
+    <item>
+      <guid isPermaLink="false">2d762d58-ca26-46fe-9304-b2d7d967cc36</guid>
+      <author>szerzo@hvg.hu (HVG)</author>
+      <category>Sport</category>
+      <category>csapatsportok</category>
+      <category>UEFA</category>
+      <category>FIFA</category>
+      <category>Gianni Infantino</category>
+      <title>Az UEFA már nem bízik Gianni Infantinóban, bizalmi szavazással készülnek eltávolítani a posztjáról a FIFA-elnököt</title>
+      <description>Lapértesülés szerint az 55 UEFA-tagország Infantino távozása mellett fog voksolni.</description>
+      <pubDate>Sat, 01 Aug 2026 11:35:10 Z</pubDate>
+      <a10:updated>2026-08-01T11:35:10Z</a10:updated>
+      <media:content url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/366d0ed6-64ba-4063-8db0-83de814507f8.jpg" medium="image" />
+      <enclosure url="https://img.hvg.hu/Img/64092e40-39ef-4e7c-88f1-4e482711b139/366d0ed6-64ba-4063-8db0-83de814507f8.jpg" type="image/jpeg" length="0" />
+      <source url="https://hvg.hu/sport">HVG</source>
+      <rank>70</rank>
+      <link>https://hvg.hu/sport/20260801_uefa-fifa-gianni-infantino-bizalomvesztes-labdarugo-vilagbajnokas</link>
+    </item>
+  </channel>
+</rss>

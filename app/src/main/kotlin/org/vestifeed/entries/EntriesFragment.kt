@@ -11,13 +11,16 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.fragment.app.activityViewModels
 import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
@@ -38,6 +41,27 @@ import org.vestifeed.settings.SettingsFragment
  * dispatch live in [EntriesViewModel]; this class wires up views and forwards
  * user input.
  */
+/**
+ * Activity-scoped holder for the entries list's scroll position. We can't
+ * rely on the RecyclerView's own view-state restoration because the hosting
+ * activity recreates the fragment instance on every config change (see
+ * [org.vestifeed.navigation.Activity.onCreate]), which discards the
+ * RecyclerView's saved hierarchy state. Keeping the position here means it
+ * survives both the configuration change and the fragment replacement.
+ *
+ * Entries are keyed by filter so that switching between Unread and Bookmarked
+ * (and back) doesn't clobber the other tab's scroll offset.
+ */
+class EntriesListScrollState : ViewModel() {
+    private val positions = mutableMapOf<EntriesFilter, Pair<Int, Int>>()
+
+    fun get(filter: EntriesFilter): Pair<Int, Int>? = positions[filter]
+
+    fun set(filter: EntriesFilter, position: Int, offset: Int) {
+        positions[filter] = position to offset
+    }
+}
+
 class EntriesFragment : AppFragment() {
 
     private var _binding: FragmentEntriesBinding? = null
@@ -58,6 +82,8 @@ class EntriesFragment : AppFragment() {
         )
     }
 
+    private val scrollState: EntriesListScrollState by activityViewModels()
+
     private val navigator = lazy { EntriesNavigator(this) }
 
     private val adapter by lazy {
@@ -68,6 +94,13 @@ class EntriesFragment : AppFragment() {
     private val touchHelper by lazy { createTouchHelper() }
 
     private val notificationPrefs by lazy { NotificationPermissionPrefs(requireContext()) }
+
+    /**
+     * Guards the one-shot restore in [renderItems]. Reset on each
+     * [onViewCreated] so that a view recreation within the same fragment
+     * instance (rare but possible) re-arms the restore.
+     */
+    private var scrollPositionRestored: Boolean = false
 
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
@@ -98,6 +131,7 @@ class EntriesFragment : AppFragment() {
             return
         }
 
+        scrollPositionRestored = false
         applyStatusBarInsets()
         initToolbarMenu()
         updateNotificationWarningVisibility()
@@ -124,8 +158,27 @@ class EntriesFragment : AppFragment() {
     }
 
     override fun onDestroyView() {
+        saveScrollPosition()
         super.onDestroyView()
         _binding = null
+    }
+
+    /**
+     * Snapshots the first visible item + its top offset into the
+     * activity-scoped [scrollState] so a recreated fragment can put the
+     * list back where the user left it. No-op if the layout manager hasn't
+     * bound any items yet (e.g. we're tearing down the initial loading
+     * state).
+     */
+    private fun saveScrollPosition() {
+        val currentFilter = filter ?: return
+        val list = _binding?.list ?: return
+        val layoutManager = list.layoutManager as? LinearLayoutManager ?: return
+        val position = layoutManager.findFirstVisibleItemPosition()
+        if (position == RecyclerView.NO_POSITION) return
+        val view = layoutManager.findViewByPosition(position) ?: return
+        val offset = layoutManager.getDecoratedTop(view)
+        scrollState.set(currentFilter, position, offset)
     }
 
     private fun isViewAlive(): Boolean = _binding != null
@@ -260,6 +313,7 @@ class EntriesFragment : AppFragment() {
                 binding.message.isVisible = false
                 binding.swipeRefresh.isVisible = true
                 adapter.submitList(items.items)
+                restoreScrollPositionIfNeeded()
             }
 
             is ItemsState.Empty -> {
@@ -302,6 +356,27 @@ class EntriesFragment : AppFragment() {
                 }
             },
         )
+    }
+
+    /**
+     * Restores the list scroll position captured in [saveScrollPosition] for
+     * the current filter, but only once per fragment instance — the
+     * OG-image poll in the view model re-renders the same list every few
+     * seconds and we don't want each render to yank the user back to the
+     * saved offset.
+     *
+     * The actual scroll is posted to the RecyclerView so it runs after the
+     * DiffUtil dispatch has laid out the new items.
+     */
+    private fun restoreScrollPositionIfNeeded() {
+        if (scrollPositionRestored) return
+        val currentFilter = filter ?: return
+        scrollPositionRestored = true
+        val saved = scrollState.get(currentFilter) ?: return
+        binding.list.post {
+            (binding.list.layoutManager as? LinearLayoutManager)
+                ?.scrollToPositionWithOffset(saved.first, saved.second)
+        }
     }
 
     /**

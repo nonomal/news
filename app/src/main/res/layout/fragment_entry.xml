@@ -36,6 +36,7 @@
                 android:paddingBottom="4dp"
                 android:textAppearance="?attr/textAppearanceHeadline5"
                 android:textColor="?colorOnBackground"
+                android:textIsSelectable="true"
                 tools:text="Title" />
 
             <TextView

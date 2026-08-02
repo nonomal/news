@@ -21,7 +21,8 @@ class ConfTable(private val conn: SQLiteConnection) {
                 sync_in_background INTEGER NOT NULL,
                 background_sync_interval_millis INTEGER NOT NULL,
                 use_built_in_browser INTEGER NOT NULL,
-                show_preview_text INTEGER NOT NULL
+                show_preview_text INTEGER NOT NULL,
+                entry_body_font_size INTEGER NOT NULL
             ) STRICT;
         """
 
@@ -37,6 +38,7 @@ class ConfTable(private val conn: SQLiteConnection) {
             backgroundSyncIntervalMillis = 10800000L,
             useBuiltInBrowser = true,
             showPreviewText = true,
+            entryBodyFontSize = 16,
         )
     }
 
@@ -67,6 +69,8 @@ class ConfTable(private val conn: SQLiteConnection) {
         val backgroundSyncIntervalMillis: Long,
         val useBuiltInBrowser: Boolean,
         val showPreviewText: Boolean,
+        // size of the entry body text in sp
+        val entryBodyFontSize: Int,
     )
 
     fun SQLiteStatement.toConf(): Conf = Conf(
@@ -81,13 +85,14 @@ class ConfTable(private val conn: SQLiteConnection) {
         backgroundSyncIntervalMillis = getLong(8),
         useBuiltInBrowser = getInt(9) == 1,
         showPreviewText = getInt(10) == 1,
+        entryBodyFontSize = getInt(11),
     )
 
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             stmt.bindTextOrNull(1, conf.backend?.name?.lowercase())
@@ -101,6 +106,7 @@ class ConfTable(private val conn: SQLiteConnection) {
             stmt.bindLong(9, conf.backgroundSyncIntervalMillis)
             stmt.bindInt(10, if (conf.useBuiltInBrowser) 1 else 0)
             stmt.bindInt(11, if (conf.showPreviewText) 1 else 0)
+            stmt.bindInt(12, conf.entryBodyFontSize)
             stmt.step()
         }
     }
@@ -108,7 +114,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text
+            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size
             FROM conf
             """
         ).use { stmt ->

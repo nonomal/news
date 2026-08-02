@@ -7,6 +7,7 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.text.Html
 import android.text.SpannableStringBuilder
+import android.util.TypedValue
 import android.text.method.LinkMovementMethod
 import android.text.style.BulletSpan
 import android.text.style.QuoteSpan
@@ -197,6 +198,7 @@ class EntryFragment : AppFragment() {
             ),
         )
         parsedContent.applyStyle(binding.summaryView)
+        binding.summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, conf.entryBodyFontSize.toFloat())
         binding.summaryView.text = parsedContent
         binding.summaryView.movementMethod = LinkMovementMethod.getInstance()
         binding.progress.isVisible = false

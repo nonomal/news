@@ -78,6 +78,9 @@
     <string name="view_comments">Näytä kommentit</string>
     <string name="use_built_in_browser">Käytä sisäänrakennettua selainta</string>
     <string name="show_preview_text">Näytä esikatseluteksti</string>
+    <string name="entry_body_font_size">Tekstin fonttikoko</string>
+    <string name="entry_body_font_size_value">%1$d sp</string>
+    <string name="entry_body_font_size_hint">Koko pisteinä</string>
     <string name="enclosures">Liitteet</string>
     <string name="manage_enclosures">Hallinnoi liitteitä</string>
     <string name="connect_to_miniflux">Yhdistä Minifluxiin</string>

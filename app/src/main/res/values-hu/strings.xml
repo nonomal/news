@@ -78,6 +78,9 @@
     <string name="view_comments">Hozzászólások megtekintése</string>
     <string name="use_built_in_browser">Beépített böngésző használata</string>
     <string name="show_preview_text">Előnézeti szöveg megjelenítése</string>
+    <string name="entry_body_font_size">Szöveg betűmérete</string>
+    <string name="entry_body_font_size_value">%1$d sp</string>
+    <string name="entry_body_font_size_hint">Méret sp-ben</string>
     <string name="enclosures">Enclosures</string>
     <string name="manage_enclosures">Manage enclosures</string>
     <string name="connect_to_miniflux">Csatlakozás Miniflux-hoz</string>

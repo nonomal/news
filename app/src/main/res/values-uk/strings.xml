@@ -78,6 +78,9 @@
     <string name="view_comments">View comments</string>
     <string name="use_built_in_browser">Use built-in browser</string>
     <string name="show_preview_text">Show preview text</string>
+    <string name="entry_body_font_size">Розмір шрифту тексту</string>
+    <string name="entry_body_font_size_value">%1$d sp</string>
+    <string name="entry_body_font_size_hint">Розмір у sp</string>
     <string name="enclosures">Enclosures</string>
     <string name="manage_enclosures">Manage enclosures</string>
     <string name="connect_to_miniflux">Connect to Miniflux</string>

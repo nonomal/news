@@ -30,6 +30,7 @@ class ConfTest {
         assertTrue(statement.contains("backend TEXT"))
         assertTrue(statement.contains("miniflux_url TEXT"))
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
+        assertTrue(statement.contains("entry_body_font_size INTEGER NOT NULL"))
     }
 
     @Test
@@ -46,6 +47,7 @@ class ConfTest {
         assertEquals(10800000L, defaultConf.backgroundSyncIntervalMillis)
         assertTrue(defaultConf.useBuiltInBrowser)
         assertTrue(defaultConf.showPreviewText)
+        assertEquals(16, defaultConf.entryBodyFontSize)
     }
 
     @Test
@@ -73,6 +75,7 @@ class ConfTest {
         assertEquals(conf.backgroundSyncIntervalMillis, result.backgroundSyncIntervalMillis)
         assertEquals(conf.useBuiltInBrowser, result.useBuiltInBrowser)
         assertEquals(conf.showPreviewText, result.showPreviewText)
+        assertEquals(conf.entryBodyFontSize, result.entryBodyFontSize)
     }
 
     @Test
@@ -136,6 +139,7 @@ class ConfTest {
         backgroundSyncIntervalMillis: Long = 3600000L,
         useBuiltInBrowser: Boolean = false,
         showPreviewText: Boolean = false,
+        entryBodyFontSize: Int = 20,
     ) = ConfTable.Conf(
         backend = backend,
         minifluxUrl = minifluxUrl,
@@ -148,5 +152,6 @@ class ConfTest {
         backgroundSyncIntervalMillis = backgroundSyncIntervalMillis,
         useBuiltInBrowser = useBuiltInBrowser,
         showPreviewText = showPreviewText,
+        entryBodyFontSize = entryBodyFontSize,
     )
 }

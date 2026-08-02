@@ -22,14 +22,20 @@ class Database(driver: SQLiteDriver, val path: String) {
 
     private fun migrate() {
         val stmt = conn.prepare("SELECT user_version FROM pragma_user_version;")
-        val version = if (stmt.step()) stmt.getInt(0) else 0
+        var version = if (stmt.step()) stmt.getInt(0) else 0
 
         if (version == 0) {
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(ConfTable.SCHEMA)
-            conn.execSQL("PRAGMA user_version=1;")
+            conn.execSQL("PRAGMA user_version=2;")
+            version = 2
+        }
+
+        if (version == 1) {
+            conn.execSQL("ALTER TABLE conf ADD COLUMN entry_body_font_size INTEGER NOT NULL DEFAULT 16;")
+            conn.execSQL("PRAGMA user_version=2;")
         }
     }
 

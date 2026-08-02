@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import com.google.android.material.textfield.TextInputEditText
 import org.vestifeed.navigation.AppFragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.Lifecycle
@@ -36,6 +37,11 @@ import org.vestifeed.sync.BackgroundSyncScheduler
 import java.util.concurrent.TimeUnit
 
 class SettingsFragment : AppFragment() {
+
+    private companion object {
+        const val MIN_FONT_SIZE_SP = 8
+        const val MAX_FONT_SIZE_SP = 48
+    }
 
     private val db by lazy { (requireContext().applicationContext as App).db }
     private val syncScheduler by lazy { BackgroundSyncScheduler(requireContext()) }
@@ -145,6 +151,14 @@ class SettingsFragment : AppFragment() {
         db.conf.update { it.copy(useBuiltInBrowser = value) }
         refresh()
     }
+
+    private fun setEntryBodyFontSize(value: Int) {
+        db.conf.update { it.copy(entryBodyFontSize = value) }
+        refresh()
+    }
+
+    private fun entryBodyFontSizeLabel(size: Int): String =
+        getString(R.string.entry_body_font_size_value, size)
 
     private fun logOut() {
         db.conf.delete()
@@ -279,6 +293,29 @@ class SettingsFragment : AppFragment() {
         useBuiltInBrowser.apply {
             isChecked = state.conf.useBuiltInBrowser
             setOnCheckedChangeListener { _, isChecked -> setUseBuiltInBrowser(isChecked) }
+        }
+
+        entryBodyFontSize.text = entryBodyFontSizeLabel(state.conf.entryBodyFontSize)
+        entryBodyFontSizeButton.setOnClickListener {
+            val dialog = MaterialAlertDialogBuilder(requireContext())
+                .setTitle(R.string.entry_body_font_size)
+                .setView(R.layout.dialog_entry_body_font_size)
+                .setPositiveButton(android.R.string.ok) { _, _ -> }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+
+            val input = dialog.findViewById<TextInputEditText>(R.id.entryBodyFontSizeInput)
+            input?.setText(state.conf.entryBodyFontSize.toString())
+
+            dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE)?.setOnClickListener {
+                val raw = input?.text?.toString().orEmpty().trim()
+                val parsed = raw.toIntOrNull()
+                if (parsed == null || parsed < MIN_FONT_SIZE_SP || parsed > MAX_FONT_SIZE_SP) {
+                    return@setOnClickListener
+                }
+                setEntryBodyFontSize(parsed)
+                dialog.dismiss()
+            }
         }
 
         manageEnclosures.setOnClickListener {

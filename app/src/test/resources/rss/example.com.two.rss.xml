@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Example Feed Two</title>
+    <link>https://example.com/two</link>
+    <description>Second feed on example.com</description>
+    <item>
+      <guid isPermaLink="false">two-item-1</guid>
+      <title>Two item one</title>
+      <link>https://example.com/two/article-1</link>
+      <description>First item of the second feed.</description>
+      <pubDate>Sun, 02 Aug 2026 13:17:00 Z</pubDate>
+    </item>
+  </channel>
+</rss>

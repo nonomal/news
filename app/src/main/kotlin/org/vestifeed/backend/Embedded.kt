@@ -13,9 +13,12 @@ import org.vestifeed.http.await
 import org.vestifeed.parser.FeedResult
 import org.vestifeed.parser.feed
 
-class Embedded(db: Database) : Backend(db) {
+class Embedded(
+    db: Database,
+    httpClient: OkHttpClient = OkHttpClient(),
+) : Backend(db) {
 
-    private val httpClient = OkHttpClient()
+    private val httpClient = httpClient
 
     private val fetcher = EmbeddedFeedFetcher(db, httpClient)
 

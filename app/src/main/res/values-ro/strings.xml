@@ -78,6 +78,7 @@
     <string name="view_comments">Vizualizează comentariile</string>
     <string name="use_built_in_browser">Utilizează browserul încorporat</string>
     <string name="show_preview_text">Afișează textul de previzualizare</string>
+    <string name="show_author_name">Afișează numele autorului</string>
     <string name="entry_body_font_size">Dimensiunea fontului</string>
     <string name="entry_body_font_size_value">%1$d sp</string>
     <string name="entry_body_font_size_hint">Dimensiune în sp</string>

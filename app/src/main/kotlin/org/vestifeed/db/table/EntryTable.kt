@@ -208,6 +208,7 @@ class EntryTable(private val conn: SQLiteConnection) {
         override val title: String,
         override val feedTitle: String,
         override val published: OffsetDateTime,
+        override val authorName: String,
         override val summary: String,
         override val extRead: Boolean,
         override val extOpenEntriesInBrowser: Boolean,
@@ -219,7 +220,8 @@ class EntryTable(private val conn: SQLiteConnection) {
             SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
                    e.ext_og_image_width, e.ext_og_image_height, e.title,
                    f.title as feed_title, f.ext_show_preview_images,
-                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser,
+                   e.author_name
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.feed_id = ?
@@ -241,7 +243,8 @@ class EntryTable(private val conn: SQLiteConnection) {
             SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
                    e.ext_og_image_width, e.ext_og_image_height, e.title,
                    f.title as feed_title, f.ext_show_preview_images,
-                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser,
+                   e.author_name
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.ext_read = 0 AND e.ext_bookmarked = 0
@@ -275,7 +278,8 @@ class EntryTable(private val conn: SQLiteConnection) {
             SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
                    e.ext_og_image_width, e.ext_og_image_height, e.title,
                    f.title as feed_title, f.ext_show_preview_images,
-                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser,
+                   e.author_name
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.ext_bookmarked = 1
@@ -563,6 +567,7 @@ class EntryTable(private val conn: SQLiteConnection) {
                     )
                 )
             }.getOrDefault(OffsetDateTime.now()),
+            authorName = stmt.getTextOrNull(getColumnIndex(stmt, "author_name")) ?: "",
             summary = stmt.getTextOrNull(getColumnIndex(stmt, "summary")) ?: "",
             extRead = stmt.getInt(getColumnIndex(stmt, "ext_read")) == 1,
             extOpenEntriesInBrowser = stmt.getInt(
@@ -589,6 +594,7 @@ class EntryTable(private val conn: SQLiteConnection) {
             summary = stmt.getTextOrNull(8) ?: "",
             extRead = stmt.getInt(9) == 1,
             extOpenEntriesInBrowser = stmt.getInt(10) == 1,
+            authorName = stmt.getTextOrNull(11) ?: "",
         )
     }
 
@@ -629,6 +635,7 @@ class EntryTable(private val conn: SQLiteConnection) {
         override val title: String,
         override val feedTitle: String,
         override val published: OffsetDateTime,
+        override val authorName: String,
         override val summary: String?,
         override val extRead: Boolean,
         override val extOpenEntriesInBrowser: Boolean,
@@ -639,7 +646,7 @@ class EntryTable(private val conn: SQLiteConnection) {
         val sql = """
             SELECT e.id, f.ext_show_preview_images, e.ext_og_image_url, e.ext_og_image_width,
                    e.ext_og_image_height, e.title, f.title as feed_title, e.published,
-                   e.summary, e.ext_read, f.ext_open_entries_in_browser
+                   e.summary, e.ext_read, f.ext_open_entries_in_browser, e.author_name
             FROM entry e
             JOIN feed f ON f.id = e.feed_id
             WHERE e.title LIKE ? OR e.summary LIKE ? OR e.content_text LIKE ?
@@ -665,6 +672,7 @@ class EntryTable(private val conn: SQLiteConnection) {
                             summary = stmt.getText(8),
                             extRead = stmt.getInt(9) == 1,
                             extOpenEntriesInBrowser = stmt.getInt(10) == 1,
+                            authorName = stmt.getText(11),
                         )
                     )
                 }

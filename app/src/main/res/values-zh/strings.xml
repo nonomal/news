@@ -78,6 +78,7 @@
     <string name="view_comments">查看评论</string>
     <string name="use_built_in_browser">使用内置浏览器</string>
     <string name="show_preview_text">显示预览文本</string>
+    <string name="show_author_name">显示作者姓名</string>
     <string name="entry_body_font_size">正文字号</string>
     <string name="entry_body_font_size_value">%1$d sp</string>
     <string name="entry_body_font_size_hint">大小（sp）</string>

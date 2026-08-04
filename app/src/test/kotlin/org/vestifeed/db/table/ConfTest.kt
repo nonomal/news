@@ -140,6 +140,7 @@ class ConfTest {
         useBuiltInBrowser: Boolean = false,
         showPreviewText: Boolean = false,
         entryBodyFontSize: Int = 20,
+        showAuthorName: Boolean = false,
     ) = ConfTable.Conf(
         backend = backend,
         minifluxUrl = minifluxUrl,
@@ -153,5 +154,6 @@ class ConfTest {
         useBuiltInBrowser = useBuiltInBrowser,
         showPreviewText = showPreviewText,
         entryBodyFontSize = entryBodyFontSize,
+        showAuthorName = showAuthorName,
     )
 }

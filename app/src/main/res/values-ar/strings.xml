@@ -78,6 +78,7 @@
     <string name="view_comments">عرض التعليقات</string>
     <string name="use_built_in_browser">استخدم المتصفح المدمج</string>
     <string name="show_preview_text">إظهار نص المعاينة</string>
+    <string name="show_author_name">إظهار اسم المؤلف</string>
     <string name="entry_body_font_size">حجم خط النص</string>
     <string name="entry_body_font_size_value">%1$d sp</string>
     <string name="entry_body_font_size_hint">الحجم بـ sp</string>

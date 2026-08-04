@@ -249,7 +249,7 @@ fun rssItems(document: Document): Result<List<Result<RssItem>>> {
                 title = element.getElementsByTagName("title").item(0)?.textContent,
                 link = link,
                 description = element.getElementsByTagName("description").item(0)?.textContent,
-                author = element.getElementsByTagName("author").item(0)?.textContent,
+                author = element.getElementsByTagName("author").item(0)?.textContent?.trim(),
                 categories = categories,
                 comments = comments,
                 enclosure = enclosure,

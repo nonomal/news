@@ -78,6 +78,7 @@
     <string name="view_comments">Ver commentarios</string>
     <string name="use_built_in_browser">Usar el navegador interno</string>
     <string name="show_preview_text">Mostrar vista previa del texto</string>
+    <string name="show_author_name">Mostrar nombre del autor</string>
     <string name="entry_body_font_size">Tamaño de fuente del cuerpo</string>
     <string name="entry_body_font_size_value">%1$d sp</string>
     <string name="entry_body_font_size_hint">Tamaño en sp</string>

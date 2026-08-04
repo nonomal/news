@@ -29,13 +29,20 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(ConfTable.SCHEMA)
-            conn.execSQL("PRAGMA user_version=2;")
-            version = 2
+            conn.execSQL("PRAGMA user_version=3;")
+            version = 3
         }
 
         if (version == 1) {
             conn.execSQL("ALTER TABLE conf ADD COLUMN entry_body_font_size INTEGER NOT NULL DEFAULT 16;")
             conn.execSQL("PRAGMA user_version=2;")
+            version = 2
+        }
+
+        if (version == 2) {
+            conn.execSQL("ALTER TABLE conf ADD COLUMN show_author_name INTEGER NOT NULL DEFAULT 0;")
+            conn.execSQL("PRAGMA user_version=3;")
+            version = 3
         }
     }
 

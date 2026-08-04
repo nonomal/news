@@ -20,6 +20,7 @@ interface EntryRowMappable {
     val title: String
     val feedTitle: String
     val published: OffsetDateTime
+    val authorName: String
     val summary: String?
     val extRead: Boolean
     val extOpenEntriesInBrowser: Boolean
@@ -47,11 +48,53 @@ object EntryRowMapper {
             imageWidth = row.extOpenGraphImageWidth,
             imageHeight = row.extOpenGraphImageHeight,
             title = row.title,
-            subtitle = "${row.feedTitle} · ${EntryTimeFormatter.format(now, row.published, resources)}",
+            subtitle = buildSubtitle(
+                feedTitle = row.feedTitle,
+                authorName = row.authorName,
+                showAuthorName = conf.showAuthorName,
+                published = row.published,
+                now = now,
+                resources = resources,
+            ),
             summary = row.summary ?: "",
             read = row.extRead,
             openInBrowser = row.extOpenEntriesInBrowser,
             useBuiltInBrowser = conf.useBuiltInBrowser,
         )
+    }
+
+    /**
+     * Joins feed title, author and post date on the secondary line of the entry
+     * card. The author segment is omitted when the underlying feed did not
+     * provide one, so authorless items stay on a single "feed · date" line.
+     */
+    internal fun buildSubtitle(
+        feedTitle: String,
+        authorName: String,
+        showAuthorName: Boolean,
+        published: OffsetDateTime,
+        now: OffsetDateTime,
+        resources: Resources,
+    ): String {
+        return joinSubtitle(
+            feedTitle = feedTitle,
+            authorName = authorName,
+            showAuthorName = showAuthorName,
+            timestamp = EntryTimeFormatter.format(now, published, resources),
+        )
+    }
+
+    internal fun joinSubtitle(
+        feedTitle: String,
+        authorName: String,
+        showAuthorName: Boolean,
+        timestamp: String,
+    ): String {
+        val includeAuthor = showAuthorName && authorName.isNotBlank()
+        return if (includeAuthor) {
+            "$feedTitle · $authorName · $timestamp"
+        } else {
+            "$feedTitle · $timestamp"
+        }
     }
 }

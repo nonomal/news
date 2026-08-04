@@ -147,6 +147,11 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
+    private fun setShowAuthorName(value: Boolean) {
+        db.conf.update { it.copy(showAuthorName = value) }
+        refresh()
+    }
+
     private fun setUseBuiltInBrowser(value: Boolean) {
         db.conf.update { it.copy(useBuiltInBrowser = value) }
         refresh()
@@ -288,6 +293,11 @@ class SettingsFragment : AppFragment() {
         showPreviewText.apply {
             isChecked = state.conf.showPreviewText
             setOnCheckedChangeListener { _, isChecked -> setShowPreviewText(isChecked) }
+        }
+
+        showAuthorName.apply {
+            isChecked = state.conf.showAuthorName
+            setOnCheckedChangeListener { _, isChecked -> setShowAuthorName(isChecked) }
         }
 
         useBuiltInBrowser.apply {

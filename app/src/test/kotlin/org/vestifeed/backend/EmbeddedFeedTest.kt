@@ -8,6 +8,7 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.vestifeed.db.Database
@@ -143,6 +144,76 @@ class EmbeddedFeedTest {
         assertEquals(
             setOf("One item one", "Two item one"),
             allEntries.map { it.title }.toSet(),
+        )
+    }
+
+    /**
+     * Regression test for author parsing. The fixture is the live
+     * https://www.space.com/feeds.xml feed, captured once and stored at
+     * `app/src/test/resources/rss/space.com.feeds.rss.xml` so the test
+     * stays deterministic and does not hit the network.
+     *
+     * Each `<author>` element in that feed sits inside a heavily-indented
+     * line and is wrapped in `<![CDATA[ ... ]]>` with a leading and trailing
+     * space, e.g.:
+     *
+     *     \t\t<author><![CDATA[ stingrayghost@gmail.com (Jeff Spry) ]]></author>\t
+     *
+     * If the parser hands `textContent` straight to the database, the stored
+     * author name is surrounded by tabs, newlines and the CDATA-internal
+     * spaces. The UI now displays the author verbatim, so we must trim it.
+     */
+    @Test
+    fun spaceComFeedSavesAuthorsWithoutSurroundingWhitespace() = runBlocking {
+        val url = server.url("/feeds.xml")
+        val feedBody = javaClass.getResourceAsStream("/rss/space.com.feeds.rss.xml")!!
+            .bufferedReader()
+            .readText()
+
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/rss+xml")
+                .setBody(feedBody),
+        )
+
+        val api = Embedded(db = db, httpClient = httpClient)
+        val result = api.addFeed(url)
+
+        db.transaction {
+            db.feed.insertOrReplace(result.feed)
+            db.link.insertForFeed(result.feed.id, result.feedLinks)
+            result.entries.forEach { (entry, links) ->
+                db.entry.insertOrReplace(listOf(entry))
+                db.link.insertForEntry(entry.id, links)
+            }
+        }
+
+        val stored = db.entry.selectByFeedId(result.feed.id)
+        assertEquals(result.entries.size, stored.size)
+
+        val authorsWithName = stored.filter { it.authorName.isNotBlank() }
+        assertTrue(
+            "Expected at least one entry with an author name, got ${stored.size} stored",
+            authorsWithName.isNotEmpty(),
+        )
+
+        for (entry in authorsWithName) {
+            assertEquals(
+                "Expected trimmed authorName for '${entry.title}', got '${entry.authorName}'",
+                entry.authorName.trim(),
+                entry.authorName,
+            )
+        }
+
+        val authors = authorsWithName.map { it.authorName }.toSet()
+        assertTrue(
+            "Expected 'stingrayghost@gmail.com (Jeff Spry)' in stored authors, got $authors",
+            "stingrayghost@gmail.com (Jeff Spry)" in authors,
+        )
+        assertTrue(
+            "Expected 'mwall@space.com (Mike Wall)' in stored authors, got $authors",
+            "mwall@space.com (Mike Wall)" in authors,
         )
     }
 }

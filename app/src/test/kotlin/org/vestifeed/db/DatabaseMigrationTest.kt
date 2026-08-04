@@ -83,4 +83,55 @@ class DatabaseMigrationTest {
         val conf = db.conf.select()
         assertEquals(16, conf.entryBodyFontSize)
     }
+
+    @Test
+    fun migrate_v2ToV3_addsShowAuthorNameColumn() {
+        val driver = BundledSQLiteDriver()
+        driver.open(dbFile.absolutePath).use { conn ->
+            conn.execSQL(FeedTable.SCHEMA)
+            conn.execSQL(EntryTable.SCHEMA)
+            conn.execSQL(LinkTable.SCHEMA)
+
+            val v2Schema = """
+                CREATE TABLE conf (
+                    backend TEXT,
+                    miniflux_url TEXT,
+                    miniflux_token TEXT,
+                    minifluxIncrementalSyncTimestamp TEXT,
+                    show_preview_images INTEGER NOT NULL,
+                    crop_preview_images INTEGER NOT NULL,
+                    sync_on_startup INTEGER NOT NULL,
+                    sync_in_background INTEGER NOT NULL,
+                    background_sync_interval_millis INTEGER NOT NULL,
+                    use_built_in_browser INTEGER NOT NULL,
+                    show_preview_text INTEGER NOT NULL,
+                    entry_body_font_size INTEGER NOT NULL
+                ) STRICT;
+            """.trimIndent()
+            conn.execSQL(v2Schema)
+
+            conn.prepare(
+                """
+                INSERT INTO conf (
+                    show_preview_images, crop_preview_images, sync_on_startup,
+                    sync_in_background, background_sync_interval_millis,
+                    use_built_in_browser, show_preview_text, entry_body_font_size
+                ) VALUES (1, 1, 1, 1, 10800000, 1, 1, 16);
+                """.trimIndent()
+            ).use { stmt ->
+                stmt.step()
+            }
+
+            conn.execSQL("PRAGMA user_version=2;")
+        }
+
+        val db = Database(driver, dbFile.absolutePath)
+
+        val conf = db.conf.select()
+        assertEquals(16, conf.entryBodyFontSize)
+        assertEquals(false, conf.showAuthorName)
+
+        db.conf.update { it.copy(showAuthorName = true) }
+        assertEquals(true, db.conf.select().showAuthorName)
+    }
 }

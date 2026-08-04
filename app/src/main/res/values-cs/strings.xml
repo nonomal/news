@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Synchronizace v pozadí</string>
     <string name="background_sync_interval">Interval synchronizace na pozadí</string>
     <string name="mark_all_as_read">Označit vše jako přečtené</string>
+    <string name="mark_all_as_read_warning">Opravdu chcete označit vše jako přečtené?</string>
     <string name="unread_news">Nepřečtené zprávy</string>
     <string name="notification_permission_required_title">Notification permission</string>
     <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>

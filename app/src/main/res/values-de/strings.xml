@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Im Hintergrund synchronisieren</string>
     <string name="background_sync_interval">Hintergrund Synchronisierungsintervall</string>
     <string name="mark_all_as_read">Alle als gelesen markieren</string>
+    <string name="mark_all_as_read_warning">Möchten Sie wirklich alle als gelesen markieren?</string>
     <string name="unread_news">Ungelesene Artikel</string>
     <string name="notification_permission_required_title">Notification permission</string>
     <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>

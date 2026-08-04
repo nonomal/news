@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">التزامن في الخلفية</string>
     <string name="background_sync_interval">فترة التزامن في الخلفية</string>
     <string name="mark_all_as_read">تعليم الكل كمقروء</string>
+    <string name="mark_all_as_read_warning">هل تريد حقًا وضع علامة على الكل كمقروء؟</string>
     <string name="unread_news">أخبار غير مقروءة</string>
     <string name="notification_permission_required_title">Notification permission</string>
     <string name="notification_permission_required_message">To notify you of new news items, this app needs the notification permission.</string>

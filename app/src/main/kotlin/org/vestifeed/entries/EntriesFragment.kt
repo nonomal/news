@@ -198,7 +198,7 @@ class EntriesFragment : AppFragment() {
                 R.id.search -> openFragment(SearchFragment::class.java)
                 R.id.settings -> openFragment(SettingsFragment::class.java)
                 R.id.markAllAsRead -> {
-                    viewModel.markAllAsRead()
+                    confirmMarkAllAsRead()
                     true
                 }
                 R.id.notificationPermissionWarning -> {
@@ -208,6 +208,17 @@ class EntriesFragment : AppFragment() {
                 else -> false
             }
         }
+    }
+
+    private fun confirmMarkAllAsRead() {
+        if (_binding == null) return
+        MaterialAlertDialogBuilder(requireContext())
+            .setMessage(R.string.mark_all_as_read_warning)
+            .setPositiveButton(R.string.mark_all_as_read) { _, _ ->
+                viewModel.markAllAsRead()
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
     }
 
     private fun onNotificationWarningClicked() {

@@ -264,6 +264,9 @@ class FeedsFragment : AppFragment() {
             }
         }
 
+        val feeds = db().feed.selectAll()
+        state.update { State.ShowingFeeds(feeds.map { it.toItem(db()) }) }
+
         if (errors.isNotEmpty()) {
             val message = buildString {
                 errors.forEach {
@@ -276,9 +279,6 @@ class FeedsFragment : AppFragment() {
             }
 
             showErrorDialog(message)
-        } else {
-            val feeds = db().feed.selectAll()
-            state.update { State.ShowingFeeds(feeds.map { it.toItem(db()) }) }
         }
     }
 

@@ -15,9 +15,15 @@ private val xmlDocumentBuilder by lazy { DocumentBuilderFactory.newInstance().ne
 fun feed(inputStream: InputStream, mediaType: String): FeedResult {
     return if (
         mediaType.startsWith("application/rss+xml")
+        || mediaType.startsWith("application/x-rss+xml")
         || mediaType.startsWith("application/atom+xml")
+        || mediaType.startsWith("application/x-atom+xml")
         || mediaType.startsWith("application/xml")
         || mediaType.startsWith("text/xml")
+        // Some servers (notably Google Sites / Blogger) label Atom/RSS feeds as
+        // text/plain. Probe the body as XML and let the parser figure out the
+        // format — XML parsing will fail loudly if the body really isn't XML.
+        || mediaType.startsWith("text/plain")
     ) {
         return feedFromXml(inputStream)
     } else {

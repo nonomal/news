@@ -1,0 +1,1993 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0"><channel><title>Gagallium</title><link>https://cambium.inria.fr/blog/index.rss</link><description></description><managingEditor>foo@bar.com</managingEditor><pubDate>19 Nov 2025 08:00:00 +0000</pubDate><lastBuildDate>19 Nov 2025 08:00:00 +0000</lastBuildDate><generator>Stog</generator><image><url>https://cambium.inria.fr/blog/</url><title>Gagallium</title><link>https://cambium.inria.fr/blog</link></image><item><title>Testing a priority queue with Monolith</title><link>https://cambium.inria.fr/blog/testing-a-priority-queue-with-Monolith</link><description>
+
+  &lt;p&gt;A priority queue is a data structure whose specification is
+non-deterministic: indeed, if a priority queue contains several
+key-value pairs whose key is minimal, then any such pair can be legally
+returned by &lt;code&gt;pop&lt;/code&gt;. In this blog post, I describe how to test
+an OCaml implementation of a priority queue using Monolith.&lt;/p&gt;
+
+
+  
+
+
+&lt;p&gt;Suppose that we have written (or someone has given us) an
+implementation of (immutable) priority queues. The signature of this
+module might look like this (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/main/src/LeftistHeap.mli&quot;&gt;LeftistHeap.mli&lt;/a&gt;):&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb1-1&quot;&gt;&lt;a href=&quot;#cb1-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Make (Key : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-2&quot;&gt;&lt;a href=&quot;#cb1-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t&lt;/span&gt;
+&lt;span id=&quot;cb1-3&quot;&gt;&lt;a href=&quot;#cb1-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;compare&lt;/span&gt;: t -&amp;gt; t -&amp;gt; &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-4&quot;&gt;&lt;a href=&quot;#cb1-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-5&quot;&gt;&lt;a href=&quot;#cb1-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-6&quot;&gt;&lt;a href=&quot;#cb1-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**A key. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-7&quot;&gt;&lt;a href=&quot;#cb1-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; key = Key.t&lt;/span&gt;
+&lt;span id=&quot;cb1-8&quot;&gt;&lt;a href=&quot;#cb1-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-9&quot;&gt;&lt;a href=&quot;#cb1-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**An immutable priority queue. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-10&quot;&gt;&lt;a href=&quot;#cb1-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; 'a t&lt;/span&gt;
+&lt;span id=&quot;cb1-11&quot;&gt;&lt;a href=&quot;#cb1-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-12&quot;&gt;&lt;a href=&quot;#cb1-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**&lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;empty&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; is the empty queue. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-13&quot;&gt;&lt;a href=&quot;#cb1-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; empty : 'a t&lt;/span&gt;
+&lt;span id=&quot;cb1-14&quot;&gt;&lt;a href=&quot;#cb1-14&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-15&quot;&gt;&lt;a href=&quot;#cb1-15&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**&lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;singleton k v&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; is a singleton queue containing the key-value&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-16&quot;&gt;&lt;a href=&quot;#cb1-16&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;     pair &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;(k, v)&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt;. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-17&quot;&gt;&lt;a href=&quot;#cb1-17&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; singleton : key -&amp;gt; 'a -&amp;gt; 'a t&lt;/span&gt;
+&lt;span id=&quot;cb1-18&quot;&gt;&lt;a href=&quot;#cb1-18&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-19&quot;&gt;&lt;a href=&quot;#cb1-19&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**&lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;merge q1 q2&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; merges the queues &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;q1&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; and &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;q2&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt;. The result is a&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-20&quot;&gt;&lt;a href=&quot;#cb1-20&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;     new queue. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-21&quot;&gt;&lt;a href=&quot;#cb1-21&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; merge : 'a t -&amp;gt; 'a t -&amp;gt; 'a t&lt;/span&gt;
+&lt;span id=&quot;cb1-22&quot;&gt;&lt;a href=&quot;#cb1-22&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-23&quot;&gt;&lt;a href=&quot;#cb1-23&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(**&lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;pop q&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; extracts a key-value pair whose key is minimal out of the queue&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-24&quot;&gt;&lt;a href=&quot;#cb1-24&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;     &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;q&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt;. &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;dt&quot;&gt;None&lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; is returned only in the case where &lt;/span&gt;&lt;span class=&quot;ot&quot;&gt;[&lt;/span&gt;q&lt;span class=&quot;ot&quot;&gt;]&lt;/span&gt;&lt;span class=&quot;co&quot;&gt; is empty. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-25&quot;&gt;&lt;a href=&quot;#cb1-25&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; pop: 'a t -&amp;gt; ((key * 'a) * 'a t) &lt;span class=&quot;dt&quot;&gt;option&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-26&quot;&gt;&lt;a href=&quot;#cb1-26&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-27&quot;&gt;&lt;a href=&quot;#cb1-27&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The implementation of this module might be based on Chris Okasaki’s
+leftist heaps, a simple and beautiful data structure (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/main/src/LeftistHeap.ml&quot;&gt;LeftistHeap.ml&lt;/a&gt;).
+But this does not matter. Let’s see how to test this implementation as a
+black box using &lt;a href=&quot;https://gitlab.inria.fr/fpottier/monolith/&quot;&gt;Monolith&lt;/a&gt; (&lt;a href=&quot;https://cambium.inria.fr/~fpottier/publis/pottier-monolith-2021.pdf&quot;&gt;paper&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Monolith expects us to provide a reference implementation of a
+priority queue. This reference implementation does not need to be very
+efficient; what matters is that it should be simple and correct. The
+simplest possible approach is to use an unsorted list of key-value
+pairs, along the following lines (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/8fc708ffdf095bec0a8017dead4bd56fed13b204/test/LeftistHeap/reference.ml#L46&quot;&gt;reference.ml&lt;/a&gt;)
+:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb2-1&quot;&gt;&lt;a href=&quot;#cb2-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t =&lt;/span&gt;
+&lt;span id=&quot;cb2-2&quot;&gt;&lt;a href=&quot;#cb2-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    (Key.t * Val.t) &lt;span class=&quot;dt&quot;&gt;list&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb2-3&quot;&gt;&lt;a href=&quot;#cb2-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb2-4&quot;&gt;&lt;a href=&quot;#cb2-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; empty : t =&lt;/span&gt;
+&lt;span id=&quot;cb2-5&quot;&gt;&lt;a href=&quot;#cb2-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    []&lt;/span&gt;
+&lt;span id=&quot;cb2-6&quot;&gt;&lt;a href=&quot;#cb2-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb2-7&quot;&gt;&lt;a href=&quot;#cb2-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; singleton k v : t =&lt;/span&gt;
+&lt;span id=&quot;cb2-8&quot;&gt;&lt;a href=&quot;#cb2-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [(k, v)]&lt;/span&gt;
+&lt;span id=&quot;cb2-9&quot;&gt;&lt;a href=&quot;#cb2-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb2-10&quot;&gt;&lt;a href=&quot;#cb2-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; merge q1 q2 : t =&lt;/span&gt;
+&lt;span id=&quot;cb2-11&quot;&gt;&lt;a href=&quot;#cb2-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    q1 @ q2&lt;/span&gt;
+&lt;span id=&quot;cb2-12&quot;&gt;&lt;a href=&quot;#cb2-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb2-13&quot;&gt;&lt;a href=&quot;#cb2-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;co&quot;&gt;(* missing [pop], for now *)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here comes the interesting part. &lt;code&gt;pop&lt;/code&gt; is a
+non-deterministic operation: if a priority queue contains several
+minimal key-value pairs, then any of them can be legally returned by
+&lt;code&gt;pop&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;In such a situation, the candidate implementation of &lt;code&gt;pop&lt;/code&gt;
+makes a choice. It would not make sense for the reference implementation
+of &lt;code&gt;pop&lt;/code&gt; to also make a choice: because the two choices might
+be different, the candidate and the reference could become out of
+sync.&lt;/p&gt;
+&lt;p&gt;Instead, we want the reference implementation of &lt;code&gt;pop&lt;/code&gt; to
+check that the choice made by the candidate implementation is legal and
+to obey this choice, that is, to make the same choice.&lt;/p&gt;
+&lt;p&gt;Therefore, the reference implementation of &lt;code&gt;pop&lt;/code&gt; cannot
+have type &lt;code&gt;t -&amp;gt; ((Key.t * Val.t) * t) option&lt;/code&gt;, as one
+might expect. Instead, it must take two arguments, namely the queue on
+the reference side and the result returned by &lt;code&gt;pop&lt;/code&gt; on the
+candidate side. It is expected to return a diagnostic, that is, an
+indication of whether this candidate result is valid or invalid. The
+type &lt;code&gt;diagnostic&lt;/code&gt; is defined by Monolith (&lt;a href=&quot;https://cambium.inria.fr/~fpottier/monolith/doc/monolith/Monolith/#spec:fun:nondet&quot;&gt;documentation&lt;/a&gt;);
+its constructors are &lt;code&gt;Valid&lt;/code&gt; and &lt;code&gt;Invalid&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The reference implementation of &lt;code&gt;pop&lt;/code&gt; can be written as
+follows (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/f049d28fea7111a0b812ab6abd9a82abd81f153a/test/LeftistHeap/reference.ml#L129&quot;&gt;link&lt;/a&gt;):&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb3-1&quot;&gt;&lt;a href=&quot;#cb3-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; pop (q : t) (&lt;span class=&quot;dt&quot;&gt;result&lt;/span&gt; : ((Key.t * Val.t) * _) &lt;span class=&quot;dt&quot;&gt;option&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb3-2&quot;&gt;&lt;a href=&quot;#cb3-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  : (((Key.t * Val.t) * t) &lt;span class=&quot;dt&quot;&gt;option&lt;/span&gt;) diagnostic =&lt;/span&gt;
+&lt;span id=&quot;cb3-3&quot;&gt;&lt;a href=&quot;#cb3-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;match&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;result&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-4&quot;&gt;&lt;a href=&quot;#cb3-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    | &lt;span class=&quot;dt&quot;&gt;Some&lt;/span&gt; (kv, _cq) -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-5&quot;&gt;&lt;a href=&quot;#cb3-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;co&quot;&gt;(* The candidate has extracted the key-value pair [kv] and has returned&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-6&quot;&gt;&lt;a href=&quot;#cb3-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;           a candidate queue [_cq] that we cannot inspect, as it is an abstract&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-7&quot;&gt;&lt;a href=&quot;#cb3-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;           data structure. Fortunately, there is no need to inspect it. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-8&quot;&gt;&lt;a href=&quot;#cb3-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;co&quot;&gt;(* Check that the key-value pair [kv] chosen by the candidate is a&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-9&quot;&gt;&lt;a href=&quot;#cb3-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;           minimal element of the queue [q], and return [q] minus [kv]. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-10&quot;&gt;&lt;a href=&quot;#cb3-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        handle @@ &lt;span class=&quot;kw&quot;&gt;fun&lt;/span&gt; () -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-11&quot;&gt;&lt;a href=&quot;#cb3-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; q = remove_minimal kv q &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-12&quot;&gt;&lt;a href=&quot;#cb3-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        valid (&lt;span class=&quot;dt&quot;&gt;Some&lt;/span&gt; (kv, q))&lt;/span&gt;
+&lt;span id=&quot;cb3-13&quot;&gt;&lt;a href=&quot;#cb3-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    | &lt;span class=&quot;dt&quot;&gt;None&lt;/span&gt; -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-14&quot;&gt;&lt;a href=&quot;#cb3-14&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;co&quot;&gt;(* The candidate has returned [None]. Check that the reference queue [q]&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-15&quot;&gt;&lt;a href=&quot;#cb3-15&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;           is empty; if it isn't, fail. *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-16&quot;&gt;&lt;a href=&quot;#cb3-16&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;kw&quot;&gt;if&lt;/span&gt; q = [] &lt;span class=&quot;kw&quot;&gt;then&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-17&quot;&gt;&lt;a href=&quot;#cb3-17&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;          valid &lt;span class=&quot;dt&quot;&gt;None&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-18&quot;&gt;&lt;a href=&quot;#cb3-18&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;kw&quot;&gt;else&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-19&quot;&gt;&lt;a href=&quot;#cb3-19&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;          invalid @@ &lt;span class=&quot;kw&quot;&gt;fun&lt;/span&gt; _doc -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-20&quot;&gt;&lt;a href=&quot;#cb3-20&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;          &lt;span class=&quot;dt&quot;&gt;format&lt;/span&gt; &lt;span class=&quot;st&quot;&gt;&amp;quot;(* candidate returns None, yet queue is nonempty *)&amp;quot;&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The auxiliary function &lt;code&gt;remove_minimal kv kvs&lt;/code&gt; (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/f049d28fea7111a0b812ab6abd9a82abd81f153a/test/LeftistHeap/reference.ml#L93&quot;&gt;link&lt;/a&gt;)
+checks that the key-value pair &lt;code&gt;kv&lt;/code&gt; is a minimal element of
+the list &lt;code&gt;kvs&lt;/code&gt; and returns this list deprived of this
+element. It fails, by raising an exception, if &lt;code&gt;kv&lt;/code&gt; is not in
+the list or not minimal.&lt;/p&gt;
+&lt;p&gt;The auxiliary function &lt;code&gt;handle&lt;/code&gt; (&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/f049d28fea7111a0b812ab6abd9a82abd81f153a/test/LeftistHeap/reference.ml#L106&quot;&gt;link&lt;/a&gt;)
+handles the exceptions raised by &lt;code&gt;remove_minimal&lt;/code&gt; and returns
+an &lt;code&gt;invalid&lt;/code&gt; diagnostic in these cases.&lt;/p&gt;
+&lt;p&gt;The reference implementation is now complete. There remains to tell
+Monolith about the operations that we want to test. For each operation,
+we must provide a specification (that is, roughly, a type), a reference
+implementation, and a candidate implementation. This is done as follows
+(&lt;a href=&quot;https://github.com/fpottier/bitsets/blob/main/test/LeftistHeap/test.ml&quot;&gt;test.ml&lt;/a&gt;):&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb4&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb4-1&quot;&gt;&lt;a href=&quot;#cb4-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; spec = t &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-2&quot;&gt;&lt;a href=&quot;#cb4-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  declare &lt;span class=&quot;st&quot;&gt;&amp;quot;empty&amp;quot;&lt;/span&gt; spec R.empty C.empty;&lt;/span&gt;
+&lt;span id=&quot;cb4-3&quot;&gt;&lt;a href=&quot;#cb4-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-4&quot;&gt;&lt;a href=&quot;#cb4-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; spec = value ^&amp;gt; key ^&amp;gt; t &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-5&quot;&gt;&lt;a href=&quot;#cb4-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  declare &lt;span class=&quot;st&quot;&gt;&amp;quot;singleton&amp;quot;&lt;/span&gt; spec R.singleton C.singleton;&lt;/span&gt;
+&lt;span id=&quot;cb4-6&quot;&gt;&lt;a href=&quot;#cb4-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-7&quot;&gt;&lt;a href=&quot;#cb4-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; spec = t ^&amp;gt; t ^&amp;gt; t &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-8&quot;&gt;&lt;a href=&quot;#cb4-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  declare &lt;span class=&quot;st&quot;&gt;&amp;quot;merge&amp;quot;&lt;/span&gt; spec R.merge C.merge;&lt;/span&gt;
+&lt;span id=&quot;cb4-9&quot;&gt;&lt;a href=&quot;#cb4-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-10&quot;&gt;&lt;a href=&quot;#cb4-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; spec = t ^&amp;gt; nondet (&lt;span class=&quot;dt&quot;&gt;option&lt;/span&gt; ((key *** value) *** t)) &lt;span class=&quot;kw&quot;&gt;in&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-11&quot;&gt;&lt;a href=&quot;#cb4-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  declare &lt;span class=&quot;st&quot;&gt;&amp;quot;pop&amp;quot;&lt;/span&gt; spec R.pop C.pop;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;In the case of &lt;code&gt;pop&lt;/code&gt;, we have used the combinator
+&lt;code&gt;nondet&lt;/code&gt; (&lt;a href=&quot;https://cambium.inria.fr/~fpottier/monolith/doc/monolith/Monolith/#spec:fun:nondet&quot;&gt;documentation&lt;/a&gt;)
+to tell Monolith that &lt;code&gt;pop&lt;/code&gt; is a non-deterministic operation,
+whose reference implementation is written in the unusual style that we
+have shown above.&lt;/p&gt;
+&lt;p&gt;There remains to run the test, which runs forever and prints the
+problematic scenarios that it detects.&lt;/p&gt;
+&lt;p&gt;It is worth noting that the result of &lt;code&gt;pop&lt;/code&gt; is a composite
+value: it is partly concrete, partly abstract, as it is an (optional)
+pair of a key-value pair (concrete data that can be observed) and a
+priority queue (abstract data that cannot be directly observed). This
+does not create any problem: Monolith is able to automatically decompose
+this composite value and submit the priority queue component to further
+testing.&lt;/p&gt;
+&lt;p&gt;To illustrate this, let us intentionally introduce the following bug
+in the candidate implementation:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb5-1&quot;&gt;&lt;a href=&quot;#cb5-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; pop q =&lt;/span&gt;
+&lt;span id=&quot;cb5-2&quot;&gt;&lt;a href=&quot;#cb5-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;match&lt;/span&gt; pop q &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-3&quot;&gt;&lt;a href=&quot;#cb5-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    | &lt;span class=&quot;dt&quot;&gt;Some&lt;/span&gt; (kv, q') -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-4&quot;&gt;&lt;a href=&quot;#cb5-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;dt&quot;&gt;ignore&lt;/span&gt; q';&lt;/span&gt;
+&lt;span id=&quot;cb5-5&quot;&gt;&lt;a href=&quot;#cb5-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;dt&quot;&gt;Some&lt;/span&gt; (kv, q) &lt;span class=&quot;co&quot;&gt;(* return the original queue, unchanged *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-6&quot;&gt;&lt;a href=&quot;#cb5-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    | &lt;span class=&quot;dt&quot;&gt;None&lt;/span&gt; -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-7&quot;&gt;&lt;a href=&quot;#cb5-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;        &lt;span class=&quot;dt&quot;&gt;None&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then, the test immediately fails and prints the following
+scenario:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;(* @03: Failure in an observation: candidate and reference disagree. *)
+          open Bitsets.LeftistHeap.Make(Int);;
+          #require &amp;quot;monolith&amp;quot;;;
+          module Sup = Monolith.Support;;
+(* @01 *) let x0 = singleton 6 11;;
+(* @02 *) let (Some ((_, _), x1)) = pop x0;;
+(* @03 *) let observed = pop x1;;
+          (* candidate returns (6, 11), which does not exist *)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The priority queue returned by the first &lt;code&gt;pop&lt;/code&gt; operation
+is extracted, named &lt;code&gt;x1&lt;/code&gt;, and submitted to a second
+&lt;code&gt;pop&lt;/code&gt; operation, where an observable problem appears.&lt;/p&gt;
+
+
+  </description><pubDate>19 Nov 2025 08:00:00 +0000</pubDate><author>François Pottier</author><guid isPermaLink="true">https://cambium.inria.fr/blog/testing-a-priority-queue-with-Monolith</guid></item><item><title>Florian’s compiler news, 28 October 2025</title><link>https://cambium.inria.fr/blog/florian-cn-2025-10-28</link><description>
+
+  &lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) work on the OCaml compiler. This week subject is my
+personal retrospective on the release of OCaml 5.4.0.&lt;/p&gt;
+
+
+  
+
+  
+  &lt;h2 id=&quot;prs&quot;&gt;PRs&lt;/h2&gt;
+&lt;h3 id=&quot;stdlib&quot;&gt;Stdlib&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;(&lt;em&gt;breaking change&lt;/em&gt;) &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13570&quot;&gt;#13570&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13794&quot;&gt;#13794&lt;/a&gt;: Format,
+add an out_width function to Format device for approximating unicode
+width. (Florian Angeletti, review by Nicolás Ojeda Bär, Daniel Bünzli,
+and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13569&quot;&gt;#13569&lt;/a&gt;:
+add a &lt;code&gt;Format.format_text&lt;/code&gt; which adds break hints to format
+literals. (Florian Angeletti, review by Nicolás Ojeda Bär, Daniel
+Bünzli, and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;cli&quot;&gt;CLI&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13764&quot;&gt;#13764&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13779&quot;&gt;#13779&lt;/a&gt;: add
+missing “-keywords” flag to ocamldep and ocamlprof (Florian Angeletti,
+report by Prashanth Mundkur, review by Gabriel Scherer)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;ocamldoc&quot;&gt;OCamldoc&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13877&quot;&gt;#13877&lt;/a&gt;:
+ocamldoc, add a &lt;code&gt;-latex-escape-underscore&lt;/code&gt; flag to control
+the escaping of &lt;code&gt;_&lt;/code&gt; underscore in latex references (in order
+to be able to match odoc behaviour). (Florian Angeletti, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13896&quot;&gt;#13896&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14098&quot;&gt;#14098&lt;/a&gt;:
+ocamldoc, do not wrap module description in a paragraph tag inside the
+table of modules (Florian Angeletti, report by John Whitington, review
+by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;error-messages&quot;&gt;Error messages&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13702&quot;&gt;#13702&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13865&quot;&gt;#13865&lt;/a&gt;:
+Specialized error messages for functors appearing in contexts where
+non-functors were expected &lt;code&gt;module A: sig ... end = Set.Make&lt;/code&gt;
+(and the reverse) (Florian Angeletti, report by Jeremy Yallop, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14070&quot;&gt;#14070&lt;/a&gt;:
+also point to label mismatches in error messages for labelled tuples
+(Florian Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13788&quot;&gt;#13788&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13813&quot;&gt;#13813&lt;/a&gt;: Keep
+the module context in spellchecking hints. &lt;code&gt;Fun.protact&lt;/code&gt; now
+prompts &lt;code&gt;Did you mean &amp;quot;Fun.protect?&amp;quot;&lt;/code&gt; rather than
+&lt;code&gt;Did you mean &amp;quot;protect?&amp;quot;&lt;/code&gt;. (Florian Angeletti, suggestion by
+Daniel Bünzli, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13817&quot;&gt;#13817&lt;/a&gt;:
+align spellchecking hints with the possibly misspelled identifier/
+Error: Unbound type constructor “aray” Hint: Did you mean “array”?
+(Florian Angeletti, suggestion by Daniel Bünzli, review by Gabriel
+Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13563&quot;&gt;#13563&lt;/a&gt;,
+lighter inline code styling for output without bold support: inline code
+is no longer printed as “…” to avoid confusion with OCaml strings.
+(Florian Angeletti, review by Richard Eisenberg)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13568&quot;&gt;#13568&lt;/a&gt;,
+composable formatting for warning and alert messages (Florian Angeletti,
+review by Richard Eisenberg)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13818&quot;&gt;#13818&lt;/a&gt;:
+better delimited hints in error message (Florian Angeletti, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;typechecker-bug-fixes&quot;&gt;Typechecker bug fixes:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13778&quot;&gt;#13778&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13811&quot;&gt;#13811&lt;/a&gt;: do not
+warn for unused type declarations when the type is used in a first-class
+module type (&lt;code&gt;module S with type t = int)&lt;/code&gt;. (Florian
+Angeletti, report by Nicolás Ojeda Bär, review by Gabriel
+Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14135&quot;&gt;#14135&lt;/a&gt;:
+Fix a rare internal typechecker error when combining recursive modules,
+polymorphic fields or methods, and constrained type parameters. (Florian
+Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14214&quot;&gt;#14214&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14221&quot;&gt;#14221&lt;/a&gt;: fix a
+confused error message for module inclusions, functor error messages
+were missing some type equalities potentially leading to nonsensical
+“type t is not compatible with type t” submessage (Florian Angeletti,
+report by Basile Clément, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14108&quot;&gt;#14108&lt;/a&gt;:
+toplevel, fix a typo in directive type mismatch (Florian Angeletti,
+review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;runtime-bug-fix&quot;&gt;Runtime bug fix&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14101&quot;&gt;#14101&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14139&quot;&gt;#14139&lt;/a&gt;: define
+atomic helper types inside &lt;code&gt;caml/misc.h&lt;/code&gt; to improve header
+compatibility with C++ (Florian Angeletti, report by Kate Deplaix,
+review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14169&quot;&gt;#14169&lt;/a&gt;:
+runtime, fix cache miss within the stack fragments cache (Florian
+Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;reviews&quot;&gt;Reviews&lt;/h2&gt;
+&lt;h3 id=&quot;standard-library&quot;&gt;Standard library:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13760&quot;&gt;#13760&lt;/a&gt;:
+Add String.{edit_distance,spellcheck} (Daniel Bünzli, review by wikku,
+Nicolás Ojeda Bär, Gabriel Scherer and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13753&quot;&gt;#13753&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13755&quot;&gt;#13755&lt;/a&gt;: Add
+Stdlib.Repr: Repr.phys_equal and Repr.compare are more explicit than
+(==) and &lt;code&gt;compare&lt;/code&gt;. (Kate Deplaix, Thomas Blanc and Léo
+Andrès, review by Gabriel Scherer, Florian Angeletti, Nicolás Ojeda Bär,
+Daniel Bünzli and Jeremy Yallop)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13796&quot;&gt;#13796&lt;/a&gt;:
+Add Uchar.utf_8_decode_length_of_byte and Uchar.max_utf_8_decode_length.
+(Daniel Bünzli, review by Nicolás Ojeda Bär and Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13768&quot;&gt;#13768&lt;/a&gt;:
+Add Either.get_left and Either.get_right (T. Kinsart, review by Nicolás
+Ojeda Bär and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13310&quot;&gt;#13310&lt;/a&gt;:
+Add Stdlib.Pair (Victoire Noizet, review by Nicolás Ojeda Bär, Daniel
+Bünzli, Xavier Van de Woestyne, Jeremy Yallop and Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13620&quot;&gt;#13620&lt;/a&gt;:
+Avoid copying the string in String.concat, String.sub and
+String.split_on_char when the full string is returned. (Christophe
+Raffalli, review by Nicolás Ojeda Bär and Gabriel Scherer and Hugo
+Heuzard)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;tools&quot;&gt;Tools:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12642&quot;&gt;#12642&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13536&quot;&gt;#13536&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14184&quot;&gt;#14184&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14192&quot;&gt;#14192&lt;/a&gt;: in the
+toplevel, print shorter paths for constructors and labels when only some
+modules along their path are open. (Gabriel Scherer, review by Florian
+Angeletti)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;manual-and-documentation&quot;&gt;Manual and documentation:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12452&quot;&gt;#12452&lt;/a&gt;:
+Add examples to Stdlib.Fun documentation. (Hazem ElMasry, review by
+Florian Angeletti and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13924&quot;&gt;#13924&lt;/a&gt;:
+Document how to put &lt;span class=&quot;citation&quot; data-cites=&quot;deprecated&quot;&gt;[@deprecated]&lt;/span&gt; on let bindings,
+constructors, etc in the manual (Valentin Gatien-Baron, review by
+Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;compiler-user-interface-and-warnings&quot;&gt;Compiler user-interface
+and warnings:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13663&quot;&gt;#13663&lt;/a&gt;:
+Improve the error message when GADT parameter variance cannot be
+checked. (Stefan Muenzel, review by Gabriel Scherer and Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13646&quot;&gt;#13646&lt;/a&gt;:
+Improve the error messages when a recursive module type references
+another recursive module type. (Stefan Muenzel, review by Florian
+Angeletti and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13809&quot;&gt;#13809&lt;/a&gt;:
+Distinguish &lt;code&gt;(module M : S)&lt;/code&gt; and
+&lt;code&gt;(module M) : (module S)&lt;/code&gt; and change locations of error
+messages when &lt;code&gt;S&lt;/code&gt; is ill-typed in &lt;code&gt;(module S)&lt;/code&gt;
+(Samuel Vivien, review by Florian Angeletti and Gabriel
+Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13814&quot;&gt;#13814&lt;/a&gt;,
+13898: Add an &lt;code&gt;unused-type-declaration&lt;/code&gt; warning when using a
+&lt;code&gt;t as 'a&lt;/code&gt; with no other occurences of &lt;code&gt;'a&lt;/code&gt; (Samuel
+Vivien, review by Florian Angeletti, Kate Deplaix)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;internalcompiler-libs-changes&quot;&gt;Internal/compiler-libs
+changes:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13302&quot;&gt;#13302&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14236&quot;&gt;#14236&lt;/a&gt;: Store
+locations of longidents components (Ulysse Gérard and Jules Aguillon,
+review by Jules Aguillon and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13460&quot;&gt;#13460&lt;/a&gt;:
+introduce a variant of all predefined types (Gabriel Scherer, review by
+Ulysse Gérard and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13457&quot;&gt;#13457&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13537&quot;&gt;#13537&lt;/a&gt;:
+Annotate alloc/free open/close pairs of functions with compiler
+attributes for static analysis. (Antonin Décimo, review by Gabriel
+Scherer and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13612&quot;&gt;#13612&lt;/a&gt;:
+Refactor &lt;code&gt;type_application&lt;/code&gt; (Ulysse Gérard, Leo White, review
+by Antonin Décimo, Gabriel Scherer, Samuel Vivien, Florian Angeletti and
+Jacques Garrigue)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13744&quot;&gt;#13744&lt;/a&gt;:
+Refactor in &lt;code&gt;collect_apply_args&lt;/code&gt; (Samuel Vivien, review by
+Florian Angeletti and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13820&quot;&gt;#13820&lt;/a&gt;:
+Add a new option -i-variance to print the variance of every type
+parameter; bivariance is printed as &lt;code&gt;+-&lt;/code&gt;, and for
+consistency, parser is modified too to accept &lt;code&gt;+-&lt;/code&gt; and
+&lt;code&gt;-+&lt;/code&gt; as &lt;code&gt;type_variance&lt;/code&gt;. (Takafumi Saikawa and
+Jacques Garrigue, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13848&quot;&gt;#13848&lt;/a&gt;:
+Add all paths components to the cmt files indexes (Ulysse Gérard, review
+by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13854&quot;&gt;#13854&lt;/a&gt;:
+Make the parser set loc_ghost more correctly, for
+&lt;code&gt;keyword%extension&lt;/code&gt; syntax (Valentin Gatien-Baron, review by
+Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13856&quot;&gt;#13856&lt;/a&gt;:
+Add a new indirection in types AST called &lt;code&gt;package&lt;/code&gt; that
+stores the content of a &lt;code&gt;Tpackage&lt;/code&gt; node (Samuel Vivien,
+review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13866&quot;&gt;#13866&lt;/a&gt;:
+Modified occurence check that prevents recursive types for it to see the
+checked type as a graph rather than a tree (Samuel Vivien, report by
+Didier Remy, review by Florian Angeletti and Jacques Garrigue)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13884&quot;&gt;#13884&lt;/a&gt;
+Correctly index modules in constructors and labels paths (Ulysse Gérard,
+review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13946&quot;&gt;#13946&lt;/a&gt;:
+refactor the #install_printer code in the debugger and toplevel (Pierre
+Boutillier, review by Gabriel Scherer and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13971&quot;&gt;#13971&lt;/a&gt;:
+Keep generalized structure from patterns when typing &lt;code&gt;let&lt;/code&gt;
+(Leo White, review by Samuel Vivien and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;build-system&quot;&gt;Build system:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13431&quot;&gt;#13431&lt;/a&gt;:
+Simplify github action responsible for flagging PRs with the
+&lt;code&gt;parsetree-changes&lt;/code&gt; label and extend it to mention the &lt;span class=&quot;citation&quot; data-cites=&quot;ppxlib-dev&quot;&gt;@ppxlib-dev&lt;/span&gt; team.
+(Nathan Rebours, review by Florian Angeletti)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;bug-fixes&quot;&gt;Bug fixes:&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13957&quot;&gt;#13957&lt;/a&gt;:
+Allow ‘effect’ as attribute id. (Pieter Goetschalckx, review by Nicolás
+Ojeda Bär and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;(&lt;em&gt;breaking change&lt;/em&gt;) &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13605&quot;&gt;#13605&lt;/a&gt;: Fix
+ungenerated constraints when they where impossible due to polyvars
+issues (Samuel Vivien, review by Florian Angeletti, Richard Eisenberg
+and Jacques Garrigue)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13710&quot;&gt;#13710&lt;/a&gt;:
+Support unicode identifiers in comments. (Pieter Goetschalckx, review by
+Florian Angeletti and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13845&quot;&gt;#13845&lt;/a&gt;:
+Fix bug in untypeast/pprintast for value bindings with polymorphic type
+annotations. (Chris Casinghino, review by Florian Angeletti and Gabriel
+Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13172&quot;&gt;#13172&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13829&quot;&gt;#13829&lt;/a&gt;: Fix a
+missing check of illegal recursive module-type definitions (Clement
+Blaudeau, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13541&quot;&gt;#13541&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13777&quot;&gt;#13777&lt;/a&gt;: Using
+C++11 &lt;code&gt;thread_local&lt;/code&gt; causes name-mangling issues when linking
+with flexlink on Cygwin. (Antonin Décimo and David Allsopp, report by
+Kate Deplaix)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13956&quot;&gt;#13956&lt;/a&gt;
+Fix a regression introduced in &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13308&quot;&gt;#13308&lt;/a&gt; triggering
+wrong unused warnings. (Ulysse Gérard, review by Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/14105&quot;&gt;#14105&lt;/a&gt;:
+Fix a loop in Pprintast that could result in a hang when printing
+constructor &lt;code&gt;(::)&lt;/code&gt; in isolation. (Ulysse Gérard, review by
+Nicolás Ojeda Bär and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+  </description><pubDate>13 Jan 2025 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">https://gallium.inria.fr/blog/florian-cn-2025-10-28</guid></item><item><title>Florian’s compiler weekly, 13 January 2025</title><link>https://cambium.inria.fr/blog/florian-cw-2025-01-13</link><description>
+
+  &lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) work on the OCaml compiler. This week subject is my
+personal retrospective on the release of OCaml 5.3.0.&lt;/p&gt;
+
+
+  
+
+  
+  &lt;p&gt;The beginning of 2025 and the release of OCaml 5.3 feels like a good
+period for some introspection on my work on the compiler during this
+release.&lt;/p&gt;
+&lt;p&gt;Looking backk at the changelog, I have participated to more or less
+50 changes in the 5.3 release. Most of those changes (~40) can be
+classified into five major themes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Error messages&lt;/li&gt;
+&lt;li&gt;Compiler display infrastructure&lt;/li&gt;
+&lt;li&gt;Tooling integration&lt;/li&gt;
+&lt;li&gt;Manual and documentation&lt;/li&gt;
+&lt;li&gt;Type system bug fixes&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Retrospecting, I have been quite busy this release with background
+work, and I still have more background work planned for OCaml 5.4.
+Hopefully, this background work will bear more visible fruits in the
+next releases.&lt;/p&gt;
+&lt;h2 id=&quot;error-messages&quot;&gt;Error messages&lt;/h2&gt;
+&lt;p&gt;The first theme for this release is recurrent for me, and I hope that
+I would be able to spend even more time on this subject soon. Indeed for
+this release, most of the error message improvements were relatively
+quick improvements on various topics (first class modules, function
+labelled arguments, functors and type clashes). Nevertheless, I still
+have many larger projects planned for improving error messages in the
+longer terms, in particular:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Efficient diffing for module level error messages: there is
+prototype implementation written by Malo Monin on his summer internship
+last summer which needs more polish before being integrated.&lt;/li&gt;
+&lt;li&gt;Semantic diffing on type expressions: using the more reliable error
+trace, I hope to come back to my previous on syntaxic difference
+highlighting in type expressions and implement a fully semantic
+version.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;For more details, here are the corresponding changelog entries
+extracted from the 5.3 changelog:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12980&quot;&gt;#12980&lt;/a&gt;:
+Explain type mismatch involving first-class modules by including the
+module level error message (Florian Angeletti, review by Vincent
+Laviron)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12985&quot;&gt;#12985&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12988&quot;&gt;#12988&lt;/a&gt;: Better
+error messages for partially applied functors. (Florian Angeletti,
+report by Arthur Wendling, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13034&quot;&gt;#13034&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13260&quot;&gt;#13260&lt;/a&gt;: Better
+error messages for mismatched function labels (Florian Angeletti, report
+by Daniel Bünzli, review by Gabriel Scherer and Samuel Vivien)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13341&quot;&gt;#13341&lt;/a&gt;:
+a warning when the pattern-matching compiler pessimizes code because
+side-effects may mutate the scrutinee during matching. (This warning is
+disabled by default, as this rarely happens and its performance impact
+is typically not noticeable.) (Gabriel Scherer, review by Nick Roberts,
+Florian Angeletti and David Allsopp)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13255&quot;&gt;#13255&lt;/a&gt;:
+Re-enable warning 34 for unused locally abstract types (Nick Roberts,
+review by Chris Casinghino and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12182&quot;&gt;#12182&lt;/a&gt;:
+Improve the type clash error message. For example, this message: This
+expression has type … is changed into: The constant “42” has type …
+(Jules Aguillon, review by Gabriel Scherer and Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13170&quot;&gt;#13170&lt;/a&gt;:
+Fix a bug that would result in some floating alerts
+&lt;code&gt;[@@@alert ...]&lt;/code&gt; incorrectly triggering Warning 53. (Nicolás
+Ojeda Bär, review by Chris Casinghino and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13203&quot;&gt;#13203&lt;/a&gt;:
+Do not issue warning 53 if the compiler is stopping before attributes
+have been accurately marked. (Chris Casinghino, review by Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;compiler-display-infrastructure&quot;&gt;Compiler display
+infrastructure&lt;/h2&gt;
+&lt;p&gt;This release I ended up spending a sizeable amount of time
+refactoring or improving the various display mechanism in the compiler.
+In particular, OCaml 5.3 comes with a new internal format for error
+messages, a new graphical debugger printer for type expressions, and the
+correction on many smaller printing bugs for booleans and the
+&lt;code&gt;mod&lt;/code&gt; operator.&lt;/p&gt;
+&lt;p&gt;This trend will continue in OCaml 5.4 since I have already launched a
+project on updating the formatting of error messages and warnings, and I
+am hoping to finally integrate my work on structured diagnostics in this
+version of OCaml.&lt;/p&gt;
+&lt;p&gt;However, beyond this (significant) piece of work, don’t really have
+longer plans on this subject.&lt;/p&gt;
+&lt;p&gt;The related changelog entries for OCaml 5.3 are:&lt;/p&gt;
+&lt;h3 id=&quot;highlights&quot;&gt;Highlights&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13049&quot;&gt;#13049&lt;/a&gt;:
+graphical debugging printer for types (Florian Angeletti, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13169&quot;&gt;#13169&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13311&quot;&gt;#13311&lt;/a&gt;:
+Introduce a document data type for compiler messages rather than relying
+on &lt;code&gt;Format.formatter -&amp;gt; unit&lt;/code&gt; closures. (Florian
+Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;error-messages-styling&quot;&gt;Error messages styling&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12891&quot;&gt;#12891&lt;/a&gt;:
+Improved styling for initial prompt (Florian Angeletti, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13263&quot;&gt;#13263&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13560&quot;&gt;#13560&lt;/a&gt;: fix
+printing true and false in toplevel and error messages (no more
+unexpected #true) (Florian Angeletti, report by Samuel Vivien, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13151&quot;&gt;#13151&lt;/a&gt;,
+name conflicts explanation as a footnote (Florian Angeletti, review by
+Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13053&quot;&gt;#13053&lt;/a&gt;:
+Improved display of builtin types such as &lt;code&gt;_ list&lt;/code&gt; when
+aliased. (Samuel Vivien, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;internal-refactoring-and-bug-fixes&quot;&gt;Internal refactoring and bug
+fixes&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13336&quot;&gt;#13336&lt;/a&gt;:
+compiler-libs, split the &lt;code&gt;Printtyp&lt;/code&gt; in three to only keep
+“user-friendly” functions in the &lt;code&gt;Printtyp&lt;/code&gt; module. (Florian
+Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12888&quot;&gt;#12888&lt;/a&gt;:
+fix printing of uncaught exceptions in &lt;code&gt;.cmo&lt;/code&gt; files passed on
+the command-line of the toplevel. (Nicolás Ojeda Bär, review by Florian
+Angeletti, report by Daniel Bünzli)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13099&quot;&gt;#13099&lt;/a&gt;:
+Fix erroneous loading of cmis for some module type errors. (Nick
+Roberts, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13251&quot;&gt;#13251&lt;/a&gt;:
+Register printer for errors in Emitaux (Vincent Laviron, review by Miod
+Vallat and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;source-printer&quot;&gt;Source printer&lt;/h3&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13391&quot;&gt;#13391&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13551&quot;&gt;#13551&lt;/a&gt;: fix a
+printing bug with &lt;code&gt;-dsource&lt;/code&gt; when using raw literal inside a
+locally abstract type constraint
+(i.e. &lt;code&gt;let f: type \#for. ...&lt;/code&gt;) (Florian Angeletti, report by
+Nick Roberts, review by Richard Eisenberg)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13603&quot;&gt;#13603&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13604&quot;&gt;#13604&lt;/a&gt;: fix
+source printing in the presence of the escaped raw identifier
+&lt;code&gt;\#mod&lt;/code&gt;. (Florian Angeletti, report by Chris Casinghino,
+review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;tooling-integration&quot;&gt;Tooling integration&lt;/h2&gt;
+&lt;p&gt;Another important subject during this release was the improvement of
+the metadata generated for Merlin. OCaml 5.3.0 metadata now track more
+accurately identifiers across implementation and interfaces, and record
+precisely how implementation identifiers were matched to interface
+identifiers in a module. For the next release, I am planning on
+improving tooling integration with merlin by reducing the difference
+between merlin typechecker and the compiler typechecker. The exact
+specification can be found following the link in the corresponding
+changelog entry:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13308&quot;&gt;#13308&lt;/a&gt;:
+keep track of relations between declaration in the cmt files. This is
+useful information for external tools for navigation and analysis
+purposis. (Ulysse Gérard, Florian Angeletti, review by Florian Angeletti
+and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13286&quot;&gt;#13286&lt;/a&gt;:
+Distinguish unique identifiers &lt;code&gt;Shape.Uid.t&lt;/code&gt; according to
+their provenance: either an implementation or an interface. (Ulysse
+Gérard, review by Florian Angeletti and Leo White)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;In a similar way, I have also worked on improving the compatibility
+of the internal compiler library with ppxlib and MetaOCaml, and
+implemented a new command line flag to improve the backward
+compatibility of the lexer:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11129&quot;&gt;#11129&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11148&quot;&gt;#11148&lt;/a&gt;:
+enforce that ppxs do not produce &lt;code&gt;parsetree&lt;/code&gt;s with an empty
+list of universally quantified type variables
+(&lt;code&gt;. int -&amp;gt; int&lt;/code&gt; instead of
+&lt;code&gt;'a . int -&amp;gt; int'&lt;/code&gt;) (Florian Angeletti, report by Simmo
+Saan, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13471&quot;&gt;#13471&lt;/a&gt;:
+add &lt;code&gt;-keywords &amp;lt;version?+list&amp;gt;&lt;/code&gt; flag to define the list
+of keywords recognized by the lexer, for instance
+&lt;code&gt;-keywords 5.2&lt;/code&gt; disable the &lt;code&gt;effect&lt;/code&gt; keyword.
+(Florian Angeletti, review by Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13257&quot;&gt;#13257&lt;/a&gt;:
+integrate MetaOCaml in the Menhir grammar to ease MetaOCaml maintenance.
+This is a purely internal change: there is no support in the lexer, so
+no change to the surface OCaml grammar. (Oleg Kiselyov, Gabriel Scherer
+and Florian Angeletti, review by Jeremy Yallop)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;manual-and-documentation&quot;&gt;Manual and documentation:&lt;/h3&gt;
+&lt;p&gt;As an author, I have documented the modest Unicode support introduced
+in 5.3 and found the time to write down the compiler release cycles.
+However, most on my time working on the documentation has been focused
+on reviewing PRs, ranging from a small change to the manual css to an
+update to the manual section on polymorphic recursion proposed by a new
+contributor.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13668&quot;&gt;#13668&lt;/a&gt;:
+Document the basic support for unicode identifiers and the switch to
+UTF-8 encoded Unicode text for OCaml source file (Florian Angeletti,
+review by Nicolás Ojeda Bär and Daniel Bünzli)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12949&quot;&gt;#12949&lt;/a&gt;:
+document OCaml release cycles and version strings in
+&lt;code&gt;release-info/introduction.md&lt;/code&gt;. (Florian Angeletti, review by
+Fabrice Buoro, Kate Deplaix, Damien Doligez, and Gabriel
+Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12298&quot;&gt;#12298&lt;/a&gt;:
+Manual: emphasize that Bigarray.int refers to an OCaml integer, which
+does not match the C int type. (Edwin Török, review by Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12868&quot;&gt;#12868&lt;/a&gt;:
+Manual: simplify style colours of the post-processed manual and API HTML
+pages, and fix the search button icon (Yawar Amin, review by Simon
+Grondin, Gabriel Scherer, and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12976&quot;&gt;#12976&lt;/a&gt;:
+Manual: use webman/&lt;span class=&quot;math inline&quot;&gt;&lt;em&gt;v&lt;/em&gt;&lt;em&gt;e&lt;/em&gt;&lt;em&gt;r&lt;/em&gt;&lt;em&gt;s&lt;/em&gt;&lt;em&gt;i&lt;/em&gt;&lt;em&gt;o&lt;/em&gt;&lt;em&gt;n&lt;/em&gt;/ * .&lt;em&gt;h&lt;/em&gt;&lt;em&gt;t&lt;/em&gt;&lt;em&gt;m&lt;/em&gt;&lt;em&gt;l&lt;/em&gt;&lt;em&gt;a&lt;/em&gt;&lt;em&gt;n&lt;/em&gt;&lt;em&gt;d&lt;/em&gt;&lt;em&gt;w&lt;/em&gt;&lt;em&gt;e&lt;/em&gt;&lt;em&gt;b&lt;/em&gt;&lt;em&gt;m&lt;/em&gt;&lt;em&gt;a&lt;/em&gt;&lt;em&gt;n&lt;/em&gt;/&lt;/span&gt;version/api/
+for OCaml.org HTML manual generation (Shakthi Kannan, review by Hannes
+Mehnert, and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13295&quot;&gt;#13295&lt;/a&gt;:
+Use syntax for deep effect handlers in the effect handlers manual page.
+(KC Sivaramakrishnan, review by Anil Madhavapeddy, Florian Angeletti and
+Miod Vallat)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13469&quot;&gt;#13469&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13474&quot;&gt;#13474&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13535&quot;&gt;#13535&lt;/a&gt;: Document
+that [Hashtbl.create n] creates a hash table with a default minimal
+size, even if [n] is very small or negative. (Antonin Décimo, Nick
+Bares, report by Nikolaus Huber and Jan Midtgaard, review by Florian
+Angeletti, Anil Madhavapeddy, Gabriel Scherer, and Miod Vallat)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13666&quot;&gt;#13666&lt;/a&gt;:
+Rewrite parts of the example code around nested lists in Chapter 6
+(Polymorphism and its limitations -&amp;gt; Polymorphic recursion) giving
+the “depth” function [in the non-polymorphically-recursive part of the
+example] a much more sensible behavior; also fix a typo and some
+formatting. (Frank Steffahn, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;type-system-bug-fixes&quot;&gt;Type system bug fixes&lt;/h2&gt;
+&lt;p&gt;At last, but not least, I spent many hours this release fixing
+internal errors due to inconsistent type constraints in the module
+systems. I have also reviewed many bug fixes and in particular a serie
+of issues in the typechecker related to the handling of non-injective
+type parameters.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12959&quot;&gt;#12959&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13055&quot;&gt;#13055&lt;/a&gt;: Avoid
+an internal error on recursive module type inconsistency (Florian
+Angeletti, review by Jacques Garrigue and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13388&quot;&gt;#13388&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13540&quot;&gt;#13540&lt;/a&gt;: raises
+an error message (and not an internal compiler error) when two local
+substitutions are incompatible (for instance
+&lt;code&gt;module type   S:=sig end type t:=(module S)&lt;/code&gt;) (Florian
+Angeletti, report by Nailen Matschke, review by Gabriel Scherer, and Leo
+White)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13185&quot;&gt;#13185&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13192&quot;&gt;#13192&lt;/a&gt;: Reject
+type-level module aliases on functor parameter inside signatures.
+(Jacques Garrigue, report by Richard Eisenberg, review by Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13306&quot;&gt;#13306&lt;/a&gt;:
+An algorithm in the type-checker that checks two types for equality
+could sometimes, in theory, return the wrong answer. This patch fixes
+the oversight. No known program triggers the bug. (Richard Eisenberg,
+review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13495&quot;&gt;#13495&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13514&quot;&gt;#13514&lt;/a&gt;: Fix
+typechecker crash while typing objects (Jacques Garrigue, report by
+Nicolás Ojeda Bär, review by Nicolas Ojeda Bär, Gabriel Scherer, Stephen
+Dolan, Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13579&quot;&gt;#13579&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13583&quot;&gt;#13583&lt;/a&gt;:
+Unsoundness involving non-injective types + gadts (Jacques Garrigue,
+report by &lt;span class=&quot;citation&quot; data-cites=&quot;v-gb&quot;&gt;@v-gb&lt;/span&gt;, review
+by Richard Eisenberg and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13598&quot;&gt;#13598&lt;/a&gt;:
+Falsely triggered warning 56 [unreachable-case] This was caused by
+unproper protection of the retyping function. (Jacques Garrigue, report
+by Tõivo Leedjärv, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2 id=&quot;miscellaneous&quot;&gt;Miscellaneous&lt;/h2&gt;
+&lt;p&gt;Beyond those major themes, I also had my hands or eyes at few of the
+changes in the language, the standard library and the compiler build
+system.&lt;/p&gt;
+&lt;h3 id=&quot;language-features&quot;&gt;Language features:&lt;/h3&gt;
+&lt;p&gt;In term of language features, I partipated to the review for the
+newly introduced syntax for effect handler (&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12309&quot;&gt;#12309&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13158&quot;&gt;#13158&lt;/a&gt;) on the
+type system and documentation (&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13295&quot;&gt;#13295&lt;/a&gt;)
+sides.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb1-1&quot;&gt;&lt;a href=&quot;#cb1-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; with_gen f = &lt;span class=&quot;kw&quot;&gt;match&lt;/span&gt; f () &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-2&quot;&gt;&lt;a href=&quot;#cb1-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| effect Random_float, k -&amp;gt; &lt;span class=&quot;dt&quot;&gt;Effect&lt;/span&gt;.Deep.continue k (&lt;span class=&quot;dt&quot;&gt;Random&lt;/span&gt;.&lt;span class=&quot;dt&quot;&gt;float&lt;/span&gt; &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;.)&lt;/span&gt;
+&lt;span id=&quot;cb1-3&quot;&gt;&lt;a href=&quot;#cb1-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| x -&amp;gt; x&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;I also finalized the support the new modest support of utf-8 encoded
+Unicode source files in OCaml 5.3 (&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11736&quot;&gt;#11736&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12664&quot;&gt;#12664&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13628&quot;&gt;#13628&lt;/a&gt;)&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb2-1&quot;&gt;&lt;a href=&quot;#cb2-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; saison = Printemps | Été | Automne | Hiver&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;and documented it (&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13668&quot;&gt;#13668&lt;/a&gt;).&lt;/p&gt;
+&lt;h3 id=&quot;type-system&quot;&gt;Type system&lt;/h3&gt;
+&lt;p&gt;On the pure type system side, I have participated to the review on
+the extended support for annotating types in GADT pattern. (&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11891&quot;&gt;#11891&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12507&quot;&gt;#12507&lt;/a&gt;). It is
+now possible to give a name to all type variables introduced by pattern
+matching on a GADT constructor&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb3-1&quot;&gt;&lt;a href=&quot;#cb3-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; _ t =&lt;/span&gt;
+&lt;span id=&quot;cb3-2&quot;&gt;&lt;a href=&quot;#cb3-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| S: &lt;span class=&quot;dt&quot;&gt;string&lt;/span&gt; -&amp;gt; &lt;span class=&quot;dt&quot;&gt;char&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;array&lt;/span&gt; t&lt;/span&gt;
+&lt;span id=&quot;cb3-3&quot;&gt;&lt;a href=&quot;#cb3-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| A: 'a &lt;span class=&quot;dt&quot;&gt;array&lt;/span&gt; -&amp;gt; 'a &lt;span class=&quot;dt&quot;&gt;array&lt;/span&gt; t&lt;/span&gt;
+&lt;span id=&quot;cb3-4&quot;&gt;&lt;a href=&quot;#cb3-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-5&quot;&gt;&lt;a href=&quot;#cb3-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; len (&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; a) (x:a t) = &lt;span class=&quot;kw&quot;&gt;match&lt;/span&gt; x &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-6&quot;&gt;&lt;a href=&quot;#cb3-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| A (&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; a) (x:a &lt;span class=&quot;dt&quot;&gt;array&lt;/span&gt;) -&amp;gt; &lt;span class=&quot;dt&quot;&gt;Array&lt;/span&gt;.length x&lt;/span&gt;
+&lt;span id=&quot;cb3-7&quot;&gt;&lt;a href=&quot;#cb3-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;| S x -&amp;gt; &lt;span class=&quot;dt&quot;&gt;String&lt;/span&gt;.length x&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;whereas it was only possible to name existentially quantified type
+variables before.&lt;/p&gt;
+&lt;h3 id=&quot;standard-library&quot;&gt;Standard library:&lt;/h3&gt;
+&lt;p&gt;I have reviewed two standard library Pull Requests (PR)&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13168&quot;&gt;#13168&lt;/a&gt;:
+In Array.shuffle, clarify the code that validates the result of the
+user-supplied function &lt;code&gt;rand&lt;/code&gt;, and improve the error message
+that is produced when this result is invalid. (François Pottier, review
+by Florian Angeletti, Daniel Bünzli and Gabriel Scherer)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13296&quot;&gt;#13296&lt;/a&gt;:
+Add mem, memq, find_opt, find_index, find_map and find_mapi to Dynarray.
+(Jake H, review by Gabriel Scherer and Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;and authored one PR exposing support for a hidden feature of the
+Format module:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12133&quot;&gt;#12133&lt;/a&gt;:
+Expose support for printing substrings in Format (Florian Angeletti,
+review by Daniel Bünzli, Gabriel Scherer and Nicolás Ojeda Bär)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h3 id=&quot;build-system&quot;&gt;Build system:&lt;/h3&gt;
+&lt;p&gt;During the release, I also happened to review some build system
+changes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13285&quot;&gt;#13285&lt;/a&gt;:
+continue the merge of the sub-makefiles into the root Makefile started
+with &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11243&quot;&gt;#11243&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11248&quot;&gt;#11248&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11268&quot;&gt;#11268&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11420&quot;&gt;#11420&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11675&quot;&gt;#11675&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12198&quot;&gt;#12198&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12321&quot;&gt;#12321&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12586&quot;&gt;#12586&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12616&quot;&gt;#12616&lt;/a&gt;, &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12706&quot;&gt;#12706&lt;/a&gt; and &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13048&quot;&gt;#13048&lt;/a&gt;.
+(Sébastien Hinderer, review by David Allsopp and Florian
+Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;(&lt;em&gt;breaking change&lt;/em&gt;) &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/13070&quot;&gt;#13070&lt;/a&gt;: On
+Windows, when configured with bootstrapped flexdll, don’t add +flexdll
+to the search path when -nostdlib is specified (which then means
+&lt;code&gt;-L path-to-flexdll&lt;/code&gt; no longer gets passed to the system
+linker). (David Allsopp, review by Florian Angeletti)&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+
+  </description><pubDate>13 Jan 2025 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">https://gallium.inria.fr/blog/florian-cw-2025-01-13</guid></item><item><title>Florian compiler weekly, 11 December 2023</title><link>https://cambium.inria.fr/blog/florian-cw-2023-12-11</link><description>
+
+  &lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) work on the OCaml compiler. This week subject is the
+release of OCaml 5.1.1, some review work on occurrences analysis for
+OCaml projects and a bit of on-going work on structured logs.&lt;/p&gt;
+
+
+  
+
+  
+  &lt;h3 id=&quot;ocaml-5.1.1&quot;&gt;OCaml 5.1.1&lt;/h3&gt;
+&lt;p&gt;OCaml 5.1.0 has been released nearly three months ago, in those
+months we have discovered a few significant bugs that were impeding the
+use of OCaml 5.1:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;one type system soundness bug&lt;/li&gt;
+&lt;li&gt;one dependency bug&lt;/li&gt;
+&lt;li&gt;one GC performance regression bug in numerical code&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;To fix those issues, and have a version of OCaml 5.1 usable by
+anyone, we have release a new patched version 5.1.1 of OCaml.&lt;/p&gt;
+&lt;p&gt;Let’s spend some time analysing those issues.&lt;/p&gt;
+&lt;h4 id=&quot;type-system-and-type-printing-bug&quot;&gt;Type system (and type
+printing) bug&lt;/h4&gt;
+&lt;p&gt;The first worrying bug in OCaml 5.1.0 was an issue with the
+refactoring of variance computation. Suddenly, in OCaml 5.1.0 one could
+write&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb1-1&quot;&gt;&lt;a href=&quot;#cb1-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; -'a n&lt;/span&gt;
+&lt;span id=&quot;cb1-2&quot;&gt;&lt;a href=&quot;#cb1-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; +'a p&lt;/span&gt;
+&lt;span id=&quot;cb1-3&quot;&gt;&lt;a href=&quot;#cb1-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; +'a ko = 'a p n&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;and the typechecker would accept the absurd statement that
+&lt;code&gt;+ * - = +&lt;/code&gt;. Such a statement can be easily exploited to
+crash an OCaml program, and it was introduced due to a small typo when
+refactoring the typechecker.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb2-1&quot;&gt;&lt;a href=&quot;#cb2-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;and&lt;/span&gt; mn =&lt;/span&gt;
+&lt;span id=&quot;cb2-2&quot;&gt;&lt;a href=&quot;#cb2-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  mem May_pos v1 &amp;amp;&amp;amp; mem May_neg v2 || mem May_pos v1 &amp;amp;&amp;amp; mem May_neg v2&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;(Can you spot the typo?)&lt;/p&gt;
+&lt;p&gt;Fortunately, the typo was easy to fix and the type system unsoundness
+was soon fixed.&lt;/p&gt;
+&lt;p&gt;But that was only the first problem. Soon after, a second report came
+in, mentioning that the typechecker was crashing on cyclic abbreviations
+like&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb3-1&quot;&gt;&lt;a href=&quot;#cb3-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; 'a t = 'a s * 'a irr&lt;/span&gt;
+&lt;span id=&quot;cb3-2&quot;&gt;&lt;a href=&quot;#cb3-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;and&lt;/span&gt; 'a irr = &lt;span class=&quot;dt&quot;&gt;unit&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-3&quot;&gt;&lt;a href=&quot;#cb3-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;and&lt;/span&gt;  'a s = 'a t&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;but only when the &lt;code&gt;-short-paths&lt;/code&gt; flag was specified. After
+some investigation, it was not the typechecker that was crashing but the
+type printer! (which is unfortunately not a that rare occurrence)&lt;/p&gt;
+&lt;p&gt;More precisely, the type printer was crashing when trying to print
+the improved type error message in OCaml 5.1 for cyclic definition&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;Error: The type abbreviation t is cyclic:
+         'a t = 'a s * 'a irr,
+         'a s * 'a irr contains 'a s,
+         'a s = 'a t&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;because in presence of the flag &lt;code&gt;-short-path&lt;/code&gt; the printer
+tried to find a better name for &lt;code&gt;'a t&lt;/code&gt; in a type environment
+which contained the recursive definition. This endeavour was doomed to
+fail. Fortunately, the fix was quite straightforward: don’t feed the
+type printer invalid type environment.&lt;/p&gt;
+&lt;h4 id=&quot;packaging-bug&quot;&gt;Packaging bug&lt;/h4&gt;
+&lt;p&gt;The introduced of compressed compiler artefacts (&lt;code&gt;.cmi&lt;/code&gt;,
+&lt;code&gt;.cmt&lt;/code&gt;, and &lt;code&gt;.cmo&lt;/code&gt; files) decreased the size of a
+compiler installation by a third. However, when focusing on the nice
+decrease in size of the installation; we forgot that using an external C
+library for compression within the runtime added this library as
+dependency for all users of the OCaml runtime.&lt;/p&gt;
+&lt;p&gt;In other words, we had added a new C dependency to all OCaml users.
+If this didn’t seem to create problem on macOS or most linux situation,
+at least for developers, it was clearly a non ideal situation. A
+compiler shouldn’t impose its dependency on compiled programs.&lt;/p&gt;
+&lt;p&gt;Moreover, if compressed marshalling is very nice for the compiler,
+this is a quite biased use case. In particular, one cannot use
+marshalled data coming from untrustworthy sources (because such data
+breaks type safety). Consequently, marshalled data is mostly used as a
+computation cache. This is what the compiler or Coq are doing, but this
+is not a frequent use case in the rest of ecosystem. Thus adding a new
+dependency to all OCaml programs for a niche use case was really not
+optimal.&lt;/p&gt;
+&lt;p&gt;Thus, after this packaging issue was discovered, we went on a journey
+to remove this dependency. After exploring hacks, visiting the
+limitations of dead symbol elimination by linkers, we finally reached a
+not that comfortable conclusion: the most robust solution was to remove
+the &lt;code&gt;Compression&lt;/code&gt; flag from the standard library, while
+moving the compression support to a compiler internal library.&lt;/p&gt;
+&lt;p&gt;With this solution, the compression library dependency is no longer
+propagated to OCaml programs. But if someone wishes to used compressed
+marshalling, the only simple option for now is to use the compiler
+library.&lt;/p&gt;
+&lt;p&gt;However, this also means for the first time in a long time, a patch
+version of OCaml introduces a breaking change. Such breaking changes
+could have been avoided by ignoring the current
+&lt;code&gt;Marshal.Compression&lt;/code&gt; flag. However, having a disabled flag
+exposed in the standard library sowing confusion amongst all users
+seemed to be a worse outcome than breaking the code of the few advanced
+users that might had released code relying on this new feature.&lt;/p&gt;
+&lt;h4 id=&quot;garbage-collection-performance-regression&quot;&gt;Garbage Collection
+Performance Regression&lt;/h4&gt;
+&lt;p&gt;Finally, while the compression odyssey was on-going, I received a
+report by an user complaining that their numerical program ported to
+OCaml from Python was slower in OCaml. After looking at the performance,
+the Garbage Collector was surprisingly high in the list of hot
+performance spot for a purely numerical program.&lt;/p&gt;
+&lt;p&gt;Knowing that there were &lt;em&gt;maybe&lt;/em&gt; some bugs lurking in the
+shadows of the 5.1.0 GC, I suggested to check the performance of this
+program on OCaml 4.14.1. Lo and behold, OCaml 4.14 &lt;em&gt;was&lt;/em&gt; faster
+than python.&lt;/p&gt;
+&lt;p&gt;What happened to OCaml 5 to create such slowdown on a single thread
+program? Comparing the amount of time the GC triggered a major
+collection was surprising:&lt;/p&gt;
+&lt;table&gt;
+&lt;thead&gt;
+&lt;tr class=&quot;header&quot;&gt;
+&lt;th&gt;compiler version&lt;/th&gt;
+&lt;th&gt;time&lt;/th&gt;
+&lt;th&gt;minor&lt;/th&gt;
+&lt;th&gt;major&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr class=&quot;odd&quot;&gt;
+&lt;td&gt;4.14.1&lt;/td&gt;
+&lt;td&gt;0.803s&lt;/td&gt;
+&lt;td&gt;6626&lt;/td&gt;
+&lt;td&gt;1656&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&quot;even&quot;&gt;
+&lt;td&gt;5.0.0&lt;/td&gt;
+&lt;td&gt;1.448s&lt;/td&gt;
+&lt;td&gt;8697&lt;/td&gt;
+&lt;td&gt;8679&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&quot;odd&quot;&gt;
+&lt;td&gt;5.1.0&lt;/td&gt;
+&lt;td&gt;5.507s&lt;/td&gt;
+&lt;td&gt;56162&lt;/td&gt;
+&lt;td&gt;56156&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&quot;even&quot;&gt;
+&lt;td&gt;5.2.0+trunk&lt;/td&gt;
+&lt;td&gt;1.701s&lt;/td&gt;
+&lt;td&gt;10945&lt;/td&gt;
+&lt;td&gt;10939&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr class=&quot;odd&quot;&gt;
+&lt;td&gt;5.1+gc_fixes&lt;/td&gt;
+&lt;td&gt;1.740s&lt;/td&gt;
+&lt;td&gt;10563&lt;/td&gt;
+&lt;td&gt;10557&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p&gt;Between OCaml 4.14 and OCaml 5.1.0, the amount of major collection
+had been multiplied by a factor 50 .&lt;/p&gt;
+&lt;p&gt;If the root cause behind this change has not been completely
+understood yet, we fortunately had an easy way out: the OCaml 5.2
+development version had already accumulated enough fixes to limit this
+increase to a less dramatic factor 6.&lt;/p&gt;
+&lt;p&gt;This is still not satisfying, but this is half expected for a still
+experimental runtime. And while waiting for a better solution, the
+collection of bug fixes integrated in OCaml 5.1.1 should made it
+possible to use numerical code in OCaml.&lt;/p&gt;
+&lt;h3 id=&quot;project-wide-occurence-index&quot;&gt;Project-wide occurence index&lt;/h3&gt;
+&lt;p&gt;Beyond the release of OCaml 5.1.1, I have been working on reviewing
+PRs.&lt;/p&gt;
+&lt;p&gt;With Gabriel Scherer and Ulysse Gérard, we spend an afternoon reading
+and discussing the design of a PR by Ulysse which improves the
+&lt;code&gt;shape&lt;/code&gt; metadata to make them provides an index of value and
+definition occurrences within an OCaml module.&lt;/p&gt;
+&lt;p&gt;The &lt;code&gt;shape&lt;/code&gt; metadata are a new form of metadata introduced
+in OCaml 4.14. Those metadata tracks definitions of types, modules,
+module types, …&lt;/p&gt;
+&lt;p&gt;One important characteristic of &lt;code&gt;shapes&lt;/code&gt; is that they are
+able to see through functors applications and includes to find back the
+original definition of values.&lt;/p&gt;
+&lt;p&gt;With the proposed PR, which still need more review time (maybe this
+week), one could use this information to find the occurrences of any
+values in an OCaml project (through the use of IDEs)&lt;/p&gt;
+&lt;h3 id=&quot;structured-log-for-the-ocaml-compiler&quot;&gt;Structured log for the
+OCaml compiler&lt;/h3&gt;
+&lt;p&gt;One of my ongoing work during this release cycle has been to create a
+structured log API for all output of the compiler.&lt;/p&gt;
+&lt;p&gt;One of the expected benefits for those logs would be a complete and
+versioned description of all user-facing outputs emitted by the
+compiler.&lt;/p&gt;
+&lt;p&gt;Consequently, a scheme for a log should have a clear version. But my
+current log API has a notion of nested logs, since the scheme DSL is
+essentially a versioned description of Algebraic Data Types.&lt;/p&gt;
+&lt;p&gt;Which leads me to the question, should nested logs have a version
+too?&lt;/p&gt;
+&lt;p&gt;My current answer is that only toplevel logs should have a version.
+Currently, this is implemented in OCaml by using a handful of generative
+functors as a fun use case for mixing phantom types and generative
+functors.&lt;/p&gt;
+&lt;p&gt;The idea is that we first define a &lt;code&gt;Root&lt;/code&gt; module type that
+can define new versions by creating a value of type
+&lt;code&gt;id scheme_version&lt;/code&gt; (with &lt;code&gt;id&lt;/code&gt; a fresh new
+type).&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb5-1&quot;&gt;&lt;a href=&quot;#cb5-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; 'a scheme_version&lt;/span&gt;
+&lt;span id=&quot;cb5-2&quot;&gt;&lt;a href=&quot;#cb5-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; ('a,'b) key&lt;/span&gt;
+&lt;span id=&quot;cb5-3&quot;&gt;&lt;a href=&quot;#cb5-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; Def = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-4&quot;&gt;&lt;a href=&quot;#cb5-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; id &lt;span class=&quot;co&quot;&gt;(* this should be a fresh and unique id *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-5&quot;&gt;&lt;a href=&quot;#cb5-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; scheme = id sch&lt;/span&gt;
+&lt;span id=&quot;cb5-6&quot;&gt;&lt;a href=&quot;#cb5-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;log&lt;/span&gt; = id t&lt;/span&gt;
+&lt;span id=&quot;cb5-7&quot;&gt;&lt;a href=&quot;#cb5-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;nonrec&lt;/span&gt; 'a key = ('a,id) key&lt;/span&gt;
+&lt;span id=&quot;cb5-8&quot;&gt;&lt;a href=&quot;#cb5-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; scheme: scheme&lt;/span&gt;
+&lt;span id=&quot;cb5-9&quot;&gt;&lt;a href=&quot;#cb5-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-10&quot;&gt;&lt;a href=&quot;#cb5-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-11&quot;&gt;&lt;a href=&quot;#cb5-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; Root = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-12&quot;&gt;&lt;a href=&quot;#cb5-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;include&lt;/span&gt; Def&lt;/span&gt;
+&lt;span id=&quot;cb5-13&quot;&gt;&lt;a href=&quot;#cb5-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; v1: id scheme_version&lt;/span&gt;
+&lt;span id=&quot;cb5-14&quot;&gt;&lt;a href=&quot;#cb5-14&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; new_key: id scheme_version  -&amp;gt; &lt;span class=&quot;dt&quot;&gt;string&lt;/span&gt; -&amp;gt; 'a typ -&amp;gt; 'a key&lt;/span&gt;
+&lt;span id=&quot;cb5-15&quot;&gt;&lt;a href=&quot;#cb5-15&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; new_version: version -&amp;gt; id scheme_version&lt;/span&gt;
+&lt;span id=&quot;cb5-16&quot;&gt;&lt;a href=&quot;#cb5-16&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Then nested records or sum types can only create new fields or
+constructors by using a typed version defined by the parent module:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb6-1&quot;&gt;&lt;a href=&quot;#cb6-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; Sum = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-2&quot;&gt;&lt;a href=&quot;#cb6-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; root&lt;/span&gt;
+&lt;span id=&quot;cb6-3&quot;&gt;&lt;a href=&quot;#cb6-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;include&lt;/span&gt; Def&lt;/span&gt;
+&lt;span id=&quot;cb6-4&quot;&gt;&lt;a href=&quot;#cb6-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; new_constr: root scheme_version -&amp;gt; &lt;span class=&quot;dt&quot;&gt;string&lt;/span&gt; -&amp;gt; 'a typ -&amp;gt; 'a key&lt;/span&gt;
+&lt;span id=&quot;cb6-5&quot;&gt;&lt;a href=&quot;#cb6-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;and we can use generative functors to ensure that our type-level
+identifiers are as fresh as we need them to be:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb7&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb7-1&quot;&gt;&lt;a href=&quot;#cb7-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; New_root_scheme(): Root&lt;/span&gt;
+&lt;span id=&quot;cb7-2&quot;&gt;&lt;a href=&quot;#cb7-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; New_record(Root:Def)(): Record &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; root := Root.id&lt;/span&gt;
+&lt;span id=&quot;cb7-3&quot;&gt;&lt;a href=&quot;#cb7-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; New_sum(Root:Def)(): Sum &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; root := Root.id&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+
+
+  </description><pubDate>11 Dec 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">https://gallium.inria.fr/blog/florian-cw-2023-12-11</guid></item><item><title>Rethinking OCaml abstract signatures</title><link>https://cambium.inria.fr/blog/rethinking-ocaml-abstract-signatures</link><description>
+
+
+&lt;p&gt;Abstract module types are one of the less understood features of the
+OCaml module system. They have been one of the obstacles in the on-going
+effort to specify, and eventually redesign, the module system.&lt;/p&gt;
+&lt;p&gt;In this blog post, I (Clément Blaudeau) present an explanation of
+what are those abstract module types, and propose a slightly restricted
+version that might be easier to understand and specify while remaining
+pretty expressive.&lt;/p&gt;
+
+
+  
+
+&lt;p&gt;For the past 2 years, I’ve been working on building a new
+specification for the OCaml module system based on Fω. The goal, besides
+the theoretical interest, is to eventually redo (the module part of) the
+typechecker with this approach, which would have several benefits:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;fix some soundness issues and edge-cases that have appeared and
+built up over the years, due to unforeseen interactions between
+features&lt;/li&gt;
+&lt;li&gt;simplify the (notoriously hard) code of the typechecker by removing
+ad-hoc techniques and hacks (such as the &lt;em&gt;strengthening&lt;/em&gt; or the
+treatment of &lt;em&gt;aliases&lt;/em&gt; for instance)&lt;/li&gt;
+&lt;li&gt;provide a clean base to add new and awaited features. Notably,
+transparent ascription and modular implicits are proposals for OCaml
+modules stalled by the lack of specification of the module system.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Yet, a key aspect in OCaml development culture is to ensure backward
+compatibility. Therefore, the new Fω approach I’ve been building should
+not only subsumes the current typechecker in normal use cases, but
+actually support &lt;em&gt;all&lt;/em&gt; of the features of the module system. For
+long, &lt;em&gt;abstract signatures&lt;/em&gt; (also called &lt;em&gt;abstract module
+types&lt;/em&gt;) were believed to be, at least, &lt;em&gt;problematic&lt;/em&gt; for Fω.
+Hopefully, we found out that a slightly restricted version of the
+feature was encodable in Fω, and, in passing, made the semantics of
+abstract signatures much simpler. Thus, only one question remains: does
+this restricted form actually covers all use cases, i.e., is the
+restriction backward compatible ?&lt;/p&gt;
+&lt;p&gt;Here, we aim at presenting the current state of abstract signatures
+and our proposed simplification purely from an &lt;strong&gt;OCaml user point
+of view&lt;/strong&gt;, not from the theoretical one. We welcome any feedback,
+specifically, use cases or potential use cases that significantly differ
+from our examples.&lt;/p&gt;
+&lt;p&gt;We start by introducing abstract signatures through examples. Then,
+we present the current state of abstract signatures in OCaml: we explain
+the syntactic approach and the issues associated with it. We argue that
+it has surprising behaviors and, in its current &lt;em&gt;unrestricted&lt;/em&gt;
+form, it is actually &lt;em&gt;too powerful for its own good&lt;/em&gt;. Then, we
+propose a restriction to make the system &lt;em&gt;predicative&lt;/em&gt; which, by
+decreasing its expressiveness, actually makes it more usable. (Our
+actual proposal is given in 3.3). We finish by other aspect related to
+usability (syntax, inference).&lt;/p&gt;
+&lt;h4 id=&quot;what-are-abstract-signatures&quot;&gt;1. What are abstract signatures
+?&lt;/h4&gt;
+&lt;p&gt;The art of modularity is all about controlling abstraction and
+interfaces. ML languages offer this control via a &lt;em&gt;module
+system&lt;/em&gt;, which contains a &lt;em&gt;signature&lt;/em&gt; language to describe
+interfaces. Signatures contain &lt;em&gt;declarations&lt;/em&gt; (fields): values
+&lt;code&gt;val x : t&lt;/code&gt;, types &lt;code&gt;type t = int&lt;/code&gt;, modules
+&lt;code&gt;module X : S&lt;/code&gt;, and module types
+&lt;code&gt;module type T = S&lt;/code&gt;. Type and module type declarations can
+also be abstract &lt;code&gt;type t&lt;/code&gt;, &lt;code&gt;module type T&lt;/code&gt;, which
+serves both to hide implementation details via &lt;em&gt;sealing&lt;/em&gt; and to
+have polymorphic interfaces, using &lt;em&gt;functors&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Here, we focus on the construct &lt;code&gt;module type T&lt;/code&gt;, called
+&lt;em&gt;abstract module type&lt;/em&gt; or &lt;em&gt;abstract signature&lt;/em&gt;. We start
+with examples adapted from &lt;a href=&quot;https://discuss.ocaml.org/t/what-are-abstract-module-types-useful-for/10121/3&quot;&gt;this
+forum discussion&lt;/a&gt;.&lt;/p&gt;
+&lt;h5 id=&quot;module-level-sealing&quot;&gt;1.1 Module-level sealing&lt;/h5&gt;
+&lt;p&gt;Let’s consider the following scenario. Two modules providing an
+implementation of UDP (&lt;code&gt;UDP1&lt;/code&gt; and &lt;code&gt;UDP2&lt;/code&gt;) are
+developed with different design trade-offs. They both implement a
+signature with basic send and receive operations. Then, functors are
+added as layers on top: taking a udp library as input, they return
+another udp library as an output.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;Reliable&lt;/code&gt; adds sequence numbers to the packets and
+re-sends missing packets;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;CongestionControl&lt;/code&gt; tracks the rate of missing packets to
+adapt the throughput to network congestion situations;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;Encryption&lt;/code&gt; encrypts the content of all messages.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;A project might need different combinations of the basic libraries
+and functors, while requiring that &lt;strong&gt;all&lt;/strong&gt; combinations use
+encryption. To enforce this, the solution is to use the module-level
+&lt;em&gt;sealing&lt;/em&gt; of abstract signatures. In practice, the signature of
+the whole library containing implementations and functors
+&lt;code&gt;UDPLib&lt;/code&gt; (typically, its &lt;code&gt;.mli&lt;/code&gt; file) is rewritten
+to abstract all interfaces except for the output of the
+&lt;code&gt;Encryption&lt;/code&gt; functor.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb1&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb1-1&quot;&gt;&lt;a href=&quot;#cb1-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UDPLib = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-2&quot;&gt;&lt;a href=&quot;#cb1-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb1-3&quot;&gt;&lt;a href=&quot;#cb1-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-4&quot;&gt;&lt;a href=&quot;#cb1-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDP1 : UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb1-5&quot;&gt;&lt;a href=&quot;#cb1-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDP2 : UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb1-6&quot;&gt;&lt;a href=&quot;#cb1-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-7&quot;&gt;&lt;a href=&quot;#cb1-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Reliable : UNSAFE -&amp;gt; UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb1-8&quot;&gt;&lt;a href=&quot;#cb1-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; CongestionControl : UNSAFE -&amp;gt; UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb1-9&quot;&gt;&lt;a href=&quot;#cb1-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-10&quot;&gt;&lt;a href=&quot;#cb1-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Encryption : UNSAFE -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-11&quot;&gt;&lt;a href=&quot;#cb1-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; send : &lt;span class=&quot;dt&quot;&gt;string&lt;/span&gt; -&amp;gt; &lt;span class=&quot;dt&quot;&gt;unit&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;(* ... *)&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb1-12&quot;&gt;&lt;a href=&quot;#cb1-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Just as type abstraction, signature abstraction can be used to
+enforce certain code patterns: users of &lt;code&gt;UDPLib&lt;/code&gt; will only be
+able to use the content of modules after calling the
+&lt;code&gt;Encryption&lt;/code&gt; functor, and yet they have the freedom to choose
+between different implementations and features:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb2&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb2-1&quot;&gt;&lt;a href=&quot;#cb2-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDPKeyHandshake = Encryption(Reliable(UDP1))&lt;/span&gt;
+&lt;span id=&quot;cb2-2&quot;&gt;&lt;a href=&quot;#cb2-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDPVideoStream  = Encryption(CongestionControl(UDP2))&lt;/span&gt;
+&lt;span id=&quot;cb2-3&quot;&gt;&lt;a href=&quot;#cb2-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* etc *)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h5 id=&quot;module-level-polymorphism&quot;&gt;1.2 Module-level polymorphism&lt;/h5&gt;
+&lt;p&gt;Another use is to introduce polymorphism at the module level. Just as
+polymorphic functions can be used to factor code, module-level
+polymorphic functors can be used to factor module expressions. If a code
+happens to often feature functor applications of the form
+&lt;code&gt;Hashtbl.Make(F(X))&lt;/code&gt; or &lt;code&gt;Set.Make(F(X))&lt;/code&gt;, one can
+define the &lt;code&gt;MakeApply&lt;/code&gt; functor as follows:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb3-1&quot;&gt;&lt;a href=&quot;#cb3-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Factorizing common expressions *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-2&quot;&gt;&lt;a href=&quot;#cb3-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt; = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; T &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb3-3&quot;&gt;&lt;a href=&quot;#cb3-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; MakeApply&lt;/span&gt;
+&lt;span id=&quot;cb3-4&quot;&gt;&lt;a href=&quot;#cb3-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  (A:&lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt;) (X: A.T)&lt;/span&gt;
+&lt;span id=&quot;cb3-5&quot;&gt;&lt;a href=&quot;#cb3-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  (B:&lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt;) (F: A.T -&amp;gt; B.T)&lt;/span&gt;
+&lt;span id=&quot;cb3-6&quot;&gt;&lt;a href=&quot;#cb3-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  (C:&lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt;) (H: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Make : B.T -&amp;gt; C.T &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) = H.Make(F(X))&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Downstream the code is rewritten into
+&lt;code&gt;MakeApply(...)(X)(...)(F)(...)(Set)&lt;/code&gt; or
+&lt;code&gt;MakeApply(...)(X)(...)(F)(...)(Hashtbl)&lt;/code&gt; Right now, the
+verbosity of such example would probably be a deal-breaker. We address
+this aspect at the end. Ignoring the verbosity, this can be useful for
+maintenance: by channeling all applications through
+&lt;code&gt;MakeApply&lt;/code&gt;, only one place needs to be updated if the arity
+or order of arguments is changed. Similarly, if several functors expect
+a &lt;em&gt;constant argument&lt;/em&gt; containing – for instance – global
+variables, a &lt;code&gt;ApplyGv&lt;/code&gt; functor can be defined to always
+provide the right second argument, which can even latter be hidden away
+to the user of &lt;code&gt;ApplyGv&lt;/code&gt;:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb4&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb4-1&quot;&gt;&lt;a href=&quot;#cb4-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Constant argument *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb4-2&quot;&gt;&lt;a href=&quot;#cb4-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Gv : GlobalVars&lt;/span&gt;
+&lt;span id=&quot;cb4-3&quot;&gt;&lt;a href=&quot;#cb4-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; ApplyGv (Y : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; B &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb4-4&quot;&gt;&lt;a href=&quot;#cb4-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    (F : Y.A -&amp;gt; GlobalVars -&amp;gt; Y.B)(X : Y.A) = F(X)(Gv)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Downstream, code featuring &lt;code&gt;F(X)(GlobalVars)&lt;/code&gt; is rewritten
+into &lt;code&gt;ApplyGv(...)(F)(X)&lt;/code&gt; Then, the programmer can hide the
+&lt;code&gt;GlobalVars&lt;/code&gt; module while letting users use
+&lt;code&gt;ApplyGv&lt;/code&gt;, ensuring that global variables are not modified in
+uncontrolled ways by certain part of the program.&lt;/p&gt;
+&lt;p&gt;Finally, polymorphism can also be used by a developer to prevent
+unwanted dependencies on implementation details. If the body of a
+functor uses an argument with a submodule &lt;code&gt;X&lt;/code&gt;, but actually
+does not depend on the content of &lt;code&gt;S&lt;/code&gt;, abstracting it is a
+“good practice”.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb5-1&quot;&gt;&lt;a href=&quot;#cb5-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F (&lt;span class=&quot;dt&quot;&gt;Arg&lt;/span&gt; : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : S ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) =&lt;/span&gt;
+&lt;span id=&quot;cb5-2&quot;&gt;&lt;a href=&quot;#cb5-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  ... &lt;span class=&quot;co&quot;&gt;(* polymorphism is not enforced *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-3&quot;&gt;&lt;a href=&quot;#cb5-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb5-4&quot;&gt;&lt;a href=&quot;#cb5-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F' (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; S &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb5-5&quot;&gt;&lt;a href=&quot;#cb5-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    (&lt;span class=&quot;dt&quot;&gt;Arg&lt;/span&gt; : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : Y.S ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; ) =&lt;/span&gt;
+&lt;span id=&quot;cb5-6&quot;&gt;&lt;a href=&quot;#cb5-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  ... &lt;span class=&quot;co&quot;&gt;(* polymorphism is enforced *)&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h5 id=&quot;so-its-just-normal-use-cases-of-abstraction&quot;&gt;1.3 So it’s just
+normal use cases of abstraction ?&lt;/h5&gt;
+&lt;p&gt;Fundamentally, these example are not surprising for developers that
+are used to rely on abstraction to protect invariants and factor code.
+Their specificity lies in the fact that there are at the module level,
+and therefore require projects with a certain size and a strong emphasis
+on modularity to be justified.&lt;/p&gt;
+&lt;h4 id=&quot;ocaml-abstract-signatures-an-incidental-feature&quot;&gt;2. OCaml’
+abstract signatures, an incidental feature ?&lt;/h4&gt;
+&lt;p&gt;The challenge for understanding (and implementing) abstract
+signatures lies more in the meaning of the module-level
+&lt;em&gt;polymorphism&lt;/em&gt; that they offer than the module level sealing, the
+latter being pretty straightforward. More specifically, the crux lies in
+the meaning of the &lt;em&gt;instantiation&lt;/em&gt; of an abstract signature
+variable &lt;code&gt;A&lt;/code&gt; by some other signature &lt;code&gt;S&lt;/code&gt;, that
+happens when a polymorphic functor is applied. OCaml follows an
+&lt;em&gt;unrestricted syntactical approach&lt;/em&gt;: &lt;code&gt;A&lt;/code&gt; can be
+instantiated by any (well-formed) signature &lt;code&gt;S&lt;/code&gt;. During
+instantiation, all occurrences of &lt;code&gt;A&lt;/code&gt; are just replaced by
+&lt;code&gt;S&lt;/code&gt; ; finally, the resulting signature is
+&lt;strong&gt;re-interpreted&lt;/strong&gt;—as if it were written &lt;em&gt;as is&lt;/em&gt; by
+the user.&lt;/p&gt;
+&lt;p&gt;However, this syntactical rewriting interferes with the
+&lt;em&gt;variant&lt;/em&gt; interpretation of signatures, which can lead to
+surprising behaviors. We discuss this aspect first. The
+&lt;em&gt;unrestricted&lt;/em&gt; aspect leads to the (infamous) &lt;em&gt;Type :
+Type&lt;/em&gt; issue which has some theoretical consequences. We finish this
+section by mentioning other—more technical—issues.&lt;/p&gt;
+&lt;h5 id=&quot;syntactical-rewriting&quot;&gt;2.1 Syntactical rewriting&lt;/h5&gt;
+&lt;p&gt;The first key issue of this approach comes from the fact that
+signatures in OCaml have a variant interpretation: abstract fields (1)
+have a different meaning (sealing or polymorphism) depending on whether
+they occur in positive or negative positions, and (2) abstract fields
+open new scopes, i.e. duplicating an abstract type field introduces two
+different abstract types. Overall, OCaml signatures can be thought of as
+having &lt;em&gt;implicit quantifiers&lt;/em&gt;: using a signature in positive or
+negative position changes its implicit quantifiers (from existential to
+universal) while duplicating a signature duplicates the quantifiers (and
+therefore introduces new incompatible abstract types).&lt;/p&gt;
+&lt;p&gt;Therefore, when instantiating an abstract signature with a signature
+that has abstract fields, the user must be aware of this, and mentally
+infer the meaning of the resulting signature. To illustrate how it can
+be confusing, let’s revisit the first motivating example and let’s
+assume that the developer actually want to expose part of the interface
+of the raw &lt;code&gt;UDP&lt;/code&gt; libraries. One might be tempted to
+instantiate &lt;code&gt;UNSAFE&lt;/code&gt; with something along the following
+lines:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb6-1&quot;&gt;&lt;a href=&quot;#cb6-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UDPLib_expose = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-2&quot;&gt;&lt;a href=&quot;#cb6-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;include&lt;/span&gt; UDPLib &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UNSAFE =&lt;/span&gt;
+&lt;span id=&quot;cb6-3&quot;&gt;&lt;a href=&quot;#cb6-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-4&quot;&gt;&lt;a href=&quot;#cb6-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb6-5&quot;&gt;&lt;a href=&quot;#cb6-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Unsafe : CORE_UNSAFE &lt;span class=&quot;co&quot;&gt;(* this part remains abstract *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-6&quot;&gt;&lt;a href=&quot;#cb6-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Safe : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;(* this part is exposed *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-7&quot;&gt;&lt;a href=&quot;#cb6-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb6-8&quot;&gt;&lt;a href=&quot;#cb6-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This returns :&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb7&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb7-1&quot;&gt;&lt;a href=&quot;#cb7-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UDPLib_expose =  &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb7-2&quot;&gt;&lt;a href=&quot;#cb7-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UNSAFE =&lt;/span&gt;
+&lt;span id=&quot;cb7-3&quot;&gt;&lt;a href=&quot;#cb7-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb7-4&quot;&gt;&lt;a href=&quot;#cb7-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-5&quot;&gt;&lt;a href=&quot;#cb7-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Unsafe : CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-6&quot;&gt;&lt;a href=&quot;#cb7-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Safe : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb7-7&quot;&gt;&lt;a href=&quot;#cb7-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb7-8&quot;&gt;&lt;a href=&quot;#cb7-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDP1 : UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-9&quot;&gt;&lt;a href=&quot;#cb7-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; UDP2 : UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-10&quot;&gt;&lt;a href=&quot;#cb7-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Reliable : UNSAFE -&amp;gt; UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-11&quot;&gt;&lt;a href=&quot;#cb7-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; CongestionControl : UNSAFE -&amp;gt; UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb7-12&quot;&gt;&lt;a href=&quot;#cb7-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Encryption : UNSAFE -&amp;gt; &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; send : &lt;span class=&quot;dt&quot;&gt;string&lt;/span&gt; -&amp;gt; &lt;span class=&quot;dt&quot;&gt;unit&lt;/span&gt; &lt;span class=&quot;co&quot;&gt;(* ... *)&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb7-13&quot;&gt;&lt;a href=&quot;#cb7-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;However, the syntactical rewriting and reinterpretation of this
+signature in the negative positions produces a counter-intuitive result.
+For instance, if we expand the signature of the argument for the functor
+&lt;code&gt;Reliable&lt;/code&gt; (for instance) we see:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb8&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb8-1&quot;&gt;&lt;a href=&quot;#cb8-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Reliable :&lt;/span&gt;
+&lt;span id=&quot;cb8-2&quot;&gt;&lt;a href=&quot;#cb8-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb8-3&quot;&gt;&lt;a href=&quot;#cb8-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb8-4&quot;&gt;&lt;a href=&quot;#cb8-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Unsafe : CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb8-5&quot;&gt;&lt;a href=&quot;#cb8-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Safe : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb8-6&quot;&gt;&lt;a href=&quot;#cb8-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; -&amp;gt; UNSAFE&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This means that the functor actually has to be &lt;em&gt;polymorphic&lt;/em&gt;
+in the underlying implementation of &lt;code&gt;CORE_UNSAFE&lt;/code&gt;, rather
+than using the internal details, which has the &lt;strong&gt;opposite
+meaning&lt;/strong&gt; as before. If the user wants to hide a &lt;em&gt;shared&lt;/em&gt;
+unsafe core, accessible to the functor when they were defined and then
+abstracted away, the following pattern may be used instead:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb9&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb9-1&quot;&gt;&lt;a href=&quot;#cb9-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UDPLib_expose' = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb9-2&quot;&gt;&lt;a href=&quot;#cb9-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb9-3&quot;&gt;&lt;a href=&quot;#cb9-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;include&lt;/span&gt; UDPLib &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; UNSAFE = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb9-4&quot;&gt;&lt;a href=&quot;#cb9-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; CORE_UNSAFE = CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb9-5&quot;&gt;&lt;a href=&quot;#cb9-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Unsafe : CORE_UNSAFE&lt;/span&gt;
+&lt;span id=&quot;cb9-6&quot;&gt;&lt;a href=&quot;#cb9-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Safe : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; ... &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb9-7&quot;&gt;&lt;a href=&quot;#cb9-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb9-8&quot;&gt;&lt;a href=&quot;#cb9-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Doing so, the instantiated signature does not contain abstract fields
+and therefore its variant reinterpretation will not introduce unwanted
+polymorphism. This observation is at the core of the proposal of this
+post.&lt;/p&gt;
+&lt;h5 id=&quot;type-type-and-impredicativity&quot;&gt;2.2 &lt;code&gt;Type : Type&lt;/code&gt; and
+impredicativity&lt;/h5&gt;
+&lt;p&gt;Abstract module types are impredicative: a signature containing an
+abstract signature can be instantiated by itself. One can trick the
+subtyping algorithm into an infinite loop of instantiating an abstract
+signature by itself, as shown by &lt;a href=&quot;https://sympa.inria.fr/sympa/arc/caml-list/1999-07/msg00027.html&quot;&gt;Andreas
+Rosseberg&lt;/a&gt;, adapting an example from &lt;a href=&quot;https://doi.org/10.1145/174675.176927&quot;&gt;Harper and Lillibridge
+(POPL ’94)&lt;/a&gt;. This also allows type-checking of (non-terminating)
+programs with an absurd type, as shown by the encoding of the Girard’s
+paradox done by &lt;a href=&quot;https://github.com/lpw25/girards-paradox/tree/master&quot;&gt;Leo
+White&lt;/a&gt;.&lt;/p&gt;
+&lt;h5 id=&quot;other-issues&quot;&gt;2.3 Other issues&lt;/h5&gt;
+&lt;p&gt;The current implementation of the typechecker does not handle
+abstract signatures correctly in some scenarios. It’s unclear if they
+are just bugs or pose theoretical challenges.&lt;/p&gt;
+&lt;h6 id=&quot;invalid-module-aliases&quot;&gt;2.3.1 Invalid module aliases&lt;/h6&gt;
+&lt;p&gt;Inside a functor, module aliases are disallowed between the parameter
+and the body (for soundness reasons, due to coercive subtyping).
+However, this check can be bypassed by using an abstract signature that
+is then instantiated with an alias. If we try to use it to produce a
+functor that exports its argument as an alias, the typechecker crashes.
+This is discussed in &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/11441&quot;&gt;#11441&lt;/a&gt;&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb10&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb10-1&quot;&gt;&lt;a href=&quot;#cb10-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* crashes the typechecker in current OCaml *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb10-2&quot;&gt;&lt;a href=&quot;#cb10-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F (&lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt; : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; T &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)(Y : &lt;span class=&quot;dt&quot;&gt;Type&lt;/span&gt;.T) = Y&lt;/span&gt;
+&lt;span id=&quot;cb10-3&quot;&gt;&lt;a href=&quot;#cb10-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb10-4&quot;&gt;&lt;a href=&quot;#cb10-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Crash (Y : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) =&lt;/span&gt;
+&lt;span id=&quot;cb10-5&quot;&gt;&lt;a href=&quot;#cb10-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  F(&lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; T = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X = Y &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h6 id=&quot;loss-of-applicativity&quot;&gt;2.3.2 Loss of applicativity&lt;/h6&gt;
+&lt;p&gt;The use of abstract signatures clashes with applicativity of
+functors, as discussed &lt;a href=&quot;https://github.com/ocaml/ocaml/issues/12204&quot;&gt;in #12204&lt;/a&gt;.&lt;/p&gt;
+&lt;h6 id=&quot;invalid-signatures-and-avoidance&quot;&gt;2.3.3 Invalid signatures and
+avoidance&lt;/h6&gt;
+&lt;p&gt;Another known issue is that the typechecker can abstract a signature
+when it contains unreachable type fields (types pointing to anonymous
+modules). This can lead to the production of &lt;em&gt;invalid signatures&lt;/em&gt;
+: signatures that are refused by the typechecker when re-entered back
+in.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb11&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb11-1&quot;&gt;&lt;a href=&quot;#cb11-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) =&lt;/span&gt;
+&lt;span id=&quot;cb11-2&quot;&gt;&lt;a href=&quot;#cb11-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-3&quot;&gt;&lt;a href=&quot;#cb11-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-4&quot;&gt;&lt;a href=&quot;#cb11-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t = Y.t &lt;span class=&quot;co&quot;&gt;(* this will force the abstraction of all of A *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-5&quot;&gt;&lt;a href=&quot;#cb11-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;      &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; u&lt;/span&gt;
+&lt;span id=&quot;cb11-6&quot;&gt;&lt;a href=&quot;#cb11-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-7&quot;&gt;&lt;a href=&quot;#cb11-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A = &lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t = Y.t &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; u = &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-8&quot;&gt;&lt;a href=&quot;#cb11-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; u = X.u&lt;/span&gt;
+&lt;span id=&quot;cb11-9&quot;&gt;&lt;a href=&quot;#cb11-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-10&quot;&gt;&lt;a href=&quot;#cb11-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-11&quot;&gt;&lt;a href=&quot;#cb11-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test = F(&lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb11-12&quot;&gt;&lt;a href=&quot;#cb11-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-13&quot;&gt;&lt;a href=&quot;#cb11-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* returns *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb11-14&quot;&gt;&lt;a href=&quot;#cb11-14&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; u = X.u &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Here, the type field &lt;code&gt;type u = X.u&lt;/code&gt; is invalid as
+&lt;code&gt;X&lt;/code&gt; has an abstract signature (and therefore, no fields).&lt;/p&gt;
+&lt;h4 id=&quot;a-solution-simple-abstract-signatures&quot;&gt;3. A solution: simple
+abstract signatures&lt;/h4&gt;
+&lt;p&gt;In this section we explore solutions for fixing the issues of the
+current approach. The core criticism we make of the OCaml approach is
+that it is actually &lt;em&gt;too expressive for its own good&lt;/em&gt;. Abstract
+signatures are &lt;em&gt;impredicative&lt;/em&gt;: they can be instantiated by
+themselves. Having impredicative instantiation with variant
+reinterpretation is hard to track for the user and interacts in very
+subtle ways with other features of the module system, slowing down its
+development—and breaking its theoretical properties. To address this, we
+take the opposite stance and propose to make the system actually
+&lt;em&gt;predicative&lt;/em&gt;: we restrict the set of signatures that can be used
+to instantiate an abstract signature. This also indirectly addresses the
+complexity of the variant reinterpretation.&lt;/p&gt;
+&lt;p&gt;We start with the simplest solution where instantiation of abstract
+signatures is restricted to signatures containing no abstract fields.
+Then, we propose to relax this restriction and allow for signatures that
+contain abstract &lt;em&gt;type&lt;/em&gt; fields (but no abstract module types),
+which we call &lt;em&gt;simple&lt;/em&gt; signatures. This will requires us to
+briefly discuss the need for module-level sharing.&lt;/p&gt;
+&lt;p&gt;In this section we focus on the theoretical aspects, but present them
+informally with examples. The practical aspects, notably syntax and
+inference, are discussed in the next section.&lt;/p&gt;
+&lt;h5 id=&quot;no-abstraction&quot;&gt;3.1 No abstraction&lt;/h5&gt;
+&lt;p&gt;One might wonder why abstract types and abstract signatures
+syntactically resembles one another and yet, the latter is much more
+complex than the former. The key lies in the fact that abstract types
+can only be instantiated by &lt;em&gt;concrete&lt;/em&gt; type expressions, without
+free variables. Informally, this:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb12&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb12-1&quot;&gt;&lt;a href=&quot;#cb12-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb12-2&quot;&gt;&lt;a href=&quot;#cb12-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t&lt;/span&gt;
+&lt;span id=&quot;cb12-3&quot;&gt;&lt;a href=&quot;#cb12-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; x : t&lt;/span&gt;
+&lt;span id=&quot;cb12-4&quot;&gt;&lt;a href=&quot;#cb12-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;val&lt;/span&gt; f : t -&amp;gt; t&lt;/span&gt;
+&lt;span id=&quot;cb12-5&quot;&gt;&lt;a href=&quot;#cb12-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t = (&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; * 'a)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;is not allowed, notably because (1) the scope of the abstract type
+variable &lt;code&gt;'a&lt;/code&gt; is unclear, (2) values of type &lt;code&gt;t&lt;/code&gt;,
+like &lt;code&gt;x&lt;/code&gt;, would be ill-typed.&lt;/p&gt;
+&lt;p&gt;Therefore, a first solution is to &lt;strong&gt;require abstract signatures
+to be instantiated only by concrete signatures, i.e. signatures with no
+abstract fields&lt;/strong&gt; (neither types nor module types). This
+circumvents the clash between the rewriting and variant reinterpretation
+of abstract fields (by disallowing them).&lt;/p&gt;
+&lt;p&gt;This is simple and sound but prevents some valid uses of abstract
+types: in the first example, &lt;code&gt;UNSAFE&lt;/code&gt; could not be
+instantiated with abstract type fields, forcing &lt;code&gt;UDP1&lt;/code&gt; and
+&lt;code&gt;UDP2&lt;/code&gt; to have the same type definitions.&lt;/p&gt;
+&lt;h5 id=&quot;the-issue-of-module-level-sharing&quot;&gt;3.2 The issue of module-level
+sharing&lt;/h5&gt;
+&lt;p&gt;If we want to relax the no-abstraction proposal, some abstract fields
+will be allowed when instantiating signatures. Then, the question of
+what sharing (i.e., type equalities) should be kept &lt;em&gt;between
+different occurrences of the abstract fields&lt;/em&gt; arises.&lt;/p&gt;
+&lt;p&gt;In OCaml signatures, sharing between two modules is usually expressed
+&lt;em&gt;at the core-level&lt;/em&gt; by rewriting the fields of the signature of
+the second module to refer to their counterpart in the first one. This
+cannot be done with abstract signatures, as they have no fields.
+Instead, the language needs module-level sharing, which in OCaml is very
+restricted. Indeed, it provides a form of module aliases (only for
+submodules, not at the top-level of a signature), but aliasing between a
+functor body and its parameter is not allowed—while it is typically the
+use-case for abstract signatures in polymorphic functors. Consider the
+following code:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb13&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb13-1&quot;&gt;&lt;a href=&quot;#cb13-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Code *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb13-2&quot;&gt;&lt;a href=&quot;#cb13-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F1 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) = Y.X&lt;/span&gt;
+&lt;span id=&quot;cb13-3&quot;&gt;&lt;a href=&quot;#cb13-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F2 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) = (Y.X : Y.A)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Currently, the typechecker cannot distinguish between the two and
+returns the same signature, while we would expect the first one to keep
+the sharing between the parameter and the body.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb14&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb14-1&quot;&gt;&lt;a href=&quot;#cb14-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Currently, both are given the same type: *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb14-2&quot;&gt;&lt;a href=&quot;#cb14-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F1 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) : A&lt;/span&gt;
+&lt;span id=&quot;cb14-3&quot;&gt;&lt;a href=&quot;#cb14-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F2 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) : A&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;As an example, we can consider the argument for the functors:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb15&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb15-1&quot;&gt;&lt;a href=&quot;#cb15-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Y = &lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb15-2&quot;&gt;&lt;a href=&quot;#cb15-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb15-3&quot;&gt;&lt;a href=&quot;#cb15-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X = &lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t = &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb15-4&quot;&gt;&lt;a href=&quot;#cb15-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb15-5&quot;&gt;&lt;a href=&quot;#cb15-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb15-6&quot;&gt;&lt;a href=&quot;#cb15-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test1 = F1(Y)&lt;/span&gt;
+&lt;span id=&quot;cb15-7&quot;&gt;&lt;a href=&quot;#cb15-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test2 = F2(Y)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;This returns :&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb16&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb16-1&quot;&gt;&lt;a href=&quot;#cb16-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test1 : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb16-2&quot;&gt;&lt;a href=&quot;#cb16-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test2 : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;While we would expect :&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb17&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb17-1&quot;&gt;&lt;a href=&quot;#cb17-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test1 : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t = &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb17-2&quot;&gt;&lt;a href=&quot;#cb17-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Test2 : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; t &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Two possible extensions would help tackle this issue.&lt;/p&gt;
+&lt;h6 id=&quot;lazy-strengthening&quot;&gt;Lazy strengthening&lt;/h6&gt;
+&lt;p&gt;A recently proposed experimentation, named &lt;em&gt;lazy
+strengthening&lt;/em&gt;, extends the signature language with an operator
+&lt;code&gt;S with P&lt;/code&gt;, where &lt;code&gt;S&lt;/code&gt; is a signature and
+&lt;code&gt;P&lt;/code&gt; a module path. It is interpreted as &lt;code&gt;S&lt;/code&gt;
+strengthened by &lt;code&gt;P&lt;/code&gt;, i.e. &lt;code&gt;S&lt;/code&gt; in which all
+abstract fields are rewritten to point to their counterpart in
+&lt;code&gt;P&lt;/code&gt;. Initially considered for performance reasons, it would
+allow for tracking of type equalities when using abstract
+signatures.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb18&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb18-1&quot;&gt;&lt;a href=&quot;#cb18-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Lazy strengthening would keep type equalities: *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb18-2&quot;&gt;&lt;a href=&quot;#cb18-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F1 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) = Y.A &lt;span class=&quot;kw&quot;&gt;with&lt;/span&gt; Y.X&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h6 id=&quot;transparent-ascription&quot;&gt;Transparent ascription&lt;/h6&gt;
+&lt;p&gt;A more involved solution is the use of an extension of aliasing
+called &lt;em&gt;transparent ascription&lt;/em&gt;, where both the alias
+&lt;em&gt;and&lt;/em&gt; the signature are stored in the signature. The signature
+language would be extended with an operator &lt;code&gt;(= P &amp;lt; S)&lt;/code&gt;.
+The technical implications of this choice are beyond the scope of this
+discussion.&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb19&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb19-1&quot;&gt;&lt;a href=&quot;#cb19-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Transparent ascription would keep module equalities: *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb19-2&quot;&gt;&lt;a href=&quot;#cb19-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; F1 (Y: &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) : (= Y.X &amp;lt; Y.A)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h5 id=&quot;our-proposal-simple-abstract-signatures&quot;&gt;3.3 Our proposal :
+&lt;em&gt;simple&lt;/em&gt; abstract signatures&lt;/h5&gt;
+&lt;p&gt;Maintaining a predicative approach, we propose to &lt;strong&gt;restrict
+instantiation only by &lt;em&gt;simple&lt;/em&gt; signatures, i.e., signatures that
+may contain abstract type fields, but no abstract module types&lt;/strong&gt;.
+This reintroduces the need to express module-level sharing and the
+mental gymnastic of variant re-interpretation of abstract type fields.
+However, it guarantees that all modules sharing the same abstract
+signature will also share the same structure (same fields) after
+instantiation, and can only differ in their type fields. We believe this
+makes for a good compromise.&lt;/p&gt;
+&lt;h6 id=&quot;expressivity-and-prenex-form&quot;&gt;Expressivity (and
+prenex-form)&lt;/h6&gt;
+&lt;p&gt;One might wonder how restrictive is this proposal. Specifically, if
+we consider a simple polymorphic functor as:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb20&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb20-1&quot;&gt;&lt;a href=&quot;#cb20-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Apply (Y : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) (F : Y.A -&amp;gt; Y.A)(X : Y.A) = F(X)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;The following partial application would be rejected:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb21&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb21-1&quot;&gt;&lt;a href=&quot;#cb21-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Rejected as A would be instantiated by `sig module type B module X : B -&amp;gt; B end` *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb21-2&quot;&gt;&lt;a href=&quot;#cb21-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Apply' = Apply(&lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; B &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : B -&amp;gt; B &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;However, this could be circumvented by eta-expanding, thus
+expliciting module type parameters, and instantiating only a simple
+signature:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb22&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb22-1&quot;&gt;&lt;a href=&quot;#cb22-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* Accepted as A is instantiated by a signature with no abstract fields *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb22-2&quot;&gt;&lt;a href=&quot;#cb22-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Apply'' = &lt;span class=&quot;kw&quot;&gt;functor&lt;/span&gt; (Y:&lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; B &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;) -&amp;gt;&lt;/span&gt;
+&lt;span id=&quot;cb22-3&quot;&gt;&lt;a href=&quot;#cb22-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  Apply(&lt;span class=&quot;kw&quot;&gt;struct&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; A = &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;type&lt;/span&gt; B = Y.B &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; X : B -&amp;gt; B &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;h6 id=&quot;higher-abstraction&quot;&gt;Higher-abstraction ?&lt;/h6&gt;
+&lt;p&gt;Concrete and simple signatures can be seen as the first two levels of
+the predicative approach for types declarations. There are no more
+levels for type declarations, as types cannot be &lt;em&gt;partially
+abstract&lt;/em&gt; (see 3.1). Could it be useful to add even more
+expressivity and authorize instantiation by a signature containing again
+an abstract module type field (which would need to be restricted with a
+level system like &lt;em&gt;universes&lt;/em&gt;)? We have found no example where
+this was useful. Besides, it would add a great layer of complexity.&lt;/p&gt;
+&lt;h4 id=&quot;other-practical-aspects&quot;&gt;4. Other practical aspects&lt;/h4&gt;
+&lt;h6 id=&quot;syntax&quot;&gt;Syntax&lt;/h6&gt;
+&lt;p&gt;A key aspect of abstract module types that reduces their usability is
+the verbosity of the syntax. Rather than having to pass signature as
+part of a module argument to a polymorphic functor, using a separate
+notation for module type parameters could be more concise. In practice,
+abstract signature arguments could be indicated by using brackets
+instead of parenthesis, and interleaved with normal module arguments, as
+in this example:&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb23&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb23-1&quot;&gt;&lt;a href=&quot;#cb23-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* At definition *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb23-2&quot;&gt;&lt;a href=&quot;#cb23-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; MakeApply&lt;/span&gt;
+&lt;span id=&quot;cb23-3&quot;&gt;&lt;a href=&quot;#cb23-3&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [A] (X:A)&lt;/span&gt;
+&lt;span id=&quot;cb23-4&quot;&gt;&lt;a href=&quot;#cb23-4&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [B] (F: A -&amp;gt; B)&lt;/span&gt;
+&lt;span id=&quot;cb23-5&quot;&gt;&lt;a href=&quot;#cb23-5&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [C] (H : &lt;span class=&quot;kw&quot;&gt;sig&lt;/span&gt; &lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; Make : B -&amp;gt; C &lt;span class=&quot;kw&quot;&gt;end&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb23-6&quot;&gt;&lt;a href=&quot;#cb23-6&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  = H.Make(F(X))&lt;/span&gt;
+&lt;span id=&quot;cb23-7&quot;&gt;&lt;a href=&quot;#cb23-7&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb23-8&quot;&gt;&lt;a href=&quot;#cb23-8&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; ApplyGv&lt;/span&gt;
+&lt;span id=&quot;cb23-9&quot;&gt;&lt;a href=&quot;#cb23-9&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [A] [B] (F:A -&amp;gt; GlobalVars -&amp;gt; B) (X:A)&lt;/span&gt;
+&lt;span id=&quot;cb23-10&quot;&gt;&lt;a href=&quot;#cb23-10&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;  = F(X)(Gv)&lt;/span&gt;
+&lt;span id=&quot;cb23-11&quot;&gt;&lt;a href=&quot;#cb23-11&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb23-12&quot;&gt;&lt;a href=&quot;#cb23-12&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;co&quot;&gt;(* At the call site *)&lt;/span&gt;&lt;/span&gt;
+&lt;span id=&quot;cb23-13&quot;&gt;&lt;a href=&quot;#cb23-13&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; M1 = MakeApply&lt;/span&gt;
+&lt;span id=&quot;cb23-14&quot;&gt;&lt;a href=&quot;#cb23-14&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [T] (X)&lt;/span&gt;
+&lt;span id=&quot;cb23-15&quot;&gt;&lt;a href=&quot;#cb23-15&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [&lt;span class=&quot;dt&quot;&gt;Hashtbl&lt;/span&gt;.HashedType] (F)&lt;/span&gt;
+&lt;span id=&quot;cb23-16&quot;&gt;&lt;a href=&quot;#cb23-16&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    [&lt;span class=&quot;dt&quot;&gt;Hashtbl&lt;/span&gt;.S] (&lt;span class=&quot;dt&quot;&gt;Hashtbl&lt;/span&gt;)&lt;/span&gt;
+&lt;span id=&quot;cb23-17&quot;&gt;&lt;a href=&quot;#cb23-17&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;/span&gt;
+&lt;span id=&quot;cb23-18&quot;&gt;&lt;a href=&quot;#cb23-18&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;module&lt;/span&gt; M2 = ApplyGv [A] [B] (F) (X)&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;Technically, this is not just syntactic sugar for anonymous
+parameters due to the fact that OCaml relies on names for applicativity
+of functors.&lt;/p&gt;
+&lt;h6 id=&quot;inference&quot;&gt;Inference&lt;/h6&gt;
+&lt;p&gt;Following up on the previous point, usability of abstract signatures
+could even be improved with some form of inference at call sites.
+Further work is needed to understand to what extend this could be
+done.&lt;/p&gt;
+&lt;h4 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h4&gt;
+&lt;p&gt;We have presented the feature of &lt;em&gt;abstract signatures&lt;/em&gt; in
+OCaml. After showing use cases via examples, we explained the issues
+associated with the unrestricted syntactical approach. Then, we propose
+a new specification: &lt;em&gt;simple abstract signatures&lt;/em&gt;. In addition to
+making the behavior of abstract signatures much more predictable for the
+user, this approach can be fully formalized by translation into Fω
+(extended with predicative kinds).&lt;/p&gt;
+&lt;p&gt;As stated above, our goal here was both to sum up the current state
+and our proposal, but also to gather feedback from users or potential
+users. In particular, we want to see if it can indeed cover all use
+cases, and if we missed other usability problems.&lt;/p&gt;
+
+</description><pubDate>01 Dec 2023 08:00:00 +0000</pubDate><author>Clément Blaudeau</author><guid isPermaLink="true">https://cambium.inria.fr/blog/rethinking-ocaml-abstract-signatures</guid></item><item><title>Florian compiler weekly, 26 September 2023</title><link>https://cambium.inria.fr/blog/florian-cw-2023-09-26</link><description>
+
+  &lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) work on the OCaml compiler. This week subject is
+some data analysis of the OCaml changelog.&lt;/p&gt;
+
+
+  
+
+  
+  &lt;p&gt;OCaml 5.1.0 has been released two weeks ago, last week was thus a
+good time to do some retrospective on this development cycle.&lt;/p&gt;
+&lt;p&gt;In particular, the OCaml compiler has accumulated a good amount of
+history in its changelog file. However, since this is a hand-written
+files with some human-enforced rules, it is not so straightforward to
+parse it and extract data.&lt;/p&gt;
+&lt;p&gt;I have thus spent some time mining information from this changelog,
+with a &lt;a href=&quot;https://github.com/Octachron/ocaml-changelog-analyzer/blob/main/parse/sapient.ml#L122&quot;&gt;bunch
+of pretty ad-hoc rules&lt;/a&gt;. The result of this effort is a &lt;a href=&quot;https://github.com/Octachron/ocaml-changelog-analyzer/blob/main/refs/changes.json&quot;&gt;cleaned-up
+json change file&lt;/a&gt;, available with few analysis tools and plot scripts
+at &lt;a href=&quot;https://github.com/Octachron/ocaml-changelog-analyzer&quot;&gt;https://github.com/Octachron/ocaml-changelog-analyzer&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Starting from this file, it is possible to extract some interesting
+titbit’s about the history of OCaml 4 and 5. For instance, in term of
+raw numbers, from OCaml 4.00.0 to OCaml 5.1.0, the changelog increased
+by 2930 entries. Filtering patch release, we have an average of 151.5
+contributions by release, with a standard deviation of 48.84, &lt;img src=&quot;number_of_contributions_by_release.svg&quot;&gt;&lt;/img&gt;&lt;/p&gt;
+&lt;p&gt;With 208 changes, the OCaml 5.1 release is the third release in term
+of contributions behind OCaml 4.03 (277 changes, with a one year release
+cycle and introduced flambda), and OCaml 4.08 (226 changes with many
+standard library changes after the introduction of the
+&lt;code&gt;Stdlib&lt;/code&gt; namespacing in OCaml 4.07.0).&lt;/p&gt;
+&lt;p&gt;Similarly, OCaml 5.1.0 with 78 authors has the largest number of
+authors, followed by OCaml 4.03.0 and OCaml 4.08:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;authors_by_release.svg&quot;&gt;&lt;/img&gt;&lt;/p&gt;
+&lt;p&gt;We have an average of 49 authors by release, with a standard
+deviation around 11.8. Maybe more importantly, we can see that we still
+a flux of a dozen of new contributors every releases Unfortunately, I am
+not tracking contributors from before OCaml 4.01., which is biasing the
+computation of the number of new authors. Thus it is hard to tell if the
+record number of new authors in 4.02 and 4.03 is due to the switch to
+the Github workflow, since it could be a data artifact.&lt;/p&gt;
+&lt;p&gt;Moreover, focusing only on the number of authors or contributions
+hide the diversity of contributions by authors. For instance, counting
+the number of authored change entries since OCaml 4.01, we have:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;9 authors with more than 100 contributions&lt;/li&gt;
+&lt;li&gt;6 authors with a number of contributions between 40 and 90&lt;/li&gt;
+&lt;li&gt;16 authors with a number of contributions 15 and 35&lt;/li&gt;
+&lt;li&gt;119 authors with more than 1 contribution but less than 13&lt;/li&gt;
+&lt;li&gt;207 authors with one contribution&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;If we represent each contributors by the number of authored
+contributions and the number of reviews on a two dimensional log plot,
+we have a quite wide cloud of points:&lt;/p&gt;
+&lt;p&gt;&lt;img src=&quot;cloud.svg&quot;&gt;&lt;/img&gt;&lt;/p&gt;
+&lt;p&gt;It is reassuring to see that there are contributors spending a
+significant amount of their time on reviews.&lt;/p&gt;
+&lt;p&gt;It is also fun to visualize the influx of new contributors by
+plotting the contributions of each persons release by release with some
+linear interpolation in-between:&lt;/p&gt;
+&lt;p&gt;&lt;video src=&quot;contributor_ballet.webm&quot; controls=&quot;&quot;&gt;&lt;a href=&quot;contributor_ballet.webm&quot;&gt;Video&lt;/a&gt;&lt;/video&gt;&lt;/p&gt;
+&lt;p&gt;It is quite a bit harder to read this movie. Trying to extract few
+key points, I can see:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;a vast group of ephemeral contributors&lt;/li&gt;
+&lt;li&gt;a lot of fluctuation of the activity of active contributors from
+release to release,&lt;/li&gt;
+&lt;li&gt;a small group of prolific and constant contributors.&lt;/li&gt;
+&lt;/ul&gt;
+
+
+  </description><pubDate>26 Sep 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">http://gallium.inria.fr/blog/florian-cw-2023-09-26</guid></item><item><title>Florian’s OCaml compiler weekly, 5 July 2023</title><link>https://cambium.inria.fr/blog/florian-compiler-weekly-2023-07-05</link><description>
+
+
+&lt;p&gt;This series of blog posts aims to give a short weekly glimpse into my
+(Florian Angeletti) daily work on the OCaml compiler. The subject this
+week is a cartography of the source of opam packages breakage in OCaml
+5.1.0 .&lt;/p&gt;
+
+
+  
+
+&lt;p&gt;With the recent release of the first beta for OCaml 5.1, I have spent
+some time at the state of the opam ecosystem looking for package that
+broke with OCaml 5.1 .&lt;/p&gt;
+&lt;p&gt;Interestingly, for this beta there most of those incompatibility
+stemmed from 7 changes in OCaml 5.1, which is a small enough number that
+I can list all those potentially package-breaking changes in this blog
+post.&lt;/p&gt;
+&lt;h3 id=&quot;stdlib-changes&quot;&gt;Stdlib changes&lt;/h3&gt;
+&lt;p&gt;Unsurprisingly, most of the package build failures finds their source
+in small changes of the standard library. Those changes accounts for at
+least 8 package build failures in the opam repository at the time of the
+first beta release.&lt;/p&gt;
+&lt;h4 id=&quot;updated-module-types-in-the-standard-library&quot;&gt;Updated module
+types in the standard library&lt;/h4&gt;
+&lt;p&gt;More precisely, one source of build failure is the changes in module
+types defined in the standard library. Such module types are a known
+source of backward compatibility difficulty. Depending on the uses of
+those module types, any change in the module types can create a build
+failure.&lt;/p&gt;
+&lt;p&gt;And OCaml 5.1 updated three of such module types.&lt;/p&gt;
+&lt;p&gt;First, the &lt;code&gt;hash&lt;/code&gt; function inside the
+&lt;code&gt;Hashtbl.SeededHashedType&lt;/code&gt; module type has been renamed to
+&lt;code&gt;seeded_hash&lt;/code&gt;. This changes make it possible for a module to
+implement both &lt;code&gt;Hashtbl.SeededHashedType&lt;/code&gt; and
+&lt;code&gt;Hashtbl.HashedType&lt;/code&gt; (&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/11157&quot;&gt;#11157&lt;/a&gt;).
+Unfortunately, this change breaks modules that were using
+&lt;code&gt;Hashtbl.MakeSeeded&lt;/code&gt; with the previous signature for the
+argument of the functor.&lt;/p&gt;
+&lt;p&gt;When the change was proposed there were only 6 opam packages affected
+by this change. Thus, the improved usability for the
+&lt;code&gt;Hashtbl.MakeSeeded&lt;/code&gt; functor seemed worth the price. And at
+the time of the first beta release, I have only seen two remaining
+packages still affected by this change.&lt;/p&gt;
+&lt;p&gt;Second, a more subtle problem occurred for libraries that were using
+the &lt;code&gt;Map.S&lt;/code&gt; or &lt;code&gt;Set.S&lt;/code&gt; module types: the
+signatures has been expanded with new functions (&lt;code&gt;to_list&lt;/code&gt;
+for &lt;code&gt;Set.S&lt;/code&gt; and &lt;code&gt;to_list&lt;/code&gt; &lt;code&gt;of_list&lt;/code&gt;,
+and &lt;code&gt;add_to_list&lt;/code&gt; for &lt;code&gt;Map.S&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;Consequently, three libraries that were defining new &lt;code&gt;Map&lt;/code&gt;
+or &lt;code&gt;Set&lt;/code&gt; functors using this signature as a constraint need
+to add those missing functions to their &lt;code&gt;Map&lt;/code&gt; and
+&lt;code&gt;Set&lt;/code&gt; implementations. Those failures are maybe less
+surprising: if one library use a module type provided by the standard
+library for one of its own implementation, it inevitably couple strongly
+itself to the standard library specification.&lt;/p&gt;
+&lt;h4 id=&quot;new-modules-in-the-standard-library&quot;&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/11581&quot;&gt;New modules in the
+standard library&lt;/a&gt;&lt;/h4&gt;
+&lt;p&gt;Another source of difficulty is that the standard library has been
+added a new &lt;code&gt;Type&lt;/code&gt; module in OCaml 5.1. This new module
+defines the well-know equality GADT (Generalized Abstract Data
+Type):&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;type (_, _) eq = Equal : ('a, 'a) eq&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;and type identity witnesses. In other words, this is mostly a module
+for heavy users of GADTs.&lt;/p&gt;
+&lt;p&gt;Normally, adding a new module to the standard library can be done
+painlessly: Standard library modules have a lower priority compared to
+local modules. Thus, if someone has a project which defines a
+&lt;code&gt;Type&lt;/code&gt; module, the non-qualified name &lt;code&gt;Type&lt;/code&gt; will
+refer to the local module, and the standard library module will be
+accessible with &lt;code&gt;Stdlib.Type&lt;/code&gt;. However, this low priority
+behaviour requires some special support in the compiler and alternative
+standard library lacks this support. Consequently, libraries (at least
+three) that are defining a local &lt;code&gt;Type&lt;/code&gt; module while using
+alternative standard library (like &lt;code&gt;base&lt;/code&gt;) might be required
+to find a non-conflicting short-name for their local &lt;code&gt;Type&lt;/code&gt;
+module (which might be as simple as&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;module Ty = Type
+open! Base&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;)&lt;/p&gt;
+&lt;h3 id=&quot;internal-api-changes&quot;&gt;Internal API changes&lt;/h3&gt;
+&lt;p&gt;The second ex æquo source of build failures in opam packages is the
+changes in internal API, either in the OCaml runtime or in the compiler
+library.&lt;/p&gt;
+&lt;h4 id=&quot;changes-in-the-runtime-internal-api&quot;&gt;Changes in the runtime
+internal API&lt;/h4&gt;
+&lt;p&gt;The internal runtime function &lt;code&gt;caml_shared_try_alloc&lt;/code&gt; now
+takes the number of reserved bits in the header as a supplementary
+argument. This change affected at least one opam package.&lt;/p&gt;
+&lt;h4 id=&quot;change-in-the-compiler-libs-api&quot;&gt;Change in the compiler-libs
+API&lt;/h4&gt;
+&lt;p&gt;To improve the rendering of weakly polymorphic row variables, OCaml
+5.1 has switched its high-level display representation of type aliases
+to make it easier to display “weakly polymorphic aliases”:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt; [&amp;gt; `X of int]  as _weak1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;rather than&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;_[&amp;gt; `X of int]&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This caused a build failure for at least one package that was relying
+on the previous API.&lt;/p&gt;
+&lt;h3 id=&quot;type-system-change&quot;&gt;Type system change&lt;/h3&gt;
+&lt;p&gt;The third ex æquo source of build failures is small changes in the
+type system, where package that were at the frontier of the technically
+correct and bugs ended up falling on the other side of the fence during
+this release.&lt;/p&gt;
+&lt;h4 id=&quot;inexact-explicit-type-annotation-for-anonymous-row-variable&quot;&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/12211&quot;&gt;Inexact explicit type
+annotation for anonymous row variable&lt;/a&gt;&lt;/h4&gt;
+&lt;p&gt;For instance, due to a bug fix, OCaml 5.1 is stricter when mixing
+explicitly polymorphic type annotations and anonymous row variables.
+Even with all the precautions described in
+http://gallium.inria.fr/blog/florian-compiler-weekly-2023-04-28, there
+was at least one opam package that was affected. On the bright side,
+this was probably a bug in the lone affected package.&lt;/p&gt;
+&lt;h4 id=&quot;generative-functors-must-be-used-generatively&quot;&gt;Generative
+functors must be used generatively&lt;/h4&gt;
+&lt;p&gt;When a functor is defined as an applicative functor&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;module App() = struct
+  type t
+end&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;OCaml 5.1 forbids now to apply as if it was a generative functor:&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;module Ok = App(struct end)
+module New_error = App()&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Previous version of OCaml did not make any difference between
+&lt;code&gt;struct end&lt;/code&gt; or &lt;code&gt;()&lt;/code&gt; in functor applications and
+thus allowed the form &lt;code&gt;App(struct end)&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The reverse situation, where a generative functor is applied to
+&lt;code&gt;struct end&lt;/code&gt; is allowed but emits a warning&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;module Gen() = struct
+  type t
+end
+module New_warning = Gen(struct end)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;Warning 73 [generative-application-expects-unit]: A generative functor
+should be applied to '()'; using '(struct end)' is deprecated.&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;This restriction is there to make clearer the distinction between
+applicative and generative application. But at least $one opam package
+needed to be updated (at the time of the beta release).&lt;/p&gt;
+&lt;h3 id=&quot;unique-case&quot;&gt;Unique case&lt;/h3&gt;
+&lt;p&gt;Sometimes, there are also backward compatible issue with packages
+that were using the compiler in surprising ways. For instance, this
+time, one package build failed because it was trying to link without
+&lt;code&gt;-for-pack&lt;/code&gt; modules compiled with &lt;code&gt;-for-pack&lt;/code&gt;,
+which happened to sometimes work in previous version of OCaml. OCaml 5.1
+took the decision to stop relying on such happenstance, and mixing
+different &lt;code&gt;-for-pack&lt;/code&gt; mode now always result in an error.&lt;/p&gt;
+
+</description><pubDate>05 Jul 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">http://cambium.inria.fr/blog/florian-compiler-weekly-2023-07-05</guid></item><item><title>Florian’s OCaml compiler weekly, 20 June 2023</title><link>https://cambium.inria.fr/blog/florian-compiler-weekly-2023-06-20</link><description>
+
+
+&lt;p&gt;This series of blog posts aims to give a short weekly glimpse into my
+(Florian Angeletti) daily work on the OCaml compiler. This quiet week
+was focused on finishing ongoing tasks and discussing future
+collaborations.&lt;/p&gt;
+
+
+  
+
+&lt;h3 id=&quot;a-few-finished-tasks&quot;&gt;A few finished tasks&lt;/h3&gt;
+&lt;p&gt;Last week was a quiet week, in term of new activities. However, I was
+able to push few of my ongoing tasks over the finish line:&lt;/p&gt;
+&lt;h4 id=&quot;semantic-tag-for-inline-code-in-the-compiler&quot;&gt;[Semantic tag for
+inline code in the compiler&lt;/h4&gt;
+&lt;p&gt;messages](https://github.com/ocaml/ocaml/pull/12210)&lt;/p&gt;
+&lt;p&gt;I have at last finalized this pull request that introduces an uniform
+quoting style for inline code inside all the messages across the
+compilers. With more than 300 hundred source files (fortunately mostly
+tests) changed, this is the kind of Pull Request that one is glad to see
+merged. At the very least, because this means no more lengthy
+rebasing.&lt;/p&gt;
+&lt;h4 id=&quot;a-type-for-symbol-identifiers-in-the-bytecode&quot;&gt;[A type for
+symbol identifiers in the bytecode&lt;/h4&gt;
+&lt;p&gt;backend](https://github.com/ocaml/ocaml/pull/12031)&lt;/p&gt;
+&lt;p&gt;Working with Sébastien Hinderer, I have completed a final review on
+his work on switching to a narrower type for global symbols in the
+bytecode backend. His PR has been merged on last Friday. Hopefully, it
+shall make further work in this area of the compiler simpler by making
+it clearer when global symbols are compilation unit names, or when they
+might be predefined exceptions.&lt;/p&gt;
+&lt;h4 id=&quot;ppxlib-0.30-ready-to-be&quot;&gt;[ppxlib 0.30 ready to be&lt;/h4&gt;
+&lt;p&gt;released](https://github.com/ocaml/opam-repository/pull/23965)&lt;/p&gt;
+&lt;p&gt;In the beginning of the week, I have spent some time with the ppxlib
+team to check that the new version of ppxlib (with the compatibility fix
+for the second alpha release of OCaml 5.1.0) is ready.&lt;/p&gt;
+&lt;p&gt;Once this new version of ppxlib is out-of-the-door, I will restart my
+survey of the state of the opam ecosystem before the release of the
+first beta for OCaml 5.1.0&lt;/p&gt;
+&lt;h3 id=&quot;discussing-future-collaborations-with-tarides&quot;&gt;Discussing future
+collaborations with Tarides&lt;/h3&gt;
+&lt;p&gt;In parallel, I have been discussing with the benchmarking team and
+odoc team at Tarides on collaborating on two subjects in the medium term
+future:&lt;/p&gt;
+&lt;h4 id=&quot;continuous-benchmarks-for-the-compiler&quot;&gt;Continuous benchmarks
+for the compiler&lt;/h4&gt;
+&lt;p&gt;A common subject of interest with Tarides benchmarking team is to try
+to set us a pipeline for continuously monitoring the performance of the
+OCaml compiler.&lt;/p&gt;
+&lt;p&gt;Having such continuous monitoring would bring two major advantages
+from my perspective:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;monitoring long term trends: a 0.1% weekly slowdown of the
+compiler speed might not be worth worrying. One year of accumulated 0.1%
+weekly slowdowns &lt;em&gt;is&lt;/em&gt; worrying.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;catching performance accident early: conversely, a significant
+unexpected drop or increase in a Pull Request is a worrying concern that
+we want to detect as early to possible to investigate (and possibly) the
+cause of this change&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h4 id=&quot;better-integration-of-the-ocaml-manual-with-ocaml.org&quot;&gt;Better
+integration of the OCaml manual with &lt;a href=&quot;https://ocaml.org&quot;&gt;ocaml.org&lt;/a&gt;&lt;/h4&gt;
+&lt;p&gt;Currently, the integration of the OCaml manual and API documentation
+within the &lt;a href=&quot;https://ocaml.org&quot;&gt;ocaml.org&lt;/a&gt; is very barebone:
+The main &lt;code&gt;ocaml.org&lt;/code&gt; site links towards the old
+&lt;code&gt;v2.ocaml.org&lt;/code&gt; website where the manual is still hosted
+through redirection.&lt;/p&gt;
+&lt;p&gt;This setup was supposed to be temporary, but I have not yet found the
+time to improve this integration. I hope to fix this in time for the
+release of OCaml 5.1.0 in July. In particular, this would be a good time
+for transitioning the &lt;code&gt;ocaml.org&lt;/code&gt; hosted API reference to the
+odoc version which has been dormant hidden with the compiler repository
+for few years now.&lt;/p&gt;
+
+</description><pubDate>20 Jun 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">http://cambium.inria.fr/blog/florian-compiler-weekly-2023-06-20</guid></item><item><title>Florian’s OCaml compiler weekly, 12 June 2023</title><link>https://cambium.inria.fr/blog/florian-compiler-weekly-2023-06-12</link><description>
+
+
+&lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) daily work on the OCaml compiler. This week, the
+focus is on my roadmap for OCaml 5.2.0 .&lt;/p&gt;
+
+
+  
+
+&lt;h3 id=&quot;my-roadmap-for-5.2.0&quot;&gt;My roadmap for 5.2.0&lt;/h3&gt;
+&lt;p&gt;With the stabilisation of OCaml 5.1.0, I have been taking the time to
+write down some of my main objectives for OCaml 5.2. There are two
+improvements on the compiler interfaces, that I really want to see
+materialise in OCaml 5.2: a structured output for compiler messages and
+an unified &lt;code&gt;short-paths&lt;/code&gt; implementation between Merlin and
+the compiler.&lt;/p&gt;
+&lt;h4 id=&quot;a-structured-output-for-compiler-messages.&quot;&gt;A structured output
+for compiler messages.&lt;/h4&gt;
+&lt;p&gt;In order to better communicate with the various OCaml development
+tools, it should be possible to emit compiler messages in a structured
+format (JSON or SEXP). One of the Outreachy internship that I mentored
+implemented a &lt;a href=&quot;https://github.com/ocaml/ocaml/pull/9979&quot;&gt;first
+version of JSON messages&lt;/a&gt; few years ago in 2020.&lt;/p&gt;
+&lt;p&gt;However, one criticism of this approach was that it was not clear if
+the format would be useful for tools like dune. Similarly, it was not
+clear if this format could evolve in a backward compatible way.&lt;/p&gt;
+&lt;p&gt;After discussing the issue further with dune developers, the
+conclusion was that if any kind of structured output would be useful for
+dune, a versioned and backward compatible output would be
+&lt;em&gt;really&lt;/em&gt; helpful.&lt;/p&gt;
+&lt;p&gt;This is why I am planning to go back on my structured output work in
+OCaml 5.2 while focusing on a versioned and structured log facility,
+that can be connected to various backend.&lt;/p&gt;
+&lt;h4 id=&quot;unified-short-paths-in-compiler-messages&quot;&gt;Unified short paths in
+compiler messages&lt;/h4&gt;
+&lt;p&gt;When printing type paths in error messages, it is useful to print
+user-friendly type names like &lt;code&gt;M.t&lt;/code&gt; and not whatever path the
+typechecker stumbled upon after various expansions like
+&lt;code&gt;A.Very.Long(Type).Application.t&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Both the compiler type pretty-printer and Merlin have an
+implementation for discovering and computing canonical type paths in
+error messages, which is enabled by the &lt;code&gt;-short-paths&lt;/code&gt;
+option.&lt;/p&gt;
+&lt;p&gt;However, the implementation of this path normalisation is completely
+different between Merlin and the compiler. Having two implementations is
+painful in term of both maintenance and evolution of this feature.
+Moreover, the compiler implementation was originally meant to be a
+temporary prototype for OCaml 4.01.0, ten years ago.&lt;/p&gt;
+&lt;p&gt;This is why I am hoping to find the time to finally upstream Merlin’s
+implementation of the &lt;code&gt;-short-path&lt;/code&gt; flag.&lt;/p&gt;
+&lt;h3 id=&quot;updating-ppxlib-after-a-parsetree-refinement&quot;&gt;Updating
+&lt;code&gt;ppxlib&lt;/code&gt; after a parsetree refinement&lt;/h3&gt;
+&lt;p&gt;Last week, I also spent some of my time working with the ppxlib team
+to iron out the last wrinkles of the second alpha for 5.1.0.&lt;/p&gt;
+&lt;p&gt;From the point of view of ppxlib, one of the interesting challenge
+introduced by the &lt;code&gt;value binding&lt;/code&gt; parsetree change in 5.1.0
+is that it added a new way to represent an old construct&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;let x : typ = expr&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;rather than a completely new construct.&lt;/p&gt;
+&lt;p&gt;Indeed, before OCaml 5.1, this construct was desugared to&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;let (x:ø. typ) = (expr:typ)&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;whereas in OCaml 5.1, this construct is a new distinct parsetree
+node.&lt;/p&gt;
+&lt;p&gt;This new parsetree node lead to some interesting questions when
+migrating Abstract Syntax Tree between version:&lt;/p&gt;
+&lt;h4 id=&quot;when-migrating-from-the-5.1-to-5.0-can-we-reproduce-the-old-encoding-down-to-the-location&quot;&gt;When
+migrating from the 5.1 to 5.0, can we reproduce the old encoding down to
+the location&lt;/h4&gt;
+&lt;p&gt;information?&lt;/p&gt;
+&lt;p&gt;Maybe surprisingly, the answer is &lt;em&gt;no&lt;/em&gt;. This is due to the
+ghost location used in the ghost constraint node: when desugaring
+&lt;code&gt;let x: (((int))) = 0&lt;/code&gt; to&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb3&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb3-1&quot;&gt;&lt;a href=&quot;#cb3-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; (x:ø. &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt;) = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;the 5.0 parser attributed to the pattern &lt;code&gt;x:ø. typ&lt;/code&gt; the
+ghost location&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb4&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb4-1&quot;&gt;&lt;a href=&quot;#cb4-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; x : ((((&lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt;))))  =&lt;/span&gt;
+&lt;span id=&quot;cb4-2&quot;&gt;&lt;a href=&quot;#cb4-2&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;    ^^^^^^^^^^^^^^^&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;But the new parsetree node only contains the location of the type
+&lt;code&gt;int&lt;/code&gt; and not the location of the end of the parentheses. We
+are thus losing a bit of information because the former encoding was
+using a concrete syntax tree location that we no longer have access to.
+Fortunately, this only happens on a ghost location of a ghost parsetree
+node.&lt;/p&gt;
+&lt;h4 id=&quot;is-the-migration-from-the-5.1-parsetree-to-the-5.0-parsetree-always-injective&quot;&gt;Is
+the migration from the 5.1 parsetree to the 5.0 parsetree always
+injective?&lt;/h4&gt;
+&lt;p&gt;Most of the time, it is possible to map an OCaml 5.1 value binding
+onto an unique OCaml 5.0 encoded value binding. This works because the
+encoding used for value bindings in 5.0 constructs type expressions of
+the form &lt;code&gt;ø. typ&lt;/code&gt; that are not allowed in OCaml. We can thus
+use those special type expressions to recognise desugared value
+bindings.&lt;/p&gt;
+&lt;p&gt;Unfortunately, this is only the case when binding variables. Indeed,
+as soon as the pattern in the value binding is not a variable&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb5&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb5-1&quot;&gt;&lt;a href=&quot;#cb5-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; (x,y) : &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; * &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;the 5.0 parser desugars this value binding to&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb6&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb6-1&quot;&gt;&lt;a href=&quot;#cb6-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; ((x,y) : &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; * &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt;) = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;without any encoding of the type constraint. This means in particular
+that the 5.0 parser creates the same AST node for both&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb7&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb7-1&quot;&gt;&lt;a href=&quot;#cb7-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; ((x,y) : &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; * &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt;) = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;and&lt;/p&gt;
+&lt;div class=&quot;sourceCode&quot; id=&quot;cb8&quot;&gt;&lt;pre class=&quot;sourceCode ocaml&quot;&gt;&lt;code class=&quot;sourceCode ocaml&quot;&gt;&lt;span id=&quot;cb8-1&quot;&gt;&lt;a href=&quot;#cb8-1&quot; aria-hidden=&quot;true&quot; tabindex=&quot;-1&quot;&gt;&lt;/a&gt;&lt;span class=&quot;kw&quot;&gt;let&lt;/span&gt; (x,y) : &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; * &lt;span class=&quot;dt&quot;&gt;int&lt;/span&gt; = &lt;span class=&quot;dv&quot;&gt;0&lt;/span&gt;, &lt;span class=&quot;dv&quot;&gt;1&lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
+&lt;p&gt;which are two different constructs in OCaml 5.1.&lt;/p&gt;
+&lt;p&gt;Consequently, when we migrate a 5.0 parsetree of this form to the
+5.1, we have to decide if we should migrate this syntactic construct to
+the old parsetree node or to the new node. In this case, since the new
+syntactic node corresponds to a “more pleasant” syntactic form, we
+decided to favour this form.&lt;/p&gt;
+
+</description><pubDate>12 Jun 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">http://cambium.inria.fr/blog/florian-compiler-weekly-2023-06-12</guid></item><item><title>Florian’s OCaml compiler weekly, 5 June 2023</title><link>https://cambium.inria.fr/blog/florian-compiler-weekly-2023-06-05</link><description>
+
+
+&lt;p&gt;This series of blog post aims to give a short weekly glimpse into my
+(Florian Angeletti) daily work on the OCaml compiler. This week, the
+focus is on the release of the second alpha for OCaml 5.1.0.&lt;/p&gt;
+
+
+  
+
+&lt;h3 id=&quot;ocaml-5.1.0-second-alpha-release&quot;&gt;OCaml 5.1.0 second alpha
+release:&lt;/h3&gt;
+&lt;p&gt;The last two weeks I have spent most of my time preparing for the
+second alpha release of OCaml 5.1.0. This second alpha has just been
+published last Friday. This new alpha release is quite heavy in term of
+bug fixes. Indeed, this release contains two major fixes:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/11903&quot;&gt;Garbage
+Collector fix&lt;/a&gt;: before this second alpha, an idle domain (or more
+precisely a non-allocating domain) could slow down considerably the
+major collection. Indeed, the work attributed to each domain during a
+major collection was scaled in function of the local domain allocation
+rate. Consequently, a non-allocating domain would choose to do little to
+no GC work, leaving the GC unable to keep up with the real allocation
+rate. To solve this issue, the new alpha has introduced a global
+accounting for the allocation rate and a global distribution of GC work
+along the domains.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/11846&quot;&gt;Windows ABI
+fix&lt;/a&gt;, the full separation of the OCaml and C stacks in OCaml 5.0.0
+created an ABI violation on Windows. More precisely, the new OCaml stack
+was still satisfying the Windows x64 ABI requirements even if it was no
+longer necessary. Contrarily C functions might end up called with a
+malformed C stack. With this fix, the OCaml stack has been freed from
+the Windows C ABI while the C stack fulfils the correct
+requirements.&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Slightly less visible, we also have an important fix in the OCaml
+compiler-libs and a type system backward compatibility enhancement:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/12191&quot;&gt;compiler-libs
+fix&lt;/a&gt;: as discussed [previously]
+(http://gallium.inria.fr/blog/florian-compiler-weekly-2023-04-24/), the
+parser published in OCaml 5.1.0~alpha1 was dropping constraints on value
+bindings (for instance &lt;code&gt;let x :&amp;gt; [&amp;gt; X of int] = ...&lt;/code&gt;).
+This has been fixed in 5.1.0~alpha2. Unfortunately such changes this
+late in the release cycle will require more work in the ppxlib
+library.&lt;/p&gt;&lt;/li&gt;
+&lt;li&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/ocaml/ocaml/pull/12211&quot;&gt;type system
+compatibility enhancement&lt;/a&gt;: similarly, the backward compatibility
+improvement that I was discussing in my &lt;a href=&quot;http://gallium.inria.fr/blog/florian-compiler-weekly-2023-04-28&quot;&gt;last
+April blog post&lt;/a&gt; has been integrated in this second alpha. This
+change restores compatibility with some accidentally compiling OCaml
+code by using a more charitable interpretation for type annotation of
+the form &lt;code&gt;'a . [&amp;gt; X of 'a ] -&amp;gt; 'a -&amp;gt; 'a&lt;/code&gt;.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Finally, this second alpha release also contains a new backend for
+IBM s390x (which was contributed by IBM). Including a new architecture
+in an alpha release feels a bit daring. However, new backends have no
+effects on existing users and give us a wider testing environment for
+the new port. Consequently, I thought that it was sensible to integrate
+the new backend in the last alpha.&lt;/p&gt;
+&lt;p&gt;Overall, this second alpha release feels less stable that I would
+have wished, but the release process is definitively going forward. With
+this late release out of the door, my current plan is to focus on
+releasing a first beta release of OCaml 5.1.0 in the upcoming weeks. If
+everything goes well, we could have a final release of OCaml 5.1.0
+around mid-July.&lt;/p&gt;
+
+</description><pubDate>05 Jun 2023 08:00:00 +0000</pubDate><author>Florian Angeletti</author><guid isPermaLink="true">http://cambium.inria.fr/blog/florian-compiler-weekly-2023-05-06</guid></item></channel></rss>

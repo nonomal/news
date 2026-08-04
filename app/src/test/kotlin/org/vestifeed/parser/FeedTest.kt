@@ -9,6 +9,60 @@ import org.junit.Test
 class FeedTest {
 
     @Test
+    fun parsesResearchSwtchAtomFeedServedAsTextPlain() {
+        val result = javaClass.getResourceAsStream("/rss/research.swtch.com.feed.atom.xml")!!.use {
+            feed(it, "text/plain; charset=utf-8")
+        }
+
+        assertTrue("Expected FeedResult.Success but got $result", result is FeedResult.Success)
+
+        val feed = (result as FeedResult.Success).feed
+        assertTrue("Expected AtomFeed but got ${feed::class.simpleName}", feed is AtomFeed)
+
+        val atom = feed as AtomFeed
+        assertEquals("research!rsc", atom.title)
+        assertTrue(
+            "research!rsc should expose at least one entry",
+            atom.entries.isNotEmpty(),
+        )
+
+        atom.entries.forEachIndexed { index, entry ->
+            assertTrue(
+                "Entry $index should have a non-blank title",
+                entry.title.isNotBlank(),
+            )
+            assertTrue(
+                "Entry $index should have at least one link",
+                entry.links.isNotEmpty(),
+            )
+        }
+    }
+
+    @Test
+    fun parsesGalliumRssFeedServedAsX_rss_xml() {
+        val result = javaClass.getResourceAsStream("/rss/gallium.inria.fr.rss.xml")!!.use {
+            feed(it, "application/x-rss+xml")
+        }
+
+        assertTrue("Expected FeedResult.Success but got $result", result is FeedResult.Success)
+
+        val feed = (result as FeedResult.Success).feed
+        assertTrue("Expected RssFeed but got ${feed::class.simpleName}", feed is RssFeed)
+
+        val rss = feed as RssFeed
+        assertEquals(RssVersion.RSS_2_0, rss.version)
+        assertEquals("Gagallium", rss.channel.title)
+        assertEquals("https://cambium.inria.fr/blog/index.rss", rss.channel.link)
+
+        val items = rss.channel.items.getOrThrow()
+        assertEquals(10, items.size)
+
+        items.forEachIndexed { index, itemResult ->
+            assertTrue("Item $index failed to parse: $itemResult", itemResult.isSuccess)
+        }
+    }
+
+    @Test
     fun parsesHvgRssFeed() {
         val result = javaClass.getResourceAsStream("/rss/hvg.hu.rss.xml")!!.use {
             feed(it, "application/rss+xml")

@@ -279,6 +279,73 @@ class OpmlTest {
         )
     }
 
+    @Test
+    fun readsNullFailureOpml() {
+        val document = readFile("null-failure.opml").toOpml()
+
+        assertEquals(OpmlVersion.V_1_1, document.version)
+        assertEquals(9, document.outlines.size)
+        assertEquals(9, document.leafOutlines().size)
+
+        val firstLeaf = document.leafOutlines().first()
+        assertEquals("Gagallium", firstLeaf.text)
+        assertEquals("https://gallium.inria.fr/blog/index.rss", firstLeaf.xmlUrl)
+
+        importsGalliumFeedServedAsX_rss_xml(firstLeaf.xmlUrl!!)
+    }
+
+    private fun importsGalliumFeedServedAsX_rss_xml(feedUrl: String) {
+        val server = MockWebServer().apply { start() }
+        val db = Database(BundledSQLiteDriver(), ":memory:")
+        val api = Embedded(db = db, httpClient = OkHttpClient())
+
+        try {
+            val fixture = "gallium.inria.fr.rss.xml"
+            val body = javaClass.getResourceAsStream("/rss/$fixture")!!
+                .bufferedReader().use { it.readText() }
+            val mockUrl = server.url("/$fixture")
+
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/x-rss+xml")
+                    .setBody(body)
+            )
+
+            val result = runBlocking { api.addFeed(mockUrl) }
+            db.transaction {
+                db.feed.insertOrReplace(result.feed)
+                db.link.insertForFeed(result.feed.id, result.feedLinks)
+                result.entries.forEach { (entry, links) ->
+                    db.entry.insertOrReplace(listOf(entry))
+                    db.link.insertForEntry(entry.id, links)
+                }
+            }
+
+            val storedFeeds = db.feed.selectAll()
+            assertEquals(1, storedFeeds.size)
+
+            val feed = storedFeeds.single()
+            assertEquals("Gagallium", feed.title)
+            assertEquals("https://cambium.inria.fr/blog/index.rss", feed.id)
+
+            val entries = db.entry.selectByFeedId(feed.id)
+            assertEquals(
+                "Feed served as application/x-rss+xml must parse 10 entries",
+                10,
+                entries.size,
+            )
+            assertTrue(
+                "Feed served as application/x-rss+xml must produce a non-empty entry title",
+                entries.any { it.title.isNotBlank() },
+            )
+        } finally {
+            server.shutdown()
+        }
+
+        assertEquals(feedUrl, "https://gallium.inria.fr/blog/index.rss")
+    }
+
     private fun readFile(path: String) =
         javaClass.getResourceAsStream("/opml/$path")!!.readTextAndClose()
 

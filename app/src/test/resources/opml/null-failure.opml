@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.1">
+  <head>
+    <title>
+      Feeder
+    </title>
+  </head>
+  <body>
+    <outline title="Gagallium" text="Gagallium" type="rss" xmlUrl="https://gallium.inria.fr/blog/index.rss"/>
+    <outline title="Evan Jones - Software Engineer | Computer Scientist" text="Evan Jones - Software Engineer | Computer Scientist" type="rss" xmlUrl="https://www.evanjones.ca/index.rss"/>
+    <outline title="MDN recent changes to documents tagged Release" text="MDN recent changes to documents tagged Release" type="rss" xmlUrl="https://developer.mozilla.org/en-US/docs/feeds/rss/tag/Release"/>
+    <outline title="David Malcolm – Red Hat Developer" text="David Malcolm – Red Hat Developer" type="rss" xmlUrl="https://developers.redhat.com/blog/author/rhdmalcolm/feed/"/>
+    <outline title="D. Kriesel" text="D. Kriesel" type="rss" xmlUrl="https://feeds.feedburner.com/dkriesel-en"/>
+    <outline title="research!rsc" text="research!rsc" type="rss" xmlUrl="https://research.swtch.com/feed.atom"/>
+    <outline title="The Hacker Blog" text="The Hacker Blog" type="rss" xmlUrl="https://thehackerblog.com/feed/index.html"/>
+    <outline title="Vincent Canfield&apos;s Blog" text="Vincent Canfield&apos;s Blog" type="rss" xmlUrl="https://vc.gg/blog/feed/"/>
+    <outline title="Myon&apos;s Blog" text="Myon&apos;s Blog" type="rss" xmlUrl="https://www.df7cb.de/blog/index.rss"/>
+  </body>
+</opml>

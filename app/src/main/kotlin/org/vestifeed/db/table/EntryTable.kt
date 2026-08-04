@@ -337,6 +337,22 @@ class EntryTable(private val conn: SQLiteConnection) {
             }
     }
 
+    /**
+     * Bulk-mark every unread, non-bookmarked entry as read and clear the
+     * `ext_read_synced` flag so the next sync pushes the change to the
+     * server. The predicate mirrors `selectUnread` so the rows that
+     * disappear from the unread list are exactly the ones mutated here.
+     *
+     * Uses a single parameter-free statement so SQLite can plan the update
+     * without per-row binding.
+     */
+    fun markAllUnreadAsRead() {
+        conn.execSQL(
+            "UPDATE entry SET ext_read = 1, ext_read_synced = 0 " +
+                "WHERE ext_read = 0 AND ext_bookmarked = 0"
+        )
+    }
+
     fun updateBookmarkedAndBookmarkedSynced(
         id: String,
         extBookmarked: Boolean,

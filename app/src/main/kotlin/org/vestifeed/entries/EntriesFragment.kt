@@ -197,6 +197,10 @@ class EntriesFragment : AppFragment() {
             when (item.itemId) {
                 R.id.search -> openFragment(SearchFragment::class.java)
                 R.id.settings -> openFragment(SettingsFragment::class.java)
+                R.id.markAllAsRead -> {
+                    viewModel.markAllAsRead()
+                    true
+                }
                 R.id.notificationPermissionWarning -> {
                     onNotificationWarningClicked()
                     true

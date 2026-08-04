@@ -156,6 +156,67 @@ class EntryTest {
         assertEquals(0L, db.entry.selectCount())
     }
 
+    @Test
+    fun entryQueries_markAllUnreadAsRead_marksUnreadAndClearsSyncedFlag() {
+        val unread = createEntry(
+            extRead = false,
+            extReadSynced = true,
+            extBookmarked = false,
+        )
+        val unreadUnsynced = createEntry(
+            extRead = false,
+            extReadSynced = false,
+            extBookmarked = false,
+        )
+        val alreadyRead = createEntry(
+            extRead = true,
+            extReadSynced = true,
+            extBookmarked = false,
+        )
+        val bookmarkedUnread = createEntry(
+            extRead = false,
+            extReadSynced = true,
+            extBookmarked = true,
+        )
+        val bookmarkedRead = createEntry(
+            extRead = true,
+            extReadSynced = true,
+            extBookmarked = true,
+        )
+
+        db.entry.insertOrReplace(
+            listOf(unread, unreadUnsynced, alreadyRead, bookmarkedUnread, bookmarkedRead)
+        )
+
+        db.entry.markAllUnreadAsRead()
+
+        val unreadAfter = db.entry.selectById(unread.id)!!
+        assertEquals(true, unreadAfter.extRead)
+        assertEquals(false, unreadAfter.extReadSynced)
+
+        val unreadUnsyncedAfter = db.entry.selectById(unreadUnsynced.id)!!
+        assertEquals(true, unreadUnsyncedAfter.extRead)
+        assertEquals(false, unreadUnsyncedAfter.extReadSynced)
+
+        val alreadyReadAfter = db.entry.selectById(alreadyRead.id)!!
+        assertEquals(true, alreadyReadAfter.extRead)
+        assertEquals(true, alreadyReadAfter.extReadSynced)
+
+        val bookmarkedUnreadAfter = db.entry.selectById(bookmarkedUnread.id)!!
+        assertEquals(false, bookmarkedUnreadAfter.extRead)
+        assertEquals(true, bookmarkedUnreadAfter.extReadSynced)
+
+        val bookmarkedReadAfter = db.entry.selectById(bookmarkedRead.id)!!
+        assertEquals(true, bookmarkedReadAfter.extRead)
+        assertEquals(true, bookmarkedReadAfter.extReadSynced)
+    }
+
+    @Test
+    fun entryQueries_markAllUnreadAsRead_isNoOpWhenEmpty() {
+        db.entry.markAllUnreadAsRead()
+        assertEquals(0L, db.entry.selectCount())
+    }
+
     private fun createEntry(
         id: String = UUID.randomUUID().toString(),
         feedId: String = UUID.randomUUID().toString(),

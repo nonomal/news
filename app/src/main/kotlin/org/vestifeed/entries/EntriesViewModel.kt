@@ -198,6 +198,22 @@ class EntriesViewModel(
         }
     }
 
+    /**
+     * Mark every unread, non-bookmarked entry as read in a single bulk
+     * UPDATE, refresh the visible list, and queue a sync so the server
+     * eventually sees the new read flags. Unsafe to call from the main
+     * thread; the DB hit is dispatched to IO internally.
+     */
+    fun markAllAsRead() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                db.entry.markAllUnreadAsRead()
+            }
+            reload()
+            sync.runInBackground()
+        }
+    }
+
     private companion object {
         /** How often the entries list asks the DB if any new OG images arrived. */
         val OG_IMAGE_POLL_INTERVAL = 5.seconds

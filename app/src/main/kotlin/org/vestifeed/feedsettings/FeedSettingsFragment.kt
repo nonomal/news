@@ -6,7 +6,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.RadioButton
 import androidx.appcompat.app.AlertDialog
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import androidx.core.view.updatePadding
 import org.vestifeed.navigation.AppFragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -50,6 +53,20 @@ class FeedSettingsFragment : AppFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).let {
+                v.updatePadding(top = it.top)
+            }
+            insets
+        }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.settings) { v, insets ->
+            insets.getInsets(WindowInsetsCompat.Type.navigationBars()).let {
+                v.updatePadding(bottom = it.bottom)
+            }
+            insets
+        }
 
         binding.toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
 

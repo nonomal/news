@@ -1,0 +1,462 @@
+<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"
+	xmlns:content="http://purl.org/rss/1.0/modules/content/"
+	xmlns:wfw="http://wellformedweb.org/CommentAPI/"
+	xmlns:dc="http://purl.org/dc/elements/1.1/"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:sy="http://purl.org/rss/1.0/modules/syndication/"
+	xmlns:slash="http://purl.org/rss/1.0/modules/slash/"
+	>
+
+<channel>
+	<title>blarg</title>
+	<atom:link href="https://exple.tive.org/blarg/feed/" rel="self" type="application/rss+xml" />
+	<link>https://exple.tive.org/blarg</link>
+	<description>a message, and part of a system of messages</description>
+	<lastBuildDate>Sun, 12 Jul 2026 21:43:45 +0000</lastBuildDate>
+	<language>en-US</language>
+	<sy:updatePeriod>
+	hourly	</sy:updatePeriod>
+	<sy:updateFrequency>
+	1	</sy:updateFrequency>
+	<generator>https://wordpress.org/?v=6.6.2</generator>
+	<item>
+		<title>Spicy</title>
+		<link>https://exple.tive.org/blarg/2026/07/12/spicy/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Sun, 12 Jul 2026 14:29:38 +0000</pubDate>
+				<category><![CDATA[analog]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[food]]></category>
+		<category><![CDATA[life]]></category>
+		<category><![CDATA[science]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7098</guid>
+
+					<description><![CDATA[By weight: Two parts peeled ginger, and Two parts green onion, both roughly cut. Two parts peeled garlic and One part whole red Thai birds&#8217; eye chilies. &#8230; all in a glass jar with a loose lid. Add a generous tablespoon of cumin and coriander seed, then make a five or six percent brine &#8211; [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p>By weight: </p>
+<ul>
+<li>Two parts peeled ginger, and </li>
+<li>Two parts green onion, both roughly cut.</li>
+<li>Two parts peeled garlic and</li>
+<li>One part whole red Thai birds&#8217; eye chilies.</li>
+</ul>
+<p>&#8230; all in a glass jar with a loose lid. </p>
+<p>Add a generous tablespoon of cumin and coriander seed, then make a five or six percent brine &#8211; I use tap water and kosher salt, 20 parts water to one part salt by weight, it&#8217;s fine &#8211; and fill the jar the rest of the way. Then, put it in the fridge to ferment for two weeks or so. </p>
+<p>Give it a shake now and then, and if the lid is snug burp it every day or two.</p>
+<p>Letting it ferment two to three weeks seems like the right thing, I haven&#8217;t left it longer than that. Drain all the fluid off, setting that aside, and put all the solids in a blender. </p>
+<p>Blend thoroughly, adding the fluid back in slowly until you get a texture you like; then add one to two tablespoons of brown sugar to brighten it up a bit. </p>
+<p>This comes out pretty assertive as hot sauces go; that&#8217;s what I like, but if you want something a bit milder, try seeding the chilies, rather than reducing the proportions, before they go into the brine. </p>
+<p>That&#8217;s how I make my own hot sauce; there&#8217;s not much to it, the secret ingredient is mostly waiting. Fermenting stuff is kind of magic, it&#8217;s easy to believe that this is where alchemy comes from.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>The Personal Is Operational</title>
+		<link>https://exple.tive.org/blarg/2026/06/24/the-personal-is-operational/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Wed, 24 Jun 2026 03:17:03 +0000</pubDate>
+				<category><![CDATA[a/b]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[doom]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[irc]]></category>
+		<category><![CDATA[linux]]></category>
+		<category><![CDATA[lunacy]]></category>
+		<category><![CDATA[science]]></category>
+		<category><![CDATA[toys]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">http://exple.tive.org/blarg/?p=3933</guid>
+
+					<description><![CDATA[				<![CDATA[]]>]]></description>
+										<content:encoded><![CDATA[<p><center><a href="<a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55238811711/" title="Untitled"><img fetchpriority="high" decoding="async" src="https://live.staticflickr.com/65535/55238811711_eb626ef5e4_c.jpg" width="600" height="800" alt="Untitled"/></a></center></p>
+<p>It&#8217;s pretty weird that water isn&#8217;t compressible.</p>
+<p>You wouldn&#8217;t think so, but should you find yourself at the very the bottom of the Marianas Trench, the water pressure around you will be around a thousand times what you&#8217;d experience a yard under fresh air, but the <em>density</em> of that water is about the same as it is in a glass on your desk right now. </p>
+<p>This means a lot of things, but one of them is that water is just about perfect for transmitting sound.</p>
+<p>During the <a href="https://waynehale.wordpress.com/2014/11/09/unfamiliar-terms/">Cold War,</a> when Soviets were a thing and the threat of global thermonuclear war was also a thing, the U.S. military built a <a href="https://en.wikipedia.org/wiki/Seawolf-class_submarine">new class of submarines they called &#8220;Seawolf&#8221;</a>. They were intended to counter the threat of a &#8220;decapitation strike&#8221;, a nuclear attack launched from just off the east coast destroying the upper echelons of the American political and military decision-making apparatus before anyone had time to react and authorize a retaliation. </p>
+<p>At the time Soviet submarines were believed &#8211; or at least people repeatedly said it was believed, possibly a useful lie, possibly a meaningless distinction &#8211; capable of launching missiles undetected from close enough to the east coast for that to happen. This was, in the rationale of the day, a &#8220;plausible scenario&#8221;, a term of art in the American military meaning &#8220;a budget in the hundreds of billions.&#8221;</p>
+<p>While they only ended up building three of them &#8211; down from a planned 30, largely because the Soviet Union had the poor manners to suddenly and inconveniently stop existing before the first one put to sea &#8211; the relevant part of this already-long-winded story is this: the Seawolf line were the first submarines designed with the help of computers good enough to model things like hydrodynamic and hydroacoustic behavior in propeller design. Meaning, they were quiet. Quiet in a way that obsoleted the best passive sonar gear in the world, at the time; the story was that you had to be able to hear a hole in the ocean, a place where background noise should be but wasn&#8217;t. </p>
+<p>An incredible technical achievement, if one that had any reason to exist <em>at all</em> by the time it shipped. Anyone remember that weird six months before the destruction of the World Trade Center, when for some reason the American media apparatus was beating the drums for a war with China? As in, America&#8217;s largest trading partner, on the far side of an ocean, for <em>no reason at all</em>? This was the reason; all those contracts were trailing off with no reason to renew them in sight, and that huge chunk of the American economy whose only job is &#8220;build in preparation for major-power war&#8221; was looking at a future of literally nothing to do. </p>
+<p>Then suddenly they did, but that&#8217;s a different story. &#8220;Thanks, Osama.&#8221;</p>
+<p>Rambling old man story over, here we are 40 years later and data is a lot easier to work with than water. </p>
+<p>So much so that it&#8217;s possible to build a reliable statistical model of you even without your participation, just from the information you and your surrounding social networks happen to leak out. Particularly for anyone who can build that graph across different apparently unrelated services; you can opt out as hard as you want, but there&#8217;s a slot in that graph defined by the people around you who didn&#8217;t or couldn&#8217;t; a hole in the ocean of data, shaped a lot like real you.</p>
+<p>It&#8217;s the deep dissonance of knowing that things like this are going on all the time, pervasively &#8211; <a href="https://www.404media.co/airlines-sell-5-billion-plane-ticket-records-to-the-government-for-warrantless-searching/">this is just one of a long line of examples</a> &#8211; and even with all of that we&#8217;re still watching governments insist that it&#8217;s not enough. </p>
+<p>Despite the fact that the state can pinpoint your location at any moment &#8211; nobody throws out logs, and you know how cellphones work &#8211; and despite their keeping an archive of this model of your life going back as far as near-infinite storage capacity permits, somehow our governments still want every conversation you’re a part of from cradle to grave to be logged, legible and searchable and tied directly to your defined official identity. Because the data they already have is &#8211; somehow &#8211; not enough. </p>
+<p>For safety, we’re told. But the question is whose.</p>
+<p>Europe, and Canada are all trying to pass laws tying online participation to real identity directly, calling them &#8220;social media age restrictions&#8221;, when they&#8217;re really nothing more than identity verification systems that happen to include age. </p>
+<p>In the UK, whose institutions have had an authoritarian streak in them a mile wide for as long as they’ve existed, the authorities are letting peaceful protestors objecting to monstrous policies hold up whatever signs they want and chant in crowds of thousands, knowing they can be arrested at home later, alone, or at their community group, job site or job interview or family gathering, in front of their kids. </p>
+<p>That&#8217;s the &#8220;for who&#8221;. Knowing they can make an example of protesters away from the protest, away from the crowds and somewhere personal, the real safety these laws provide is the safety of the authorities. The worn-in-jackboot comfort of knowing they can always find you specifically, at a specific time or place where they have all the advantages and you are at your most vulnerable. </p>
+<p>But the truth is that anyone with the data can find you there. And that&#8217;s the thing that cannot be reconciled: while Western nations are rushing forward with de-anonymization and identify-verification mandates for their entire populations, for the convenience of the local thugs blessed with the force of law, elsewhere there&#8217;s an actual kinetic conflict raging on the Western doorstep, where both sides are leveraging the same information &#8211; information from dating services, fitness apps, cell towers, social media and advertisers just to name a few &#8211; to physically and effectively target people on the battlefield.</p>
+<p>People think of privacy as a thing we have but it isn’t one thing. Your privacy, our privacy, is our being able to choose for ourselves what we share about ourselves, and when, and with who, and the other word we have for that is dignity. Our inherent dignity as human beings. Our privacy is our agency over our dignity. </p>
+<p>But it&#8217;s also a shield.</p>
+<p>Today, the state of network security is so bad that there&#8217;s a de-facto <a href="https://www.techradar.com/pro/security/huge-onefly-data-breach-sees-traveler-ids-and-payment-details-leaked">Verification-To-Theft Identity pipeline</a> plugged into any system that asks you to scan your ID, but that&#8217;s <em>nothing</em> compared to the <a href="https://www.bbc.com/news/world-europe-66162502">the Strava</a>-to-<a href="https://www.mapulus.com/blog/strava-fitness-tracker-military-secrets-location-data">Deployment-Coordinates</a> problems, much less the <a href="https://cybernews.com/editorial/israel-hacked-iran-traffic-cameras-us-war/">IP-Camera-to-Missile-Delivery</a> tooling used all over the Middle East and <a href="https://www.theatlantic.com/international/2026/06/underground-intelligence-network-russia-ukraine/687578/">Catphish-To-Drone-Strike operations</a> playing out on the Ukrainian front right now.</p>
+<p>Data is just data, and in an information warfare context, human privacy and state sovereignty are <em>the same thing</em>. You wouldn&#8217;t think so, until you take a hard look into how they&#8217;re implemented and the attack surfaces they enable or deny, but they are the same thing and both of them are national security issues. </p>
+<p>Nobody will be made safer, by age verification. Nobody will be made safer by key escrow or mandating breakable encryption or stored chat logs, nobody but the police at least. But everyone will be put at risk by the systems that <em>have to exist</em> to implement them, systems purpose built to let you be precision targeted by anyone who so much as feels so inclined. The infrastructure under <a href="https://futurism.com/artificial-intelligence/police-ai-surveillance-stalking">bored cops stalking their exes</a> (or <a href="https://www.chch.com/chch-news/ottawa-police-chief-warns-officers-off-abusing-databases-for-sexual-misconduct/">anyone they want</a>), <a href="https://www.pbs.org/newshour/world/iran-built-a-vast-camera-network-to-control-dissent-israel-used-it-to-track-targets-ap-sources-say">oppressive states stalking their dissidents and foreign intelligence agencies stalking public officials</a> is all the same infrastructure, and <a href="https://cambridgeanalytica.org/data-breaches-scandals/passports-driver-licenses-exposed-public-internet-2026-51096/">it doesn&#8217;t care who uses it or how or why</a>. It can&#8217;t care, so we have to.</p>
+<p>We need to stop thinking about protecting The Children from social media and start thinking about protecting the country from social media, and how pervasive surveillance makes all of us, not just our kids but everyone, a target. </p>
+<p>Privacy is dignity, yes, privacy is safety, yes, and on top of that, on top of everything, privacy is an <em>operational military risk</em>. Our privacy, our inherent dignity as human beings, is a national security issue.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>nvwgf2umx.dll crash fix</title>
+		<link>https://exple.tive.org/blarg/2026/06/12/nvwgf2umx-dll-crash-fix/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Fri, 12 Jun 2026 19:23:25 +0000</pubDate>
+				<category><![CDATA[arcade]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[lunacy]]></category>
+		<category><![CDATA[parenting]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7036</guid>
+
+					<description><![CDATA[I had the aging-computer-toucher&#8217;s blessing-slash-curse of introducing my son to the Yin and Yang of Windows Problem Solving this week, with the emergence of an absolutely relentless nvwgf2umx.dll crash in the Unity engine he&#8217;s using for homework. The Yin is this: you have to buckle down and carefully read the error messages and logs first, [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55311099530/in/dateposted/" title="Untitled"><img decoding="async" src="https://live.staticflickr.com/65535/55311099530_b65c9b9d4e_b.jpg" width="768" height="1024" alt="Untitled"/></a></center></p>
+<p>I had the aging-computer-toucher&#8217;s blessing-slash-curse of introducing my son to the Yin and Yang of Windows Problem Solving this week, with the emergence of an absolutely relentless nvwgf2umx.dll crash in the Unity engine he&#8217;s using for homework.  </p>
+<p><strong>The Yin</strong> is this: you have to buckle down and carefully read the error messages and logs first, always. What has happened specifically, where and when did it start, what else is nearby in time and space and maybe related that changed, you know the drill. But especially the event logs, because they will almost always tell you what&#8217;s going on, and you have to do that because&#8230;</p>
+<p><strong>The Yang</strong> is that virtually all the &#8220;fixes&#8221; you&#8217;ll find with a search come from people who did not do that, people with no mental model of anything that happens and no interest in standing one up just trying random crap and hoping. Stack Overflow is gone and everything else is five nines worth of baseless, pointless, relentlessly superstitious nonsense, the late night infomercials of a demon-haunted world. </p>
+<p>I&#8217;m genuinely proud of my son for giving this second half a shot on his own, searching for answers and seeing hundreds of fire-up-the-incense-and-swing-the-cat suggestions like &#8220;&#8230;try re-seating your RAM after rubbing it with alcohol. If that doesn&#8217;t work, reconnect your Wifi. Turn your VPN on and off&#8221;, and I am not <em>joking at all</em>, and having the wit and presence to say &#8220;&#8230; aren&#8217;t those, like, entirely different other parts of the computer?&#8221;</p>
+<p>Yes. Yes they <em>are</em> entirely different parts of the computer, and this specifically is the grade of bullshit we have to wade through some days. </p>
+<p>&#8220;Is this just AI?&#8221; </p>
+<p>&#8220;No. People who didn&#8217;t really want to know things were running their mouths long before AI. This is where AI comes from though. &#8221;</p>
+<p>&#8220;OK&#8230;. Ok. So&#8230;. what do we do?&#8221;</p>
+<p>Unfortunately, the answer to that is the slog. The yin-and-yang metaphor falls apart here, the ancient belief that &#8220;there are ten thousand things between heaven and earth&#8221; doesn&#8217;t traditionally conclude with &#8220;&#8230; and most of them are bullshit&#8221;, and even though that line would make an <em>amazing</em> hanzi-smatter-grade tattoo, most of what we have to deal with here is bullshit. We have empiricism and stubbornness and we&#8217;re gonna win, but it&#8217;s going to be a slog. We&#8217;re going to build a mental model of what&#8217;s happening, or what might be happening, and we&#8217;re going to put the screws to that model until it gives us what we want, and it&#8217;s going to be a slog but we&#8217;re gonna win.</p>
+<p>Part of the slog is just reading everything you can; panning for patterns in a river of noise, trying to find that faint glimmer of a common thread, and in this case it came out easily: these people are all gamers. Which means they&#8217;re all machine-tweakers. And I, to my shame, have also at times indulged this reprehensible vice; I See Myself in these people because I Am these people. And when part of our model is &#8220;this problem overwhelmingly happens to gamers&#8221;, at least part of our path becomes clear. </p>
+<p>One of the Underknown Things in this equally-reprehensible so maybe I&#8217;m not so bad in comparison modern world of ours is that Graphics Processing Units are not just Processing Graphics, and their associated Drivers are not always in the driver&#8217;s seat. </p>
+<p>GPUs are Full Fledged Computers, they have Full Fledged Computer Problems, and one of those problems is that &#8220;<a href="https://en.wikipedia.org/wiki/Shader">shaders</a>&#8221; &#8211; and a bunch of other things but shaders as a class are the big one &#8211; are not actually clever little tinted-glass ways of prettying up the triangles our Graphics Processing Units are tasked with furiously gavaging into our eyeballs, they&#8217;re actually tiny, sometimes not so tiny programs that need to be compiled specifically for <em>your</em> version of <em>your</em> driver of <em>your</em> GPU on <em>your</em> operating system so they fit right into a specific part of the Rendering Pipeline, the pixel-related part of the chain of events between your Pressing X and whoever&#8217;s on the screen Not Dying. It&#8217;s My Blog And I&#8217;ll Talk Like This If I Want.</p>
+<p>But this means Compile All The Shaders, and the plan in a perfect world is that this compile-all-the-shaders work gets done the first time you run a game and that solves the whole your driver on your computer for your card problem for you for good. </p>
+<p>When that plan works it works great; starting up games is way, way faster specifically because &#8220;starting up a game&#8221; doesn&#8217;t also mean &#8220;&#8230; aaaaand also compile dozens or hundreds of these tiny programs first&#8221; every time you want to drive or fly or murder-hobo your way through your world-ambience of choice.</p>
+<p>But that means when it doesn&#8217;t work &#8211; when, hypothetically, a driver update happens and a tiny program compiled for what&#8217;s-not-your-driver-anymore is pressed into service &#8211; the results are predictable. And in our case, those results will show up in the Windows Event Viewer saying, crash in nvwgf2umx.dll.</p>
+<p>I am guessing that all stands for nVidia, Windows Graphics Foundation To UMX; Windows Graphics Foundation is the long forgotten birth name of DirectX, and I assume UMX is some equally ancient nVidia internal-representation thing, maybe Universal Middleware something. Who knows. It doesn&#8217;t matter. </p>
+<p>What matters is, we know what problems this shape are called, and maybe we know exactly what this problem is now. This is Full Fledged Computer Problem Number Zero, it&#8217;s cache invalidation, and we know exactly what to do about cache invalidation.  </p>
+<p>There might be a more elegant solution to this, but this works: You go to the nVidia website and download the driver package for your card. You&#8217;ll get the choice that amounts to &#8220;stable or gamer&#8221;, which I sort of love for giving us a glimpse of what nVidia really thinks of gamers, but pick whatever. Let your heart guide you. </p>
+<p>The important thing is that when you install the new driver, you&#8217;ll be given the option to install the whole-ass nVidia Application, and you&#8217;re going to pick that, and the next choice you&#8217;ll have is to pick &#8220;clean install&#8221;, which for our purposes means &#8220;clear stale cache&#8221;, and that&#8217;s the checkbox that solves the problem.</p>
+<p>You won&#8217;t even have to reboot, I bet, but given where we are and how we got here it&#8217;s probably a good idea. That none of this is the default behaviour in manual updates, much less during windows-stock driver updates, much less as a &#8220;repairing GPU cache&#8221; option after a crash (crache?) is something that I&#8217;d like somebody somewhere &#8211; probably someone with a black shirt with a nice green logo on it, if I&#8217;m lucky maybe somebody with a very nice leather jacket &#8211; to think really hard about.</p>
+<p>But yeah, here I am still writing this stuff up in the hope that understanding machines still matters and maybe it helps. So I hope this helps.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Racletture Redux</title>
+		<link>https://exple.tive.org/blarg/2026/06/12/racletture-redux/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Fri, 12 Jun 2026 15:13:09 +0000</pubDate>
+				<category><![CDATA[a/b]]></category>
+		<category><![CDATA[business]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[doom]]></category>
+		<category><![CDATA[fail]]></category>
+		<category><![CDATA[flickr]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[hate]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[losers]]></category>
+		<category><![CDATA[lunacy]]></category>
+		<category><![CDATA[science]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7040</guid>
+
+					<description><![CDATA[Ted Chiang recently wrote that: The term deepfake traditionally refers to photos, audio, and video, but when it comes to discussions of consciousness, we need to regard text as a deepfake medium as well. Just as it is vastly easier to generate a realistic video of an astronaut in orbit around Alpha Centauri than it [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55310685846/in/dateposted/" title="Untitled"><img decoding="async" src="https://live.staticflickr.com/65535/55310685846_8d966c7e91_b.jpg" width="1024" height="768" alt="Untitled"/></a></center></p>
+<p><a href="https://en.wikipedia.org/wiki/Ted_Chiang">Ted Chiang</a> recently <a href="https://www.theatlantic.com/philosophy/2026/06/no-artificial-intelligence-is-not-conscious/687378/?gift=R2zbWGNBDp_xHqoa7Q8ZRp-EV6jGaHiamQBxQQlMJqI">wrote that</a>:</p>
+<blockquote><p>The term <em>deepfake</em> traditionally refers to photos, audio, and video, but when it comes to discussions of consciousness, we need to regard text as a deepfake medium as well. Just as it is vastly easier to generate a realistic video of an astronaut in orbit around Alpha Centauri than it is to develop an interstellar propulsion technology, it is vastly easier to generate a plausible simulacrum of a conversation between two conscious beings than it is to develop a computer program that is conscious and has a genuine desire to communicate with a human. The primary difference between deepfake photos and LLM conversations is that the people who generate the former are deliberately trying to fool others, and many of the people who elicit the latter from LLMs have inadvertently fooled themselves.</p></blockquote>
+<p>A month ago, I watched <a href="https://exple.tive.org/blarg/2026/05/02/lies-damned-lies-and-stochastics/">Gemini make up a bunch of nonsense</a> out of absolutely nothing more than two words in novel sequence. It all looked very believable, except that before I hit publish the entire idea existed exactly nowhere in the universe outside my imagination. </p>
+<p>Fortunately for all of us, I owned up to that right here on this very blarg, and I know the Big G has visited me many, many times since to make sure none of the posts I&#8217;ve put up over the last twenty years haven&#8217;t changed, so let&#8217;s check in with them to catch up on the state of international fromage relativism:</p>
+<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55330711130/in/dateposted/" title="dfb7bd08e6677f92"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/55330711130_340119e4a2_b.jpg" width="1024" height="985" alt="dfb7bd08e6677f92"/></a></center></p>
+<p>In a <a href="https://the-decoder.com/landmark-german-ruling-declares-googles-ai-overviews-are-googles-own-words-and-makes-it-liable-for-false-answers/">recently-concluded court case</a>:</p>
+<blockquote><p>&#8220;&#8230; Google argued that users could check the linked sources themselves to verify whether the AI summary was correct. Users generally knew &#8220;that information generated with AI should not be blindly trusted,&#8221; the company claimed. That&#8217;s a remarkable statement given the scale at which Google serves AI overviews. It&#8217;s also not entirely true, since the connection between sources and generated content isn&#8217;t always there.&#8221;</p></blockquote>
+<p>No kidding. </p>
+<p>Fortunately, the German court decided companies are accountable for the text that they&#8217;ve caused to appears on their websites, whatever the tooling:</p>
+<blockquote><p>If Google were only liable for obvious violations, victims would have no real legal recourse when the AI makes false claims. The third parties whose websites served as sources hadn&#8217;t even made the statements in question. So victims couldn&#8217;t sue the sources, and under existing rules they couldn&#8217;t effectively sue Google either. [&#8230;] An AI&#8217;s opinion is &#8220;not the expression of an acquired conviction of the persons expressing it, but the result of an algorithm,&#8221; the court wrote.<br />
+Offering AI-powered research is &#8220;above all an expression of Google&#8217;s business activities&#8221; and &#8220;at most a secondary expression of an interest in being able to freely express one&#8217;s opinion and beliefs.&#8221;</p></blockquote>
+<p>That ellipsis is doing some lifting, I admit. Lucky for you, you already know that information generated by Mike Hoye&#8217;s Imagination &#8220;should not be blindly trusted&#8221;, and that &#8220;people can dig deeper and verify.&#8221; The system works!</p>
+<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55330438888/in/dateposted/" title="38a7dfebaf09a142"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/55330438888_c768037911_o.png" width="619" height="782" alt="38a7dfebaf09a142"/></a></center></p>
+<p>Also this week <a href="https://www.ft.com/content/b3828e92-4961-4b39-84f0-c42f33be3c3f">in the Financial Times</a>:</p>
+<blockquote><p>A KPMG report on how AI is being used by businesses across the world exaggerated adoption of the technology with bogus case studies that appear to have been based on AI hallucinations. The October report, &#8220;Redefining excellence in the age of agentic AI&#8221;, made numerous false claims about the use of AL by organisations including the Swiss bank UBS, the UK&#8217;s National Health Service and the public transit groups Swiss Federal Railways and Transport for London. The inaccuracies were identified as AI hallucinations by the research group GPTZero and verified by the FT. After being alerted to the issue, UBS said it would ask KPMG to remove the false claims, and the Big Four firm on Thursday pulled the report from some of its websites.</p></blockquote>
+<p>No kidding.</p>
+<p>These tools are glorified next-word-prediction machines churning out biblically-accurate madlibs with no more ability to tell truth from lies from nonsense than a meat grinder has to tell steak from rat from hand. </p>
+<p>Those last two questions aren&#8217;t really directed at a lookup table in a server farm, of course. </p>
+<p>You called yourselves engineers, the zenith of the field, the absolute cream of the crop organizing the world&#8217;s data to make it universally accessible and useful, and you built this and you knew what it was and you know what it is and you shipped it anyway. That&#8217;s what&#8217;s on my mind today. Where is your self respect.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Aeons</title>
+		<link>https://exple.tive.org/blarg/2026/06/02/aeons/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Tue, 02 Jun 2026 21:40:39 +0000</pubDate>
+				<category><![CDATA[beauty]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[doom]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[microfiction]]></category>
+		<category><![CDATA[weird]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7033</guid>
+
+					<description><![CDATA[I met a traveller from an antique land Who said: A vast and jagged temple Stands in the desert. Near it, on the sand, Half sunk, a shattered placard lies, whose angles, And jagged prose and words in long dead language, Tell that its builder well those dangers read Which yet survive, radiant of these [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p>I met a traveller from an antique land<br />
+Who said: A vast and jagged temple<br />
+Stands in the desert. Near it, on the sand,<br />
+Half sunk, a shattered placard lies, whose angles,<br />
+And jagged prose and words in long dead language,<br />
+Tell that its builder well those dangers read<br />
+Which yet survive, radiant of these lifeless things,<br />
+The salt that held them and the stone that burns:<br />
+And in its message these words appear:<br />
+“This is not a place of honour; nothing valued is here.<br />
+We considered ourselves a powerful culture.”<br />
+Nothing beside remains. Round the decay<br />
+Of that colossal wreck, boundless and bare<br />
+The lone and level sands stretch far away.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Dimming The Lights</title>
+		<link>https://exple.tive.org/blarg/2026/05/29/dimming-the-lights/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Fri, 29 May 2026 14:52:54 +0000</pubDate>
+				<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[science]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7027</guid>
+
+					<description><![CDATA[A few days ago, over on Mastodon I asked if there were existing tools that can provide warnings about whether or not a video might be seizure-inducing. My (naive, racked with engineers&#8217; disease) brain assumed that you could probably pull something plausible about this straight out of the video stream, if you were dealing with [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p>A few days ago, over on Mastodon I asked if there were existing tools that can provide warnings about whether or not a video might be seizure-inducing. My (naive, racked with engineers&#8217; disease) brain assumed that you could probably pull something plausible about this straight out of the video stream, if you were dealing with video at all; several sequential frames with large differences between them seem easy to detect, but of course lots of things seem easy when you don&#8217;t know anything about anything.</p>
+<p>Unsurprisingly, these tools already exist. </p>
+<p>One, from EA of all people, <a href="https://github.com/electronicarts/IRIS">is called IRIS</a> and gives you an interesting, if somewhat dry, CSV result; at these timestamps are these issues. Seems useful!</p>
+<p>The Trace project&#8217;s <a href="https://trace.umd.edu/peat/">PEAT</a>, their Photosensitive Epilepsy Analysis Tool, has a graphical interface and looks a little easier to use for less mechanized investigation.</p>
+<p>Finally, we found a project called <a href="https://github.com/OMARVII/Neuroshield">Neuroshield</a> that has a <a href="https://chromewebstore.google.com/detail/neuroshield/dbmdhjhmfmdnohcphcmdlfaiipdoldfk">chrome addon</a>, and there&#8217;s a similar but unrelated <a href="https://addons.mozilla.org/en-US/firefox/addon/epilepsy-blocker/">Epilepsy Blocker</a> for Firefox as well.</p>
+<p>I can&#8217;t speak to the validity of these tools, though I assume IRIS and PEAT are both good enough for liability purposes. I&#8217;m still interested in exploring the detection-via-compression approach, because &#8211; if it works, and again who knows &#8211; that seems like something that could be implemented on-device with trivial overhead. In any case, I&#8217;m leaving this here for future reference. I&#8217;d be glad for additions, and maybe you&#8217;ll find it useful.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Some Tiny Signal</title>
+		<link>https://exple.tive.org/blarg/2026/05/28/some-tiny-signal/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Thu, 28 May 2026 01:23:17 +0000</pubDate>
+				<category><![CDATA[a/b]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[hate]]></category>
+		<category><![CDATA[life]]></category>
+		<category><![CDATA[mozilla]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=7018</guid>
+
+					<description><![CDATA[Jimmy Wales once said that the biggest reason Nupedia &#8211; the predecessor to Wikipedia you&#8217;ve never heard of &#8211; failed was insisting on control instead of trust. &#8220;&#8230;The very earliest mistake was the assumption that you needed this rigorous top-down process of control.&#8221; By &#8220;once&#8221; I mean he said that a little over 90 days [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55297878299/in/dateposted/" title="Untitled"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/55297878299_627bbdb632_b.jpg" width="768" height="1024" alt="Untitled"/></a></center></p>
+<p><a href="https://en.wikipedia.org/wiki/Jimmy_Wales">Jimmy Wales</a> once said that the biggest reason <a href="https://en.wikipedia.org/wiki/Nupedia">Nupedia</a> &#8211; the predecessor to Wikipedia you&#8217;ve never heard of &#8211; failed was <a href="https://www.forbes.com/sites/rodgerdeanduncan/2026/02/17/wikipedias-founder-on-building-systems-that-assume-good-faith/">insisting on control instead of trust</a>.  &#8220;&#8230;The very earliest mistake was the assumption that you needed this rigorous top-down process of control.&#8221;</p>
+<p>By &#8220;once&#8221; I mean he said that a little over 90 days ago. </p>
+<p>I set up a small, regular donation as soon I got to a point in life that I could afford it; I&#8217;ve even kept it going while I was unemployed. It isn&#8217;t a lot of money, because I don&#8217;t have a lot of money.</p>
+<p>But I can&#8217;t see how union-busting aligns with these fundamental ideas Wikipedia claims to be founded on and aspire to, to <a href="https://wikimediafoundation.org/who-we-are/values">any of these &#8220;values&#8221;</a>. So with the news of <a href="https://medium.com/@jakeorlowitz/wikipedia-is-doing-the-capitalist-thing-56a393232943">Wikimedia&#8217;s decision to fire their lead developer and entire community team</a> I sent this to <code>donate@wikimedia.org</code> earlier today:</p>
+<blockquote><p>
+In light of Wikimedia&#8217;s decision to fire its lead developer and community team as a reprisal for organizing, I&#8217;ve cancelled my monthly donation. </p>
+<p>I expected better from you.</p>
+<p>&#8211; mhoye</p></blockquote>
+<p>I hate this. I hate it. Wikipedia is one of the greatest collective achievements in human history, and unions have never been a threat to competent, humane management, only the other kind. But I don&#8217;t have any other meaningful way to send this tiny, maybe insignificant message.</p>
+<p>I expected better. </p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Lies, Damned Lies And Stochastics</title>
+		<link>https://exple.tive.org/blarg/2026/05/02/lies-damned-lies-and-stochastics/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Sat, 02 May 2026 22:06:19 +0000</pubDate>
+				<category><![CDATA[a/b]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[doom]]></category>
+		<category><![CDATA[fail]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[hate]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[losers]]></category>
+		<category><![CDATA[science]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<category><![CDATA[weird]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=6998</guid>
+
+					<description><![CDATA[This is fun. I was into the cheese banter with some friends over on Mastodon &#8211; as one does &#8211; and I came up with a clever phrase that I thought would make a clever joke. At least I thought it was novel; I sometimes wonder if I&#8217;m the first person to come up with [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p>This is fun. </p>
+<p>I was into the cheese banter with some friends over on Mastodon &#8211; as one does &#8211; and I came up with a clever phrase that I thought would make a clever joke. At least I thought it was novel; I sometimes wonder if I&#8217;m the first person to come up with phrases like this so I decided to check. </p>
+<p>So I looked up &#8220;raclette maximalism&#8221;.</p>
+<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55244712641/in/dateposted/" title="raclette-maximalism"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/55244712641_da5983bfd9_o.png" width="765" height="1059" alt="raclette-maximalism"/></a></center></p>
+<p>Underneath that &#8220;show more&#8221; button is four hundred words explaining what &#8220;raclette maximalism&#8221; means, traditions behind it and the key aspects of the experience. It goes into protracted detail about how you can set an &#8220;eclectic scene&#8221; and &#8220;elevate the experience&#8221;, finishing off with three product-placement suggestions of &#8220;Recommended Gear for the Maximum Hosting Experience.&#8221; </p>
+<p>And then we see the search part, saying &#8220;no results found.&#8221; Because those results don&#8217;t exist. Because &#8220;Raclette Maximalism&#8221; doesn&#8217;t exist.</p>
+<p>I made it up; it came out of my imagination and I typed it into a search box a few seconds later, and the <em>biggest software company in the world</em> gave me a confident, detailed explanation of what it means and how I can do it at home, and it is <em>not a real thing that exists at all.</em></p>
+<p>A lot of people have bet their careers and their companies on this tech and it just fabricates completely unfounded stories at the slightest prompt with no warning or hesitation at all. The biggest software company in the world has built a system that lies relentlessly, and people are building their whole identities on this shifting, sucking epistemological quicksand.  </p>
+<p>And I don&#8217;t know why so many people can&#8217;t see it, or decide they don&#8217;t want to. The fact of it is right there staring back at us.</p>
+<p>In fact, &#8220;Raclette Maximalism&#8221; is a traditional Swiss-German art in the intersectional Bauhaus/Dada tradition of hosting a party where the hosts add melted Raclette to progressively more elaborate and preposterous ingredients, starting with the traditional toasted bread potatos and continuing to cured meats, exotic animals, out of season vegetables, unwitting house pets, convenient books and magazines, the furniture, and eventually the guests themselves.</p>
+<p>I made that up too and it&#8217;s also all nonsense, but soon enough that nonsense will be part of the corpus parroted back to us with total mechanical disregard for veracity or consistency or even reality, because it sure looks like nobody in the language model world has quarterly goals for those. </p>
+<p>I understand morale is in the gutter at the big G these days, and I&#8217;d be a lot more sympathetic if that wasn&#8217;t the right way to feel about building software that lies to people. It must be hard to measure things like &#8220;integrity&#8221;, and even if you could it would probably make other, more important numbers like &#8220;money&#8221; go up a bit less quickly. I guess if it&#8217;s not a line on a graph that points at a quarterly bonus, some people can convince themselves almost anything is no more or less real or meaningful than, say, raclette maximalism.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>Meshtaculous</title>
+		<link>https://exple.tive.org/blarg/2026/04/29/meshtaculous/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Wed, 29 Apr 2026 18:37:57 +0000</pubDate>
+				<category><![CDATA[Uncategorized]]></category>
+		<category><![CDATA[awesome]]></category>
+		<category><![CDATA[digital]]></category>
+		<category><![CDATA[documentation]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[linux]]></category>
+		<category><![CDATA[lunacy]]></category>
+		<category><![CDATA[toys]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=6933</guid>
+
+					<description><![CDATA[Mesh networking and LoRaWAN &#8211; Long Range, Wide Area Networking &#8211; is an interesting, relatively recent distributed networking layer that seems to be attracting people interested in cooperative antidependency, inexpensive resiliarchism and larval stage tinkercomms. You know: the usual people. That crowd. If commodity hardware, docs on the ragged edge between incompleteness and ambiguity and [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/55237908317/" title="Untitled"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/55237908317_0fd3149fca_b.jpg" width="768" height="1024" alt="Untitled"/></a></center></p>
+<p>Mesh networking and LoRaWAN &#8211; Long Range, Wide Area Networking &#8211; is an interesting, relatively recent distributed networking layer that seems to be attracting people interested in cooperative antidependency, inexpensive resiliarchism and larval stage tinkercomms. You know: the usual people. That crowd. If commodity hardware, docs on the ragged edge between incompleteness and ambiguity and ongoing wire-level bickering are the warm bath you pull to make glancing at the razor feel romantic, maybe this is your new jam. </p>
+<p>I&#8217;m starting out with cheap hardware and a Debian shell because if I don&#8217;t do everything the hardest possible way I don&#8217;t know who I am. The hardware is the <a href="https://meshtastic.org/docs/hardware/devices/heltec-automation/">Heltec v4 boards</a> plus the GPS addon widgets, and I&#8217;ve greebled them up with nicer than stock external antennas and a homebrewed case, all of which are surprisingly inexpensive for what they are. The Debian is Debian Sid, named after the <a href="https://disney.fandom.com/wiki/Sid_Phillips">kid in the first Toy Story</a>, and for the record Pixar was doing that kid dirty from day zero. The One Different Kid in a suburb as sterile and white as a brand-new urinal, building his own Toys and their Stories out of whatever he could scrounge, who goes on to a career cleaning up after other people, he&#8217;s the monster? Mel Brooks never quite said that history is written by the <a href="https://www.youtube.com/watch?v=HnXKE0nfAjI">victor&#8217;s merchandising department</a>, but I bet if he&#8217;d known he could cash in on an Extended MBCU he would have. Pixar, I see you. We all see you. </p>
+<p>You start by installing <code>esptool</code> from the Apt Repositories in The Traditional Manner, &#8220;the Apt Repositories&#8221; and &#8220;The Traditional Manner&#8221; both being towering monuments to the humanity of humanity, totems to a better future made of electrons and love. We&#8217;re going to flash the Heltec v4 chip with that esptool in a minute, but figuring out what to flash and how is going to be an ordeal. If you&#8217;ve spared a glance down at the wall of text under this line you&#8217;ve probably guessed that ordeal is the only thing on the menu today, so let&#8217;s get into the slog.    </p>
+<p>The Meshtastic site says &#8220;use a chromium-based browser to&#8221;, and I checked out of that sentence before the second &#8216;m&#8217;; this house is a <a href="https://www.firefox.com/en-US/firefox/152.0a1/releasenotes/">ride or die Firefox Nightly shop</a>, and if you want to keep the Web stop using Chrome. <a href="https://addons.mozilla.org/en-CA/firefox/addon/ublock-origin/?utm_source=addons.mozilla.org&#038;utm_medium=mhoye&#038;utm_content=search">You can have a real adblocker</a> and the inside of your head will stop feeling like the trash bins behind marketing-industry client-state headquarters. You don&#8217;t need to live like this and I refuse. </p>
+<p>Instead, we&#8217;re going to try hard and believe in ourselves, each other, and a secret third thing.</p>
+<p>A few conflicting terminologies to get out of the way; this is a pretty new field, a unified perspective is hard to come by and the docs are scattered and raw in that very human way that <acronym title="haha">meshes</acronym> terribly with the failures of modern search, so building a mental model of what everything means and does here is still an exercise. But imagine a yard rake that&#8217;s also a footgun. Imagine dozens of them scattered about the pristine lawns of Sid&#8217;s etherized suburb, muttering something about freedom, closing your eyes and going for a stroll. Imagine the sounds and shouting, echoing from the distance, seemingly every direction, knowing that people say it don&#8217;t be like it is, but it do. I promised you an ordeal and that means you get paragraphs like this one.</p>
+<p>To save you the hilarity of imagining what happens next that will &#8211; we&#8217;ve all Been Around The Rake Yard Block once or twice, I assume everyone still reading this has Seen Some Linux &#8211; probably not shock you: &#8220;Meshtastic&#8221; and &#8220;Meshcore&#8221; are two entirely different things that live on the same hardware strata and absolutely don&#8217;t talk to each other at all. </p>
+<p>Meshcore seems to be targeting reliable fixed-position infrastructure, Meshtastic seems to be aiming for more flexible, mobile-as-in-moving-around-friendly communications, the wire protocols are incompatibly different, and since I&#8217;m just playing with it at the moment I&#8217;m using Meshtastic. MQTT is a message queueing, publish-subscribe thing for small networked widgets we&#8217;re going to be using. The scripts we&#8217;re provided are largely unusable, and we&#8217;re going to have to figure out things like &#8220;exactly what specific chip is in this widget&#8221; to make headway. You know, the usual usual.</p>
+<p>(As an aside, If you want to take the infrastructure route instead, make a note that the Meshcore community are wrangling <a href="https://blog.meshcore.io/2026/04/23/the-split">their first Famous Asshole Problem</a>; it looks like people with correct opinions have got critical mass and a handle on it, but it&#8217;s something you should have on your scope before pushing off the pier.)</p>
+<p>Anyway, the ordeal. Let&#8217;s get back to the ordealing. The Meshtastic site will tell you that flashing from the command line is not recommended or supported, which is good and true mainly because everything else they have to say about the process is not. We&#8217;re going to be cutting open their provided scripts and scrying a better future from their entrails in a moment; there are a bunch of textual mismatches between how their intended esptool wants to live and how Debian&#8217;s does, meaninglessly-abrasive stuff like underscores vs. hyphens, and we&#8217;re just gonna need to grit our teeth and ordeal with it.</p>
+<p>We start at the <a href="https://heltec.org/project/wifi-lora-32-v4/">Heltec site proper</a> where we learn the v4 is <a href="https://heltec.org/project/wifi-lora-32-v4/#:~:text=Base%20on%20ESP32%2DS3R2%20%26%20SX%2D1262%2C%20supports%20Wi%2DFi%20b%2Fg%2Fn%2C%20BLE%2C%20and%20LoRa%20communication">&#8220;Base on <code>ESP32-S3R2 & SX-1262</code>, supports Wi-Fi b/g/n, BLE, and LoRa communication&#8221;</a>, and that&#8217;s the first hint we need that we&#8217;re looking for the <code>ESP32S3</code> version of the Meshtastic firmware.</p>
+<p>That firmware (released November 2025, current as of April 2026) lives here: <code><a href="https://github.com/meshtastic/firmware/releases/download/v2.7.15.567b8ea/firmware-esp32s3-2.7.15.567b8ea.zip">https://github.com/meshtastic/firmware/releases/download/v2.7.15.567b8ea/firmware-esp32s3-2.7.15.567b8ea.zip</a></code>.</p>
+<p>Download it but don&#8217;t open it.</p>
+<p>Listen, I&#8217;m an ardent believer in restorative justice. I believe we have a moral obligation to treat incarceration as the last, most reluctantly-taken resort of a just society. But the people who make zip files that barf their contents into same directory they&#8217;re in should be thrown in nerd jail forever, and should the day dawn that we come to our collective senses, realize that we can outgrow the worst habits of our history together and throw open those barred doors to put the cruelties of the carceral state behind us, we should let those people out last. </p>
+<p>This is one of those files. Put it in its own folder before you unzip it. Next, create a folder called &#8220;binaries&#8221; and move all the <code>*.bin</code> and <code>*.json</code> files into it. We only need a few so let&#8217;s get the rest out of the way; open up ./binaries/, select everything called &#8220;firmware-heltec-v4-whatever&#8221; and move them back. </p>
+<p>The Heltec-V4 manual specifies that you should plug in that little antenna they provide before you plug in the power, so do that now; I think the antenna opposite the USB-C jack, not the one on the back. When you plug it in, run <code>sudo dmesg</code> to figure out where your machine thinks this new widget is plugged in. On my machine, the tail end of it looks like this:</p>
+<blockquote>
+<pre>
+[ 1922.519468] usb 1-1.1: New USB device found, idVendor=303a, idProduct=1001, bcdDevice= 1.00
+[ 1922.519497] usb 1-1.1: New USB device strings: Mfr=1, Product=2, SerialNumber=3
+[ 1922.519509] usb 1-1.1: Product: heltec_wifi_lora_32 v4 (16 MB FLASH, 2 MB PSRAM)
+[ 1922.519531] usb 1-1.1: Manufacturer: Espressif Systems
+[ 1922.519546] usb 1-1.1: SerialNumber: 441BF66ACEB8
+[ 1922.573824] cdc_acm 1-1.1:1.0: ttyACM0: USB ACM device
+</pre>
+</blockquote>
+<p>The important bits for our purposes are that our device has been found and given a name, <strong>ttyACM0</strong> &#8211; meaning <code>/dev/ttyACM0</code> &#8211; when we&#8217;re referring to it later.</p>
+<p>Next, we take a look at our install scripts. As an aside:</p>
+<blockquote>
+<pre>
+$&gt;head -n 4 device-update.sh
+
+#!/usr/bin/env bash
+
+PYTHON=${PYTHON:-$(which python3 python | head -n 1)}
+CHANGE_MODE=false
+</pre>
+</blockquote>
+<p>Stop invoking python from bash, statements dreamed up by the utterly deranged, etc etc. </p>
+<p>On to the promised evisceration. The version of esptool this script is expecting is written in The Pythonic Version Of The Traditional Manner which I guess is also a towering monument to the humanity of humanity but in the non-good way, so here we are invoking a guessed-at version of python from an arbitrary version of bash. It&#8217;s the chocolate and peanut butter of legibility and error handling if chocolate was garbage and peanut butter was also garbage.</p>
+<p>We&#8217;re not going to run this code, which is good because it doesn&#8217;t work, but we do need to tear it apart to figure out what will work. So: edit <code>device-update.sh</code> however you like editing things, and change everywhere that says &#8220;<code>$ESPTOOL_CMD</code>&#8221; to &#8220;<code>echo $ESPTOOL_CMD</code>&#8220;. Now once we run it, it will tell us what it was intended to do, instead of not doing that and giving us an inscrutable stack trace instead.</p>
+<p>What you get from that is:</p>
+<blockquote>
+<pre>
+Trying to flash update ./firmware-heltec-v4-2.7.22.96dd647.bin
+echo /usr/bin/python3 -m esptool --port /dev/TTYACM0 --baud 115200 write_flash 0x10000 ./firmware-heltec-v4-2.7.22.96dd647.bin
+</pre>
+</blockquote>
+<p>&#8230; and this gives us enough to work with. We don&#8217;t need to worry about baud rates, and &#8211; and this was tediously-won knowledge, let me tell you what &#8211; that 0x10000 offset is a mistake that breaks everything, but now we can go back to our local, apt-blessed esptool and this, at long last, is our invocation:</p>
+<p><code>sudo esptool --chip esp32s3 --port /dev/ttyACM0 write_flash 0x0 firmware-heltec-v4-2.7.15.567b8ea.bin</code></p>
+<p>Type that in, and do not hit enter. Now: with your Heltec chip plugged in, with the antenna in place, push down both buttons for a second or two, then release the RST button &#8211; the one closest to you, if the USB-C port on the chip is on your left &#8211; holding the PRG button for an extra second or so. Release that and hit enter.</p>
+<p>If all has gone well, you&#8217;ll get this:</p>
+<blockquote>
+<pre>
+$ sudo esptool --chip esp32s3 --port /dev/ttyACM0 write_flash 0x00 firmware-heltec-v4-2.7.15.567b8ea.bin
+esptool.py v4.7.0
+Serial port /dev/ttyACM0
+Connecting...
+Chip is ESP32-S3 (QFN56) (revision v0.2)
+Features: WiFi, BLE, Embedded PSRAM 2MB (AP_3v3)
+Crystal is 40MHz
+MAC: 44:1b:f6:6a:ce:b8
+Uploading stub...
+Running stub...
+Stub running...
+Configuring flash size...
+Flash will be erased from 0x00000000 to 0x00204fff...
+Compressed 2115760 bytes to 1313715...
+Wrote 2115760 bytes (1313715 compressed) at 0x00000000 in 14.2 seconds (effective 1193.8 kbit/s)...
+Hash of data verified.
+
+Leaving...
+Hard resetting via RTS pin...
+</pre>
+</blockquote>
+<p>Unplug it, plug it back in, and with that I think our ordeal comes to a close. It should be ready to pair via BT to your mobile device of choice. You might need &#8211; via that tiny onscreen menu &#8211; to deactivate, reboot and reactivate bluetooth to get it to consent to pair; I think I had this problem &#8211; and hopefully you won&#8217;t have it at all &#8211; because of various flash-to-the-wrong-offset mistakes I made testing, but that&#8217;s how I recovered. I&#8217;m using whichever version Meshtastic came out of the iOS App Store, but I&#8217;m expecting and Android device in a few weeks and I&#8217;ll give that a shot when it arrives.</p>
+<p>I&#8217;ve got more to work out here &#8211; <code>meshtasticd</code> isn&#8217;t set up for me yet, and I&#8217;ve got more to figure out as far as linux-native devices and network bridging are concerned &#8211; but this works! I can see messages going by and mine are going out. It&#8217;s a start.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+		<item>
+		<title>The Decline</title>
+		<link>https://exple.tive.org/blarg/2026/04/08/the-decline/</link>
+		
+		<dc:creator><![CDATA[mhoye]]></dc:creator>
+		<pubDate>Wed, 08 Apr 2026 14:24:06 +0000</pubDate>
+				<category><![CDATA[documentation]]></category>
+		<category><![CDATA[doom]]></category>
+		<category><![CDATA[future]]></category>
+		<category><![CDATA[interfaces]]></category>
+		<category><![CDATA[life]]></category>
+		<category><![CDATA[losers]]></category>
+		<category><![CDATA[vendetta]]></category>
+		<guid isPermaLink="false">https://exple.tive.org/blarg/?p=6938</guid>
+
+					<description><![CDATA[This isn&#8217;t pessimism, I think; it&#8217;s evidence. That being better people stubbornly refuses to stop mattering is an existence proof that better worlds are possible. During the first few weeks of Operation Desert Storm &#8211; we&#8217;d routinely see videos of entire battalions of Iraqi soldiers walking up to the first American GI they could find [&#8230;]]]></description>
+										<content:encoded><![CDATA[<p><center><a data-flickr-embed="true" href="https://www.flickr.com/photos/mhoye/54933950727/in/dateposted/" title="Untitled"><img loading="lazy" decoding="async" src="https://live.staticflickr.com/65535/54933950727_2eb6353b63_h.jpg" width="1200" height="1600" alt="Untitled"/></a></center></p>
+<p>This isn&#8217;t pessimism, I think; it&#8217;s evidence. That being better people stubbornly refuses to stop mattering is an existence proof that better worlds are possible.</p>
+<p>During the first few weeks of <a href="https://en.wikipedia.org/wiki/Gulf_War">Operation Desert Storm</a> &#8211; we&#8217;d routinely see videos of entire battalions of Iraqi soldiers walking up to the first American GI they could find waving white flags, believing that the worst thing that could happen to them at the hands of the American military was a shower, an MRE and a pack of cigarettes. The mythos of America and the American military as just actor was largely intact then, and that mythos saved a lot of American lives. The idea that the allied forces would be &#8220;greeted as liberators&#8221; &#8211; seemingly jingoist nonsense, to politically suspicious students of history &#8211; was, surprisingly, turning out to be true.</p>
+<p>And <a href="https://en.wikipedia.org/wiki/Abu_Ghraib_torture_and_prisoner_abuse">then the Abu Ghraib torture site came to light</a>, and that all stopped dead.</p>
+<p>Suddenly the prospect of surrendering yourself to American custody meant what those students of history would have told anyone who&#8217;d listen what it always had meant; maybe getting tortured to death and maybe getting sexually humiliated as part of the process. Everyone saw; if that was your choice, better to die fighting. In days the entire tide of that conflict in that whole region changed. The whole world knew, and there was no recovering from it.</p>
+<p>We&#8217;re looking at the long unwinding of that story here today, everywhere. America &#8211; Trump, yes, but <em>America</em> &#8211; launched this doomed, misguided, idiotic war for no purpose, on a bedrock of rambling posturing lies, in the middle of the last meaningful peace negotiations they&#8217;ll ever see. Nobody can or will believe in Americans, or even the idea of America, again. That&#8217;s over now. </p>
+<p>I think the only real question left is how can the rest of the world manage the unwinding of dying empires that don&#8217;t particularly want or realize they need unwinding. What does America make, these days? Obsolete cars, innovative financial instruments, rented software, guns and corn. Did I miss anything?</p>
+<p>Certainly, I wonder what Britain minus London looks like on a spreadsheet when you take &#8220;innovative financial instruments&#8221; and &#8220;rent&#8221; &#8211; meaning &#8220;play money for the rich&#8221; and &#8220;value extraction from the poor&#8221;, respectively &#8211; out of the equations. Alanis Obomsawin once, and often paraphrased, said &#8220;When the last tree is cut, the last fish is caught, and the last river is polluted; when to breathe the air is sickening, you will realize, too late, that wealth is not in bank accounts and that you can’t eat money.&#8221; What&#8217;s the all-money side of that proverbial coin? I, naively, believe money is useful even as solar and batteries (and renewable power in general I think) slowly redefine the people&#8217;s entire relationship with the State, while the petro-legacy versions of said States thrash their way into well-earned graves.</p>
+<p>But once the last haven is shuttered, once the last rent is sought, once the last hoards of wealth are taxed&#8230; well. Who are you, what is left, when money on its own is not enough to make money?</p>
+<p>It&#8217;s corny, I guess, but part of the answer to that is that being better people stubbornly refuses to stop mattering, that better worlds are stubbornly refusing to stop being possible.</p>
+]]></content:encoded>
+					
+		
+		
+			</item>
+	</channel>
+</rss>

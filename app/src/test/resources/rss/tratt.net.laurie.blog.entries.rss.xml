@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="0.92">
+
+<channel>
+<title>Laurence Tratt: Blog</title>
+<link>https://tratt.net/</link>
+<description>Laurence Tratt</description>
+<language>en-gb</language>
+
+<item>
+<pubDate>Tue, 30 Jun 2026 10:50 +0000</pubDate>
+<title>Local Reasoning for Global Properties</title>
+<link>https://tratt.net/laurie/blog/2026/local_reasoning_for_global_properties.html</link>
+<guid>https://tratt.net/laurie/blog/2026/local_reasoning_for_global_properties.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 09 Jun 2026 11:40 +0000</pubDate>
+<title>Test-case Reducers Are Underappreciated Debugging Tools</title>
+<link>https://tratt.net/laurie/blog/2026/test_case_reducers_are_underappreciated_debugging_tools.html</link>
+<guid>https://tratt.net/laurie/blog/2026/test_case_reducers_are_underappreciated_debugging_tools.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 15 Apr 2026 12:35 +0000</pubDate>
+<title>Retrofitting JIT Compilers into C Interpreters</title>
+<link>https://tratt.net/laurie/blog/2026/retrofitting_jit_compilers_into_c_interpreters.html</link>
+<guid>https://tratt.net/laurie/blog/2026/retrofitting_jit_compilers_into_c_interpreters.html</guid>
+</item>
+
+<item>
+<pubDate>Mon, 12 Jan 2026 15:57 +0000</pubDate>
+<title>PLISS 2026</title>
+<link>https://tratt.net/laurie/blog/2026/pliss_2026.html</link>
+<guid>https://tratt.net/laurie/blog/2026/pliss_2026.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 12 Nov 2025 16:25 +0000</pubDate>
+<title>Upcoming Talk in London</title>
+<link>https://tratt.net/laurie/blog/2025/upcoming_talk_in_london.html</link>
+<guid>https://tratt.net/laurie/blog/2025/upcoming_talk_in_london.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 12 Nov 2025 11:05 +0000</pubDate>
+<title>Async and Finaliser Deadlocks</title>
+<link>https://tratt.net/laurie/blog/2025/async_and_finaliser_deadlocks.html</link>
+<guid>https://tratt.net/laurie/blog/2025/async_and_finaliser_deadlocks.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 29 Oct 2025 13:45 +0000</pubDate>
+<title>What Context Can Bring to Terminal Mouse Clicks</title>
+<link>https://tratt.net/laurie/blog/2025/what_context_can_bring_to_terminal_mouse_clicks.html</link>
+<guid>https://tratt.net/laurie/blog/2025/what_context_can_bring_to_terminal_mouse_clicks.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 16 Sep 2025 10:55 +0000</pubDate>
+<title>Why Firsts Matter</title>
+<link>https://tratt.net/laurie/blog/2025/why_firsts_matter.html</link>
+<guid>https://tratt.net/laurie/blog/2025/why_firsts_matter.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 06 Aug 2025 10:50 +0000</pubDate>
+<title>LLM Inflation</title>
+<link>https://tratt.net/laurie/blog/2025/llm_inflation.html</link>
+<guid>https://tratt.net/laurie/blog/2025/llm_inflation.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 22 Jul 2025 10:35 +0000</pubDate>
+<title>Comparing the Glove80 and Maltron keyboards</title>
+<link>https://tratt.net/laurie/blog/2025/comparing_the_glove80_and_maltron_keyboards.html</link>
+<guid>https://tratt.net/laurie/blog/2025/comparing_the_glove80_and_maltron_keyboards.html</guid>
+</item>
+
+<item>
+<pubDate>Mon, 14 Jul 2025 10:30 +0000</pubDate>
+<title>The LLM-for-software Yo-yo</title>
+<link>https://tratt.net/laurie/blog/2025/the_llm_for_software_yoyo.html</link>
+<guid>https://tratt.net/laurie/blog/2025/the_llm_for_software_yoyo.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 02 Apr 2025 11:20 +0000</pubDate>
+<title>The Fifth Kind of Optimisation</title>
+<link>https://tratt.net/laurie/blog/2025/the_fifth_kind_of_optimisation.html</link>
+<guid>https://tratt.net/laurie/blog/2025/the_fifth_kind_of_optimisation.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 25 Mar 2025 11:50 +0000</pubDate>
+<title>Better Shell History Search</title>
+<link>https://tratt.net/laurie/blog/2025/better_shell_history_search.html</link>
+<guid>https://tratt.net/laurie/blog/2025/better_shell_history_search.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 28 Jan 2025 11:15 +0000</pubDate>
+<title>Can We Retain the Benefits of Transitive Dependencies Without Undermining Security?</title>
+<link>https://tratt.net/laurie/blog/2024/can_we_retain_the_benefits_of_transitive_dependencies_without_undermining_security.html</link>
+<guid>https://tratt.net/laurie/blog/2024/can_we_retain_the_benefits_of_transitive_dependencies_without_undermining_security.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 27 Nov 2024 12:25 +0000</pubDate>
+<title>Structured Editing and Incremental Parsing</title>
+<link>https://tratt.net/laurie/blog/2024/structured_editing_and_incremental_parsing.html</link>
+<guid>https://tratt.net/laurie/blog/2024/structured_editing_and_incremental_parsing.html</guid>
+</item>
+
+<item>
+<pubDate>Mon, 25 Nov 2024 13:45 +0000</pubDate>
+<title>How I Prepare to Make a Video on Programming</title>
+<link>https://tratt.net/laurie/blog/2024/how_i_prepare_to_make_a_video_on_programming.html</link>
+<guid>https://tratt.net/laurie/blog/2024/how_i_prepare_to_make_a_video_on_programming.html</guid>
+</item>
+
+<item>
+<pubDate>Sun, 10 Nov 2024 09:25 +0000</pubDate>
+<title>pizauth: HTTPS redirects</title>
+<link>https://tratt.net/laurie/blog/2024/pizauth_https_redirects.html</link>
+<guid>https://tratt.net/laurie/blog/2024/pizauth_https_redirects.html</guid>
+</item>
+
+<item>
+<pubDate>Wed, 21 Aug 2024 12:30 +0000</pubDate>
+<title>Recording and Processing Spoken Word</title>
+<link>https://tratt.net/laurie/blog/2024/recording_and_processing_spoken_word.html</link>
+<guid>https://tratt.net/laurie/blog/2024/recording_and_processing_spoken_word.html</guid>
+</item>
+
+<item>
+<pubDate>Fri, 31 May 2024 10:10 +0000</pubDate>
+<title>Why the Circular Specification Problem and the Observer Effect Are Distinct</title>
+<link>https://tratt.net/laurie/blog/2024/why_the_circular_specification_problem_and_the_observer_effect_are_distinct.html</link>
+<guid>https://tratt.net/laurie/blog/2024/why_the_circular_specification_problem_and_the_observer_effect_are_distinct.html</guid>
+</item>
+
+<item>
+<pubDate>Tue, 14 May 2024 11:00 +0000</pubDate>
+<title>What Factors Explain the Nature of Software?</title>
+<link>https://tratt.net/laurie/blog/2024/what_factors_explain_the_nature_of_software.html</link>
+<guid>https://tratt.net/laurie/blog/2024/what_factors_explain_the_nature_of_software.html</guid>
+</item>
+
+</channel>
+</rss>

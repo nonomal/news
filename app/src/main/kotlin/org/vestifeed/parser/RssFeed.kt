@@ -11,6 +11,8 @@ import java.util.Locale
 private val RFC_822_FORMATS = listOf(
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US),
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss X", Locale.US),
+    SimpleDateFormat("EEE, dd MMM yyyy HH:mm Z", Locale.US),
+    SimpleDateFormat("EEE, dd MMM yyyy HH:mm X", Locale.US),
 )
 
 data class RssFeed(
@@ -21,6 +23,7 @@ data class RssFeed(
 
 enum class RssVersion {
     RSS_2_0,
+    RSS_0_92,
 }
 
 data class RssChannel(
@@ -104,6 +107,7 @@ fun rssFeed(document: Document): Result<RssFeed> {
 
     val version = when (rawVersion) {
         "2.0" -> RssVersion.RSS_2_0
+        "0.92" -> RssVersion.RSS_0_92
         else -> return Result.failure(Exception("Unsupported RSS version: $rawVersion"))
     }
 

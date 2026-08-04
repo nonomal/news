@@ -44,6 +44,12 @@
     <string name="bookmarked">نشانک‌شده</string>
     <string name="search">جستجو</string>
     <string name="clear_search_input">تمیز کردن ورودی جستجو</string>
+    <string name="find_in_page">Find in page</string>
+    <string name="find_match_n_of_n">%1$d / %2$d</string>
+    <string name="find_no_matches">No matches</string>
+    <string name="previous_match">Previous match</string>
+    <string name="next_match">Next match</string>
+    <string name="close_search">Close search</string>
     <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
     <string name="no_results">No results</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">شما برنامه‌ای که بتواند این پادکست را پخش کنید ندارید.</string>

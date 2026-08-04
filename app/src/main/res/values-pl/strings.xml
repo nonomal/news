@@ -44,6 +44,12 @@
     <string name="bookmarked">W zakładkach</string>
     <string name="search">Szukaj</string>
     <string name="clear_search_input">Wyczyść dane wyszukiwania</string>
+    <string name="find_in_page">Find in page</string>
+    <string name="find_match_n_of_n">%1$d / %2$d</string>
+    <string name="find_no_matches">No matches</string>
+    <string name="previous_match">Previous match</string>
+    <string name="next_match">Next match</string>
+    <string name="close_search">Close search</string>
     <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
     <string name="no_results">No results</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">Nie masz aplikacji, które mogą odtwarzać ten podcast.</string>

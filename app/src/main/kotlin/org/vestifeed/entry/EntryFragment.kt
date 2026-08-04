@@ -6,9 +6,13 @@ import android.content.Intent
 import android.graphics.Rect
 import android.graphics.Typeface
 import android.os.Bundle
+import android.text.Editable
 import android.text.Html
+import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
+import android.text.style.BackgroundColorSpan
 import android.text.style.BulletSpan
 import android.text.style.QuoteSpan
 import android.text.style.URLSpan
@@ -17,12 +21,15 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import androidx.core.content.ContextCompat
 import androidx.core.text.parseAsHtml
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -65,6 +72,27 @@ class EntryFragment : AppFragment() {
 
     private val enclosuresAdapter = createEnclosuresAdapter()
 
+    private val findInPageMatches = mutableListOf<FindInPageMatch>()
+    private val findInPageSpans = mutableListOf<BackgroundColorSpan>()
+    private var currentMatchSpan: BackgroundColorSpan? = null
+    private var currentMatchIndex: Int = -1
+    private var isSearchBarVisible: Boolean = false
+
+    private val highlightColor: Int by lazy {
+        ContextCompat.getColor(requireContext(), R.color.find_in_page_highlight)
+    }
+    private val currentMatchColor: Int by lazy {
+        ContextCompat.getColor(requireContext(), R.color.find_in_page_current_match)
+    }
+
+    private val searchTextWatcher = object : TextWatcher {
+        override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+        override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+        override fun afterTextChanged(s: Editable?) {
+            applyFindInPage(s?.toString().orEmpty())
+        }
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -79,6 +107,19 @@ class EntryFragment : AppFragment() {
 
         binding.toolbar.setNavigationOnClickListener {
             parentFragmentManager.popBackStack()
+        }
+
+        binding.closeSearchButton.setOnClickListener { closeFindInPage() }
+        binding.previousMatchButton.setOnClickListener { navigateFindInPageMatch(-1) }
+        binding.nextMatchButton.setOnClickListener { navigateFindInPageMatch(1) }
+        binding.searchInput.addTextChangedListener(searchTextWatcher)
+        binding.searchInput.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                navigateFindInPageMatch(1)
+                true
+            } else {
+                false
+            }
         }
 
         binding.enclosures.apply {
@@ -128,9 +169,144 @@ class EntryFragment : AppFragment() {
     }
 
     override fun onDestroyView() {
+        clearFindInPageHighlights()
+        binding.searchInput.removeTextChangedListener(searchTextWatcher)
         super.onDestroyView()
         _binding = null
     }
+
+    private fun toggleFindInPage() {
+        if (isSearchBarVisible) closeFindInPage() else openFindInPage()
+    }
+
+    private fun openFindInPage() {
+        binding.searchBar.isVisible = true
+        isSearchBarVisible = true
+        binding.searchInput.requestFocus()
+        val imm = requireContext().getSystemService(InputMethodManager::class.java)
+        imm?.showSoftInput(binding.searchInput, 0)
+    }
+
+    private fun closeFindInPage() {
+        if (binding.searchInput.text?.isNotEmpty() == true) {
+            binding.searchInput.setText("")
+        }
+        binding.searchInput.clearFocus()
+        val imm = requireContext().getSystemService(InputMethodManager::class.java)
+        imm?.hideSoftInputFromWindow(binding.searchInput.windowToken, 0)
+        binding.searchBar.isVisible = false
+        isSearchBarVisible = false
+    }
+
+    private fun applyFindInPage(query: String) {
+        clearFindInPageHighlights()
+        if (query.isEmpty()) {
+            updateFindInPageCounter()
+            return
+        }
+        collectFindInPageTextViews().forEach { view ->
+            val spannable = ensureMutableText(view)
+            val source = spannable.toString()
+            var index = 0
+            while (index < source.length) {
+                val found = source.indexOf(query, index, ignoreCase = true)
+                if (found < 0) break
+                val end = found + query.length
+                val span = BackgroundColorSpan(highlightColor)
+                spannable.setSpan(span, found, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+                findInPageSpans.add(span)
+                findInPageMatches.add(FindInPageMatch(view, found, end))
+                index = end
+            }
+        }
+        if (findInPageMatches.isNotEmpty()) {
+            currentMatchIndex = 0
+            highlightCurrentFindInPageMatch()
+        }
+        updateFindInPageCounter()
+    }
+
+    private fun navigateFindInPageMatch(direction: Int) {
+        if (findInPageMatches.isEmpty()) return
+        val size = findInPageMatches.size
+        currentMatchIndex = ((currentMatchIndex + direction) % size + size) % size
+        highlightCurrentFindInPageMatch()
+        updateFindInPageCounter()
+    }
+
+    private fun highlightCurrentFindInPageMatch() {
+        currentMatchSpan?.let { span ->
+            val view = findInPageMatches.getOrNull(currentMatchIndex)?.view ?: return@let
+            (view.text as? Spannable)?.removeSpan(span)
+        }
+        val match = findInPageMatches.getOrNull(currentMatchIndex) ?: return
+        val span = BackgroundColorSpan(currentMatchColor)
+        (match.view.text as? Spannable)?.setSpan(
+            span,
+            match.start,
+            match.end,
+            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+        )
+        currentMatchSpan = span
+        scrollToFindInPageMatch(match)
+    }
+
+    private fun clearFindInPageHighlights() {
+        findInPageMatches.forEach { match ->
+            val spannable = match.view.text as? Spannable ?: return@forEach
+            findInPageSpans.forEach { spannable.removeSpan(it) }
+            currentMatchSpan?.let { spannable.removeSpan(it) }
+        }
+        findInPageMatches.clear()
+        findInPageSpans.clear()
+        currentMatchSpan = null
+        currentMatchIndex = -1
+        updateFindInPageCounter()
+    }
+
+    private fun updateFindInPageCounter() {
+        binding.matchCounter.text = if (findInPageMatches.isEmpty()) {
+            getString(R.string.find_match_n_of_n, 0, 0)
+        } else {
+            getString(
+                R.string.find_match_n_of_n,
+                currentMatchIndex + 1,
+                findInPageMatches.size,
+            )
+        }
+        binding.previousMatchButton.isEnabled = findInPageMatches.isNotEmpty()
+        binding.nextMatchButton.isEnabled = findInPageMatches.isNotEmpty()
+    }
+
+    private fun scrollToFindInPageMatch(match: FindInPageMatch) {
+        val layout = match.view.layout ?: return
+        val line = layout.getLineForOffset(match.start)
+        val rect = Rect(0, layout.getLineTop(line), match.view.width, layout.getLineBottom(line))
+        match.view.requestRectangleOnScreen(rect, false)
+    }
+
+    private fun collectFindInPageTextViews(): List<TextView> {
+        val views = mutableListOf<TextView>()
+        views.add(binding.title)
+        for (i in 0 until binding.summaryView.childCount) {
+            val child = binding.summaryView.getChildAt(i)
+            when (child) {
+                is TextView -> views.add(child)
+                is ViewGroup -> (child.getChildAt(0) as? TextView)?.let { views.add(it) }
+            }
+        }
+        return views
+    }
+
+    private fun ensureMutableText(textView: TextView): SpannableStringBuilder {
+        val current = textView.text
+        if (current is SpannableStringBuilder) return current
+        val builder = SpannableStringBuilder(current)
+        textView.text = builder
+        return builder
+    }
+
+    private data class FindInPageMatch(val view: TextView, val start: Int, val end: Int)
 
     private fun loadEntry() {
         viewLifecycleOwner.lifecycleScope.launch {
@@ -178,6 +354,7 @@ class EntryFragment : AppFragment() {
         }
         menu.findItem(R.id.feedSettings)?.isVisible = true
         menu.findItem(R.id.share)?.isVisible = true
+        menu.findItem(R.id.findInPage)?.isVisible = true
 
         binding.contentContainer.isVisible = true
         binding.toolbar.title = feedTitle
@@ -274,6 +451,11 @@ class EntryFragment : AppFragment() {
                     putExtra(Intent.EXTRA_TEXT, firstAlternateLink.href.toString())
                 }
                 startActivity(Intent.createChooser(intent, ""))
+                return true
+            }
+
+            R.id.findInPage -> {
+                toggleFindInPage()
                 return true
             }
         }

@@ -1,11 +1,19 @@
 package org.vestifeed.opml
 
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import org.vestifeed.parser.AtomLinkRel
+import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
+import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.*
 import java.io.InputStream
 import java.nio.charset.Charset
 import java.util.UUID
 import org.junit.Test
+import org.vestifeed.backend.Embedded
+import org.vestifeed.db.Database
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
 
@@ -125,6 +133,150 @@ class OpmlTest {
     fun readsMozillaOpml() {
         val document = readFile("mozilla.opml").toOpml()
         assertEquals(2, document.outlines.size)
+    }
+
+    @Test
+    fun readsFeederOpml() {
+        val document = readFile("feeder.opml").toOpml()
+
+        assertEquals(OpmlVersion.V_1_1, document.version)
+        assertEquals(4, document.outlines.size)
+        assertEquals(4, document.leafOutlines().size)
+
+        val expected = listOf(
+            "Free software jobs" to "https://static.fsf.org/fsforg/rss/jobs.xml",
+            "FSF News" to "https://static.fsf.org/fsforg/rss/news.xml",
+            "fossjobs.net" to "https://www.fossjobs.net/rss/all/",
+            "L'Agenda du Libre" to "https://www.agendadulibre.org/events.rss",
+        )
+
+        val parsed = document.leafOutlines().map { it.text to it.xmlUrl }
+        assertEquals(expected, parsed)
+
+        document.leafOutlines().forEach { outline ->
+            assertEquals("", outline.htmlUrl)
+            assertEquals(false, outline.extOpenEntriesInBrowser)
+            assertNull(outline.extShowPreviewImages)
+            assertEquals("", outline.extBlockedWords)
+        }
+
+        importsAllFourFeeds(document)
+    }
+
+    private fun importsAllFourFeeds(document: OpmlDocument) {
+        val server = MockWebServer().apply { start() }
+        val db = Database(BundledSQLiteDriver(), ":memory:")
+        val api = Embedded(db = db, httpClient = OkHttpClient())
+
+        try {
+            val fixtures = mapOf(
+                "https://static.fsf.org/fsforg/rss/jobs.xml" to "fsf.jobs.rdf.xml",
+                "https://static.fsf.org/fsforg/rss/news.xml" to "fsf.news.rdf.xml",
+                "https://www.fossjobs.net/rss/all/" to "fossjobs.net.rss.xml",
+                "https://www.agendadulibre.org/events.rss" to "agendadulibre.events.rdf.xml",
+            )
+
+            val baseUrl = server.url("/")
+            val mockUrlByOriginal = mutableMapOf<String, HttpUrl>()
+
+            for ((originalUrl, fixture) in fixtures) {
+                val body = javaClass.getResourceAsStream("/rss/$fixture")!!
+                    .bufferedReader().use { it.readText() }
+                val mockUrl = baseUrl.newBuilder()
+                    .addPathSegments(fixture)
+                    .build()
+                mockUrlByOriginal[originalUrl] = mockUrl
+                server.enqueue(
+                    MockResponse()
+                        .setResponseCode(200)
+                        .setHeader("Content-Type", "application/rss+xml")
+                        .setBody(body)
+                )
+            }
+
+            document.leafOutlines().forEach { leaf ->
+                val mockUrl = mockUrlByOriginal[leaf.xmlUrl!!]!!
+                val result = runBlocking { api.addFeed(mockUrl) }
+                db.transaction {
+                    db.feed.insertOrReplace(result.feed)
+                    db.link.insertForFeed(result.feed.id, result.feedLinks)
+                    result.entries.forEach { (entry, links) ->
+                        db.entry.insertOrReplace(listOf(entry))
+                        db.link.insertForEntry(entry.id, links)
+                    }
+                }
+            }
+
+            val storedFeeds = db.feed.selectAll()
+            assertEquals(4, storedFeeds.size)
+
+            val titles = storedFeeds.map { it.title }.toSet()
+            assertEquals(
+                setOf("Free software jobs", "FSF News", "fossjobs.net", "L'Agenda du Libre"),
+                titles,
+            )
+
+            val feedIds = storedFeeds.map { it.id }.toSet()
+            assertEquals(
+                setOf(
+                    "http://www.fsf.org/resources/jobs/listing",
+                    "http://www.fsf.org/news/aggregator",
+                    "https://www.fossjobs.net/",
+                    "https://www.agendadulibre.org/",
+                ),
+                feedIds,
+            )
+
+            for (feed in storedFeeds) {
+                val entries = db.entry.selectByFeedId(feed.id)
+                assertTrue(
+                    "Feed ${feed.title} should have at least one entry",
+                    entries.isNotEmpty(),
+                )
+            }
+
+            assertFirstEntryPublished(
+                title = "Free software jobs",
+                storedFeeds = storedFeeds,
+                db = db,
+                expectedPublished = java.time.OffsetDateTime.parse("2026-03-10T12:04:09Z"),
+            )
+            assertFirstEntryPublished(
+                title = "FSF News",
+                storedFeeds = storedFeeds,
+                db = db,
+                expectedPublished = java.time.OffsetDateTime.parse("2026-06-19T21:13:07Z"),
+            )
+            assertFirstEntryPublished(
+                title = "fossjobs.net",
+                storedFeeds = storedFeeds,
+                db = db,
+                expectedPublished = java.time.OffsetDateTime.parse("2026-07-09T11:19:01Z"),
+            )
+            assertFirstEntryPublished(
+                title = "L'Agenda du Libre",
+                storedFeeds = storedFeeds,
+                db = db,
+                expectedPublished = java.time.OffsetDateTime.parse("2026-07-18T04:24:06Z"),
+            )
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    private fun assertFirstEntryPublished(
+        title: String,
+        storedFeeds: List<FeedTable.Feed>,
+        db: Database,
+        expectedPublished: java.time.OffsetDateTime,
+    ) {
+        val feed = storedFeeds.single { it.title == title }
+        val firstEntry = db.entry.selectByFeedId(feed.id).first()
+        assertEquals(
+            "Feed '$title' first entry should have published date parsed from the feed",
+            expectedPublished.toInstant(),
+            firstEntry.published.toInstant(),
+        )
     }
 
     private fun readFile(path: String) =

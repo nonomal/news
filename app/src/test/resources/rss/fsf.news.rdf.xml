@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:syn="http://purl.org/rss/1.0/modules/syndication/" xmlns="http://purl.org/rss/1.0/">
+
+
+
+<channel rdf:about="http://www.fsf.org/news/aggregator/RSS">
+  <title>FSF News</title>
+  <link>http://www.fsf.org/news/aggregator</link>
+  <description></description>
+  <image rdf:resource="http://www.fsf.org/logo.png"/>
+
+  <items>
+    <rdf:Seq>
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/statement-regarding-gnu-savannah-security-reports"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2026-librelocal-meetup-update"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2026-job-opportunity-fsf-engineering-and-certification-manager"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/librelocal-2026"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/eko-k-a-owen-joins-the-fsf-board-as-the-union-staff-pick"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/free-software-foundation-receives-historic-private-donations"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2024-free-software-awards-winners"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2025-photo-contest-winners"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/librephone-project"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/fsf-turns-forty-with-a-new-president-and-a-new-campaign"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2025-ian-kelling-becomes-board-president"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/fsf-confirms-alexandre-oliva-to-board-of-directors"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/2025-fsf-job-opportunity-pm"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/fsf40-volunteer-panel"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/news/fsf40-foundation-panel"/>
+      
+    </rdf:Seq>
+  </items>
+
+</channel>
+
+
+  <item rdf:about="http://www.fsf.org/news/statement-regarding-gnu-savannah-security-reports">
+    <title>Statement regarding GNU Savannah security reports</title>
+    <link>http://www.fsf.org/news/statement-regarding-gnu-savannah-security-reports</link>
+    <description></description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2026-06-19T21:13:07Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2026-librelocal-meetup-update">
+    <title>Forty-six free software meetups on six continents</title>
+    <link>http://www.fsf.org/news/2026-librelocal-meetup-update</link>
+    <description>BOSTON, Massachusetts, USA (Tuesday, May 19, 2026) — The Free 
+Software Foundation (FSF) reports that its global call for free 
+software supporters to organize LibreLocals this May resulted in free 
+software supporters organizing forty-six LibreLocal events on six 
+continents thus far. New dates and locations are being added daily.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2026-05-22T20:14:22Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2026-job-opportunity-fsf-engineering-and-certification-manager">
+    <title>Job opportunity: Engineering and Certification Manager at the Free Software Foundation</title>
+    <link>http://www.fsf.org/news/2026-job-opportunity-fsf-engineering-and-certification-manager</link>
+    <description>The Free Software Foundation (FSF), a Massachusetts 501(c)(3) charity with a worldwide mission to promote computer user freedom, seeks a motivated and talented individual to be our new Engineering and Certification Manager. This position is ideally full-time and US-based, but exceptions can be made for a qualified candidate.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    
+      <dc:subject>featured</dc:subject>
+    
+    <dc:date>2026-03-10T12:15:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/librelocal-2026">
+    <title>The FSF announces global call for FSF's LibreLocal 2026 meetups</title>
+    <link>http://www.fsf.org/news/librelocal-2026</link>
+    <description>BOSTON, Massachusetts, USA (Tuesday, February 24, 2026), — The 
+Free Software Foundation (FSF) has just launched its global call for  
+LibreLocal 2026.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2026-02-24T22:09:29Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/eko-k-a-owen-joins-the-fsf-board-as-the-union-staff-pick">
+    <title>Eko K. A. Owen joins the FSF board as the union staff pick</title>
+    <link>http://www.fsf.org/news/eko-k-a-owen-joins-the-fsf-board-as-the-union-staff-pick</link>
+    <description>BOSTON, Massachusetts, USA (December 29, 2025) — The Free Software Foundation (FSF) 
+announced today that Eko K. A. Owen will follow in Ian Kelling's footsteps by 
+becoming the second union staff-elected board member on the organization's 
+board of directors.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-12-29T22:45:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/free-software-foundation-receives-historic-private-donations">
+    <title>Free Software Foundation receives historic private donations</title>
+    <link>http://www.fsf.org/news/free-software-foundation-receives-historic-private-donations</link>
+    <description>Boston, Massachusetts, USA (Wednesday, December 24, 2025) -- The Free Software Foundation (FSF) today announced it received two major contributions totaling around $900,000 USD.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-12-24T22:45:02Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2024-free-software-awards-winners">
+    <title>Free Software Awards winners announced: Andy Wingo, Alx Sa, Govdirectory</title>
+    <link>http://www.fsf.org/news/2024-free-software-awards-winners</link>
+    <description>BOSTON, Massachusetts, USA (Tuesday, December 9, 2025) — The Free
+Software Foundation (FSF) announced today the recipients of the 2024
+Free Software Awards, which are given annually by the FSF to groups 
+and individuals in the free software community who have made 
+significant contributions to the cause for software freedom.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    
+      <dc:subject>Advancement of Free Software</dc:subject>
+    
+    
+      <dc:subject>Project of Social Benefit</dc:subject>
+    
+    
+      <dc:subject>New Contributor</dc:subject>
+    
+    <dc:date>2025-12-09T16:40:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2025-photo-contest-winners">
+    <title>Announcing the winners of the FSF40 Photo Contest</title>
+    <link>http://www.fsf.org/news/2025-photo-contest-winners</link>
+    <description>BOSTON, Massachusetts, USA (Thursday, November 6, 2025) — The Free Software Foundation (FSF) today announced the winning photo submissions in the FSF40 Photo Contest held in August.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-11-06T21:20:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/librephone-project">
+    <title>FSF announces Librephone project</title>
+    <link>http://www.fsf.org/news/librephone-project</link>
+    <description>  BOSTON, Massachusetts, USA (Tuesday, October 14, 2025) — The
+  Free Software Foundation (FSF) today announced its project to
+  bring mobile phone freedom to users. "LibrePhone" is an
+  initiative to reverse-engineer obstacles preventing mobile
+  phone freedom until its goal is achieved.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-10-14T21:50:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/fsf-turns-forty-with-a-new-president-and-a-new-campaign">
+    <title>FSF turns forty with a groundbreaking new project and a new president</title>
+    <link>http://www.fsf.org/news/fsf-turns-forty-with-a-new-president-and-a-new-campaign</link>
+    <description></description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-10-04T23:45:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2025-ian-kelling-becomes-board-president">
+    <title>FSF confirms Ian Kelling as its new president</title>
+    <link>http://www.fsf.org/news/2025-ian-kelling-becomes-board-president</link>
+    <description>BOSTON, Massachusetts, USA (Thursday, October 2, 2025) — The Free 
+Software Foundation (FSF) announced today that Ian Kelling, senior 
+systems administrator for the organization and the first union 
+member to hold a seat on its board, has been elected as the new 
+president of the FSF.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-10-02T20:05:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/fsf-confirms-alexandre-oliva-to-board-of-directors">
+    <title>FSF confirms Alexandre Oliva to board of directors</title>
+    <link>http://www.fsf.org/news/fsf-confirms-alexandre-oliva-to-board-of-directors</link>
+    <description>BOSTON, Massachusetts, USA (Monday, September 22, 2025) — The Free Software Foundation (FSF) today announced the addition of Alexandre Oliva to its board of directors after a three month trial period.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-09-22T23:05:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/2025-fsf-job-opportunity-pm">
+    <title>Job opportunity: Program Manager at the Free Software Foundation </title>
+    <link>http://www.fsf.org/news/2025-fsf-job-opportunity-pm</link>
+    <description>This position has been filled.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-09-19T15:50:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/fsf40-volunteer-panel">
+    <title>FSF40: Free software activists to speak on their history of involvement</title>
+    <link>http://www.fsf.org/news/fsf40-volunteer-panel</link>
+    <description>BOSTON, Massachusetts, USA (Wednesday, September 17, 2025), The Free
+Software Foundation (FSF) today announced a panel talk made up of
+long-time GNU and FSF volunteers will be held at the organization's
+40th anniversary. All are welcome to attend.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-09-17T19:25:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/news/fsf40-foundation-panel">
+    <title>Electronic Frontier Foundation, F-Droid, and Sugar Labs leaders to speak at FSF's fortieth anniversary</title>
+    <link>http://www.fsf.org/news/fsf40-foundation-panel</link>
+    <description>BOSTON, Massachusetts, USA (Tuesday, September 10, 2025), The Free Software Foundation (FSF) today announced that representatives from the Electronic Frontier Foundation (EFF), F-Droid, and Sugar Labs will speak at the FSF40 celebration on October 4, 2025, in Boston, MA, USA.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-09-10T16:45:00Z</dc:date>
+    <dc:type>News Item</dc:type>
+  </item>
+
+
+
+</rdf:RDF>

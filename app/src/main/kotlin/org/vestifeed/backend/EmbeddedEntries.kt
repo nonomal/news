@@ -1,6 +1,5 @@
 package org.vestifeed.backend
 
-import android.util.Base64
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -24,6 +23,7 @@ import org.vestifeed.parser.feed
 import java.security.MessageDigest
 import java.text.SimpleDateFormat
 import java.time.OffsetDateTime
+import java.util.Base64
 import java.util.Date
 import java.util.Locale
 
@@ -269,7 +269,7 @@ internal fun RssItem.toEntry(feedId: String): Pair<EntryTable.Entry, List<LinkTa
 private fun sha256(string: String): String {
     val digest = MessageDigest.getInstance("SHA-256")
     val hash = digest.digest(string.toByteArray())
-    return Base64.encodeToString(hash, Base64.DEFAULT)
+    return Base64.getEncoder().encodeToString(hash)
 }
 
 private fun Date.toIsoString(): String = ISO.format(this)

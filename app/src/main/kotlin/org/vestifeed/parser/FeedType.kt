@@ -5,6 +5,7 @@ import org.w3c.dom.Document
 enum class FeedType {
     ATOM,
     RSS,
+    RDF,
     UNKNOWN,
 }
 
@@ -19,6 +20,10 @@ fun feedType(document: Document): FeedType {
 
     if (documentElement.tagName == "rss") {
         return FeedType.RSS
+    }
+
+    if (documentElement.tagName == "rdf:RDF") {
+        return FeedType.RDF
     }
 
     return FeedType.UNKNOWN

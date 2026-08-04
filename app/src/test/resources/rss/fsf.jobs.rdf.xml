@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:syn="http://purl.org/rss/1.0/modules/syndication/" xmlns="http://purl.org/rss/1.0/">
+
+
+
+<channel rdf:about="http://www.fsf.org/resources/jobs/listing/RSS">
+  <title>Free software jobs</title>
+  <link>http://www.fsf.org/resources/jobs/listing</link>
+  <description>This is a meeting place where skilled and informed individuals working in the world of free software come to find job opportunities they can believe in.</description>
+  <image rdf:resource="http://www.fsf.org/logo.png"/>
+
+  <items>
+    <rdf:Seq>
+      
+        <rdf:li rdf:resource="http://www.fsf.org/resources/jobs/fsf-engineering-and-certification-manager"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/resources/jobs/ep5-c-developers"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/resources/jobs/new/employersection"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/resources/jobs/new/faq"/>
+      
+      
+        <rdf:li rdf:resource="http://www.fsf.org/resources/jobs/new/index_html"/>
+      
+    </rdf:Seq>
+  </items>
+
+</channel>
+
+
+  <item rdf:about="http://www.fsf.org/resources/jobs/fsf-engineering-and-certification-manager">
+    <title>Job opportunity: Engineering and Certification Manager at the Free Software Foundation</title>
+    <link>http://www.fsf.org/resources/jobs/fsf-engineering-and-certification-manager</link>
+    <description>The Free Software Foundation (FSF), a Massachusetts 501(c)(3) charity with a worldwide mission to promote computer user freedom, seeks a motivated and talented individual to be our new Engineering and Certification Manager. This position is ideally full-time and US-based, but exceptions can be made for a qualified candidate.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2026-03-10T12:04:09Z</dc:date>
+    <dc:type>Document</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/resources/jobs/ep5-c-developers">
+    <title>Volunteer opportunity: C# developers at ep5</title>
+    <link>http://www.fsf.org/resources/jobs/ep5-c-developers</link>
+    <description>Revolutionizing Building Automation for a Sustainable Future. </description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2025-04-22T20:55:00Z</dc:date>
+    <dc:type>Document</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/resources/jobs/new/employersection">
+    <title>Looking for skilled and dedicated people?</title>
+    <link>http://www.fsf.org/resources/jobs/new/employersection</link>
+    <description>Support the free software community while finding a great new employee. 
+</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2008-03-24T20:00:00Z</dc:date>
+    <dc:type>Document</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/resources/jobs/new/faq">
+    <title>Frequently Asked Questions</title>
+    <link>http://www.fsf.org/resources/jobs/new/faq</link>
+    <description></description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2008-03-24T20:00:00Z</dc:date>
+    <dc:type>Document</dc:type>
+  </item>
+
+
+  <item rdf:about="http://www.fsf.org/resources/jobs/new/index_html">
+    <title>Free software jobs</title>
+    <link>http://www.fsf.org/resources/jobs/new/index_html</link>
+    <description>This is a meeting place where skilled and informed individuals working in the world of free software come to find job opportunities they can believe in.</description>
+    
+    <dc:publisher>No publisher</dc:publisher>
+    <dc:creator></dc:creator>
+    <dc:rights></dc:rights>
+    <dc:date>2005-03-25T23:45:00Z</dc:date>
+    <dc:type>Document</dc:type>
+  </item>
+
+
+
+</rdf:RDF>

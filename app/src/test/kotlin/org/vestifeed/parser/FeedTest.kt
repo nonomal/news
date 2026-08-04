@@ -103,4 +103,37 @@ class FeedTest {
         assertNotNull(first.link)
         assertNotNull(first.description)
     }
+
+    @Test
+    fun parsesFsfJobsRss10Feed() {
+        val result = javaClass.getResourceAsStream("/rss/fsf.jobs.rdf.xml")!!.use {
+            feed(it, "application/rss+xml")
+        }
+
+        assertTrue("Expected FeedResult.Success but got $result", result is FeedResult.Success)
+
+        val feed = (result as FeedResult.Success).feed
+        assertTrue("Expected RssFeed but got ${feed::class.simpleName}", feed is RssFeed)
+
+        val rss = feed as RssFeed
+        assertEquals(RssVersion.RSS_1_0, rss.version)
+        assertEquals("Free software jobs", rss.channel.title)
+        assertEquals("http://www.fsf.org/resources/jobs/listing", rss.channel.link)
+        assertEquals(
+            "This is a meeting place where skilled and informed individuals working in the world of free software come to find job opportunities they can believe in.",
+            rss.channel.description,
+        )
+
+        val items = rss.channel.items.getOrThrow()
+        assertTrue("Expected at least one item but got ${items.size}", items.isNotEmpty())
+
+        items.forEachIndexed { index, itemResult ->
+            assertTrue("Item $index failed to parse: $itemResult", itemResult.isSuccess)
+        }
+
+        val first = items.first().getOrThrow()
+        assertNotNull(first.title)
+        assertNotNull(first.link)
+        assertNotNull(first.description)
+    }
 }

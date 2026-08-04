@@ -5,6 +5,10 @@ import org.w3c.dom.Element
 import java.net.URI
 import java.net.URL
 import java.text.SimpleDateFormat
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 
@@ -15,6 +19,28 @@ private val RFC_822_FORMATS = listOf(
     SimpleDateFormat("EEE, dd MMM yyyy HH:mm X", Locale.US),
 )
 
+private val ISO_LOCAL_DATE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+
+private fun parseRssDate(raw: String): Date? {
+    // RSS 2.0 standard: RFC 822 (e.g. "Sun, 02 Aug 2026 13:16:00 +0000")
+    RFC_822_FORMATS.firstNotNullOfOrNull { format ->
+        runCatching { format.parse(raw) }.getOrNull()
+    }?.let { return it }
+
+    // ISO 8601 with offset (e.g. "2026-03-10T12:04:09Z", "2026-03-10T12:04:09+05:00")
+    runCatching { Date.from(OffsetDateTime.parse(raw).toInstant()) }.getOrNull()
+        ?.let { return it }
+
+    // ISO 8601 without T separator (e.g. "2026-07-09 11:19:01")
+    runCatching {
+        Date.from(
+            LocalDateTime.parse(raw, ISO_LOCAL_DATE_TIME).toInstant(ZoneOffset.UTC)
+        )
+    }.getOrNull()?.let { return it }
+
+    return null
+}
+
 data class RssFeed(
     // Mandatory attribute that specifies the version of RSS that the document conforms to
     val version: RssVersion,
@@ -24,6 +50,7 @@ data class RssFeed(
 enum class RssVersion {
     RSS_2_0,
     RSS_0_92,
+    RSS_1_0,
 }
 
 data class RssChannel(
@@ -135,11 +162,37 @@ fun rssFeed(document: Document): Result<RssFeed> {
     )
 }
 
-fun rssItems(document: Document): Result<List<Result<RssItem>>> {
+fun rdfFeed(document: Document): Result<RssFeed> {
     val channel = document.documentElement.getElementsByTagName("channel").item(0) as Element?
         ?: return Result.failure(Exception("Missing element: channel"))
 
-    val itemElements = channel.getElementsByTagName("item").list().filterIsInstance<Element>()
+    val title = channel.getElementsByTagName("title").item(0)?.textContent
+        ?: return Result.failure(Exception("Channel has no title"))
+
+    val link = channel.getElementsByTagName("link").item(0)?.textContent
+        ?: return Result.failure(Exception("Channel has no link"))
+
+    val description = channel.getElementsByTagName("description").item(0)?.textContent
+        ?: return Result.failure(Exception("Channel has no description"))
+
+    return Result.success(
+        RssFeed(
+            version = RssVersion.RSS_1_0,
+            channel = RssChannel(
+                title = title,
+                link = link,
+                description = description,
+                items = rssItems(document),
+            ),
+        )
+    )
+}
+
+fun rssItems(document: Document): Result<List<Result<RssItem>>> {
+    document.documentElement.getElementsByTagName("channel").item(0) as Element?
+        ?: return Result.failure(Exception("Missing element: channel"))
+
+    val itemElements = document.documentElement.getElementsByTagName("item").list().filterIsInstance<Element>()
 
     val items: List<Result<RssItem>> = itemElements.map { element ->
         val link = element.getElementsByTagName("link").item(0)?.textContent
@@ -202,14 +255,11 @@ fun rssItems(document: Document): Result<List<Result<RssItem>>> {
             )
         }
 
-        val rawPubDate = element.getElementsByTagName("pubDate").item(0)?.textContent?.trim()
-
-        val pubDate = if (rawPubDate != null) {
-            RFC_822_FORMATS.firstNotNullOfOrNull { format ->
-                runCatching { format.parse(rawPubDate) }.getOrNull()
-            } ?: return@map Result.failure(Exception("Failed to parse pubDate as date"))
-        } else {
-            null
+        val pubDate = sequenceOf(
+            element.getElementsByTagName("pubDate").item(0)?.textContent?.trim(),
+            element.getElementsByTagName("dc:date").item(0)?.textContent?.trim(),
+        ).firstNotNullOfOrNull { rawPubDate ->
+            rawPubDate?.let { parseRssDate(it) }
         }
 
         var guid: RssItemGuid? = null
@@ -248,12 +298,17 @@ fun rssItems(document: Document): Result<List<Result<RssItem>>> {
             )
         }
 
+        val author = sequenceOf(
+            element.getElementsByTagName("author").item(0)?.textContent?.trim(),
+            element.getElementsByTagName("dc:creator").item(0)?.textContent?.trim(),
+        ).firstOrNull { !it.isNullOrBlank() }
+
         Result.success(
             RssItem(
                 title = element.getElementsByTagName("title").item(0)?.textContent,
                 link = link,
                 description = element.getElementsByTagName("description").item(0)?.textContent,
-                author = element.getElementsByTagName("author").item(0)?.textContent?.trim(),
+                author = author,
                 categories = categories,
                 comments = comments,
                 enclosure = enclosure,

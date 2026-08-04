@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<opml version="1.1">
+  <head>
+    <title>
+      Feeder
+    </title>
+  </head>
+  <body>
+    <outline title="Free software jobs" text="Free software jobs" type="rss" xmlUrl="https://static.fsf.org/fsforg/rss/jobs.xml"/>
+    <outline title="FSF News" text="FSF News" type="rss" xmlUrl="https://static.fsf.org/fsforg/rss/news.xml"/>
+    <outline title="fossjobs.net" text="fossjobs.net" type="rss" xmlUrl="https://www.fossjobs.net/rss/all/"/>
+    <outline title="L&apos;Agenda du Libre" text="L&apos;Agenda du Libre" type="rss" xmlUrl="https://www.agendadulibre.org/events.rss"/>
+  </body>
+</opml>

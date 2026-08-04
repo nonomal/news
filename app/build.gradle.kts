@@ -49,6 +49,12 @@ android {
         viewBinding = true
     }
 
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
     lint {
         disable += "GradleDependency"
     }

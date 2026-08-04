@@ -59,6 +59,14 @@ private fun documentToFeedResult(document: Document): FeedResult {
             }
         }
 
+        FeedType.RDF -> {
+            rdfFeed(document).map {
+                FeedResult.Success(it)
+            }.getOrElse {
+                FeedResult.ParserError(it)
+            }
+        }
+
         FeedType.UNKNOWN -> FeedResult.UnsupportedFeedType
     }
 }

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns="http://purl.org/rss/1.0/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:georss="http://www.georss.org/georss">
+  <channel rdf:about="https://www.agendadulibre.org/">
+    <title>L'Agenda du Libre</title>
+    <description>Logiciels, Arts, Données, Matériels, Contenus, Communs, Internet...</description>
+    <link>https://www.agendadulibre.org/</link>
+    <dc:language>fr</dc:language>
+    <dc:creator>https://www.agendadulibre.org/</dc:creator>
+    <items>
+      <rdf:Seq>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34426"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35497"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35329"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35026"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35443"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33871"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35404"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33123"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35511"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34080"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35202"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34427"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35498"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35330"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35027"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34977"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34081"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35203"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34428"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34663"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35499"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35534"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35331"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35408"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35292"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35518"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34534"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35075"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34082"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35074"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34429"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35073"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35500"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35332"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34751"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35072"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34546"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35383"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35488"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34627"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35069"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35293"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35409"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35415"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33454"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35545"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34083"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34430"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35333"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35475"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35487"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33872"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35387"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34676"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35514"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35520"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35528"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35318"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34794"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35163"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35519"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35516"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35068"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34084"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34431"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35430"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35334"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34230"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34978"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35524"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34520"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35525"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35527"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34085"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34432"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35506"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34664"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35335"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35489"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35452"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34804"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35447"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34535"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35493"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35481"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35227"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35484"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34433"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35336"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/34547"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35529"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35384"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35294"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35535"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35536"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35515"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35513"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/35164"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33858"/>
+        <rdf:li rdf:resource="https://www.agendadulibre.org/events/33455"/>
+      </rdf:Seq>
+    </items>
+  </channel>
+  <item rdf:about="https://www.agendadulibre.org/events/34426">
+    <guid>34426@agendadulibre.org</guid>
+    <dc:identifier>34426@agendadulibre.org</dc:identifier>
+    <dc:date>2026-01-29T09:02:32Z</dc:date>
+    <georss:point>47.3153 5.03158</georss:point>
+    <title>Dijon: Atelier du mardi, Le mardi  4 août 2026 de 15h00 à 19h00.</title>
+    <pubDate>2026-01-29T09:02:32Z</pubDate>
+    <link>https://www.agendadulibre.org/events/34426</link>
+    <description>&lt;p&gt;&lt;img style="display: block; margin-left: auto; margin-right: auto;" src="https://i0.wp.com/desobs.fr/wp-content/uploads/2025/12/cropped-generated_image-2.png?resize=87%2C87&amp;amp;ssl=1" alt="" width="87" height="87"&gt;&lt;/p&gt;
+&lt;p&gt; &lt;/p&gt;
+&lt;p&gt;Présentation de différents outils concernant les logiciels libres.&lt;/p&gt;
+&lt;p&gt;Assistance technique.&lt;/p&gt;
+&lt;p&gt;De préférence sur RDV directement sur le site de l'asso&lt;/p&gt;
+&lt;p&gt; &lt;/p&gt;</description>
+    <content:encoded>
+      <![CDATA[<p><img style="display: block; margin-left: auto; margin-right: auto;" src="https://i0.wp.com/desobs.fr/wp-content/uploads/2025/12/cropped-generated_image-2.png?resize=87%2C87&amp;ssl=1" alt="" width="87" height="87"></p>
+<p> </p>
+<p>Présentation de différents outils concernant les logiciels libres.</p>
+<p>Assistance technique.</p>
+<p>De préférence sur RDV directement sur le site de l'asso</p>
+<p> </p>]]>
+    </content:encoded>
+    <hashtags>#dijon #informatiqueLibre #installation #réemploi #réparation #résilience #résoudre #atelier #desobsolescence #adieuWindows</hashtags>
+  </item>
+  <item rdf:about="https://www.agendadulibre.org/events/35497">
+    <guid>35497@agendadulibre.org</guid>
+    <dc:identifier>35497@agendadulibre.org</dc:identifier>
+    <dc:date>2026-07-18T04:24:06Z</dc:date>
+    <georss:point>47.9737 0.2095</georss:point>
+    <title>Le Mans: Permanence du mercredi, Le mercredi  5 août 2026 de 12h30 à 17h30.</title>
+    <pubDate>2026-07-18T04:24:06Z</pubDate>
+    <link>https://www.agendadulibre.org/events/35497</link>
+    <description>&lt;p&gt;Assistance technique et démonstration concernant les logiciels libres.&lt;img style="float: right;" src="https://www.capoupascap.info/wp-content/uploads/2018/06/LinuxMaine.png" alt="" width="136" height="136"&gt;&lt;/p&gt;
+&lt;p&gt; &lt;/p&gt;
+&lt;p&gt;Il est préférable de réserver votre place à &lt;a href="mailto:contact@linuxmaine"&gt;contact (at) linuxmaine (point) org &lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Planning des réservations consultable&lt;a href="https://linuxmaine.org/spip.php?article8"&gt; ici.&lt;/a&gt;&lt;/p&gt;</description>
+    <content:encoded>
+      <![CDATA[<p>Assistance technique et démonstration concernant les logiciels libres.<img style="float: right;" src="https://www.capoupascap.info/wp-content/uploads/2018/06/LinuxMaine.png" alt="" width="136" height="136"></p>
+<p> </p>
+<p>Il est préférable de réserver votre place à <a href="mailto:contact@linuxmaine">contact (at) linuxmaine (point) org </a></p>
+<p>Planning des réservations consultable<a href="https://linuxmaine.org/spip.php?article8"> ici.</a></p>]]>
+    </content:encoded>
+    <hashtags>#leMans #linuxmaine #gnuLinux #demonstration #assistance #permanence #logicielsLibres #linux #adieuWindows</hashtags>
+  </item>
+  <item rdf:about="https://www.agendadulibre.org/events/35329">
+    <guid>35329@agendadulibre.org</guid>
+    <dc:identifier>35329@agendadulibre.org</dc:identifier>
+    <dc:date>2026-06-11T20:55:55Z</dc:date>
+    <georss:point>45.6708 0.172613</georss:point>
+    <title>Gond-Pontouvre: Permanence du mercredi, Le mercredi  5 août 2026 de 14h00 à 18h00.</title>
+    <pubDate>2026-06-11T20:55:55Z</pubDate>
+    <link>https://www.agendadulibre.org/events/35329</link>
+    <description>&lt;p&gt;&lt;img style="float: right;" src="https://laplla.net/wp-content/uploads/2022/09/Logo-Laplla-net-20200723-0166x0220-sans-texte.png" width="220"&gt;Nous sommes convaincus depuis le début qu'un ordinateur n'est pas un consommable jetable et qu'on a tous le droit de comprendre et de maîtriser nos outils numériques. C'est de là qu'est née l'asso, à Gond-Pontouvre: un repaire de passionnés du libre et du bidouillage, où l'on défend les logiciels libres, la souveraineté technologique et le bon vieux plaisir de mettre les mains dans le cambouis. Au fil du temps, on a élargi le terrain de jeu, mais l'esprit reste le même: on apprend, on partage, on transmet.&lt;/p&gt;
+&lt;p&gt;Le cœur historique, c'est le reconditionnement. On collecte des machines en fin de vie, on les teste sous toutes les coutures, et on leur offre une seconde jeunesse: passage en SSD pour réveiller les plus poussives, installation de &lt;strong&gt;Linux Mint&lt;/strong&gt; pour un système libre, léger et accessible, et hop — un PC qu'on croyait bon pour la benne repart pour plusieurs années.&lt;/p&gt;
+&lt;p&gt;Vous avez un vieux portable qui rame ou une tour oubliée au grenier? Apportez-la, on regarde ensemble.&lt;/p&gt;
+&lt;p&gt;Côté fabrication numérique, le FabLab ouvre ses portes: venez concevoir et fabriquer vos projets sur nos machines — impression 3D (Creality K1 Max &amp;amp; K2 Plus), découpe et gravure laser (Falcon 2 Pro 60W), et de quoi toucher à&lt;br&gt;l'électronique embarquée. Les bénévoles sont là pour vous guider — l'idée n'est pas de faire à votre place, mais de vous apprendre à faire.&lt;/p&gt;
+&lt;p&gt;Entrée libre, esprit d'entraide et de partage des savoirs. Apportez vos questions, vos machines ou simplement votre curiosité.&lt;/p&gt;</description>
+    <content:encoded>
+      <![CDATA[<p><img style="float: right;" src="https://laplla.net/wp-content/uploads/2022/09/Logo-Laplla-net-20200723-0166x0220-sans-texte.png" width="220">Nous sommes convaincus depuis le début qu'un ordinateur n'est pas un consommable jetable et qu'on a tous le droit de comprendre et de maîtriser nos outils numériques. C'est de là qu'est née l'asso, à Gond-Pontouvre: un repaire de passionnés du libre et du bidouillage, où l'on défend les logiciels libres, la souveraineté technologique et le bon vieux plaisir de mettre les mains dans le cambouis. Au fil du temps, on a élargi le terrain de jeu, mais l'esprit reste le même: on apprend, on partage, on transmet.</p>
+<p>Le cœur historique, c'est le reconditionnement. On collecte des machines en fin de vie, on les teste sous toutes les coutures, et on leur offre une seconde jeunesse: passage en SSD pour réveiller les plus poussives, installation de <strong>Linux Mint</strong> pour un système libre, léger et accessible, et hop — un PC qu'on croyait bon pour la benne repart pour plusieurs années.</p>
+<p>Vous avez un vieux portable qui rame ou une tour oubliée au grenier? Apportez-la, on regarde ensemble.</p>
+<p>Côté fabrication numérique, le FabLab ouvre ses portes: venez concevoir et fabriquer vos projets sur nos machines — impression 3D (Creality K1 Max &amp; K2 Plus), découpe et gravure laser (Falcon 2 Pro 60W), et de quoi toucher à<br>l'électronique embarquée. Les bénévoles sont là pour vous guider — l'idée n'est pas de faire à votre place, mais de vous apprendre à faire.</p>
+<p>Entrée libre, esprit d'entraide et de partage des savoirs. Apportez vos questions, vos machines ou simplement votre curiosité.</p>]]>
+    </content:encoded>
+    <hashtags>#gondPontouvre #laplla.net #reconditionnement #permanence #installParty #linuxMint #logicielsLibres #gnuLinux</hashtags>
+  </item>
+
+</rdf:RDF>

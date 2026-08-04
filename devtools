@@ -8,6 +8,7 @@
 #   ./devtools emulator status                Show ADB device list and boot state
 #   ./devtools emulator doctor                Diagnose Wayland / GPU / Qt plugin issues
 #   ./devtools emulator screencap [path]      Capture the device screen to PATH
+#   ./devtools emulator push <local> [remote] Push a file to the device
 #   ./devtools emulator logcat [-n N] [--tag TAG] [--pid PID]
 #                                            Dump recent logcat lines (default: $VESTI_PACKAGE only)
 #   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
@@ -90,6 +91,8 @@ Commands:
   doctor                         Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
   screencap [path]               Capture the device screen to PATH
                                  (default: $VESTI_LOG_DIR/vesti.png)
+  push <local> [remote]          Push LOCAL to the device at REMOTE
+                                 (default: /sdcard/Download/<basename>)
   logcat [-n N] [--tag TAG] [--pid PID]
                                  Dump recent logcat lines (default: $VESTI_PACKAGE only,
                                  last 200 lines). With no --tag/--pid the ring buffer is
@@ -305,6 +308,32 @@ emulator_screencap() {
   log "Saved to $dest"
 }
 
+emulator_push() {
+  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+    return 1
+  fi
+
+  if [ $# -lt 1 ]; then
+    err "Usage: ./devtools emulator push <local> [remote]"
+    return 1
+  fi
+
+  local local_path="$1"
+  local filename
+  filename="$(basename "$local_path")"
+  local remote_path="${2:-/sdcard/Download/$filename}"
+
+  if [ ! -f "$local_path" ]; then
+    err "Local file not found: $local_path"
+    return 1
+  fi
+
+  log "Pushing $local_path to $VESTI_DEVICE:$remote_path..."
+  "$ADB" -s "$VESTI_DEVICE" push "$local_path" "$remote_path"
+  log "Done. Visible to the file picker under /sdcard/Download/."
+}
+
 # Dump recent logcat. Defaults to the current $VESTI_PACKAGE pid so crashes
 # and ANRs surface immediately. Pass --tag to filter by tag, --pid to filter
 # by pid, or omit both to see the whole ring buffer.
@@ -394,6 +423,7 @@ cmd_emulator() {
     status)    emulator_status ;;
     doctor)    emulator_doctor ;;
     screencap) emulator_screencap "$@" ;;
+    push)      emulator_push "$@" ;;
     logcat)    emulator_logcat "$@" ;;
     snapshot)  emulator_snapshot "$@" ;;
     help|-h|--help) usage_emulator ;;

@@ -50,14 +50,11 @@
                 android:textColor="?android:attr/textColorSecondary"
                 tools:text="September 29, 2020" />
 
-            <TextView
+            <LinearLayout
                 android:id="@+id/summaryView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:lineSpacingMultiplier="1.2"
-                android:paddingHorizontal="16dp"
-                android:textAppearance="?attr/textAppearanceBody1"
-                android:textIsSelectable="true" />
+                android:orientation="vertical" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/enclosures"

@@ -4,18 +4,21 @@ import android.content.ActivityNotFoundException
 import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Rect
+import android.graphics.Typeface
 import android.os.Bundle
 import android.text.Html
 import android.text.SpannableStringBuilder
-import android.util.TypedValue
 import android.text.method.LinkMovementMethod
 import android.text.style.BulletSpan
 import android.text.style.QuoteSpan
 import android.text.style.URLSpan
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.core.net.toUri
@@ -35,7 +38,9 @@ import org.vestifeed.parser.AtomLinkRel
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.enclosures.EnclosuresAdapter
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import org.jsoup.Jsoup
 import org.vestifeed.R
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -189,18 +194,7 @@ class EntryFragment : AppFragment() {
             ?.href
             ?.toHttpUrlOrNull()
 
-        val parsedContent = parseEntryContent(
-            entry.contentText ?: "",
-            TextViewImageGetter(
-                textView = binding.summaryView,
-                scope = viewLifecycleOwner.lifecycleScope,
-                baseUrl = baseUrl,
-            ),
-        )
-        parsedContent.applyStyle(binding.summaryView)
-        binding.summaryView.setTextSize(TypedValue.COMPLEX_UNIT_SP, conf.entryBodyFontSize.toFloat())
-        binding.summaryView.text = parsedContent
-        binding.summaryView.movementMethod = LinkMovementMethod.getInstance()
+        renderEntryContent(entry.contentText ?: "", baseUrl)
         binding.progress.isVisible = false
 
         enclosuresAdapter.submitList(
@@ -355,6 +349,84 @@ class EntryFragment : AppFragment() {
         }
     }
 
+    private fun renderEntryContent(content: String, baseUrl: HttpUrl?) {
+        binding.summaryView.removeAllViews()
+
+        splitEntryContent(content).forEach { block ->
+            when (block) {
+                is EntryContentBlock.Markup -> addMarkupBlock(block.content, baseUrl)
+                is EntryContentBlock.Preformatted -> addPreformattedBlock(block.content)
+            }
+        }
+    }
+
+    private fun addMarkupBlock(content: String, baseUrl: HttpUrl?) {
+        val textView = createEntryTextView()
+        val parsedContent = parseEntryContent(
+            content,
+            TextViewImageGetter(
+                textView = textView,
+                scope = viewLifecycleOwner.lifecycleScope,
+                baseUrl = baseUrl,
+            ),
+        )
+        if (parsedContent.isBlank()) return
+
+        parsedContent.applyStyle(textView)
+        textView.text = parsedContent
+        textView.movementMethod = LinkMovementMethod.getInstance()
+        binding.summaryView.addView(textView)
+    }
+
+    private fun addPreformattedBlock(content: String) {
+        if (content.isBlank()) return
+
+        val horizontalPadding = resources.getDimensionPixelSize(R.dimen.dp_16)
+        val verticalPadding = resources.getDimensionPixelSize(R.dimen.dp_8)
+        val textView = createEntryTextView().apply {
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+            setHorizontallyScrolling(true)
+            setPadding(horizontalPadding, verticalPadding, horizontalPadding, verticalPadding)
+            text = content
+            typeface = Typeface.MONOSPACE
+        }
+        val scrollView = HorizontalScrollView(requireContext()).apply {
+            layoutParams = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+            isFillViewport = true
+            addView(textView)
+        }
+        binding.summaryView.addView(scrollView)
+    }
+
+    private fun createEntryTextView() = TextView(requireContext()).apply {
+        layoutParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT,
+        )
+        val textAppearance = TypedValue()
+        requireContext().theme.resolveAttribute(
+            com.google.android.material.R.attr.textAppearanceBody1,
+            textAppearance,
+            true,
+        )
+        setTextAppearance(textAppearance.resourceId)
+        setLineSpacing(0f, 1.2f)
+        setPadding(
+            resources.getDimensionPixelSize(R.dimen.dp_16),
+            0,
+            resources.getDimensionPixelSize(R.dimen.dp_16),
+            0,
+        )
+        setTextSize(TypedValue.COMPLEX_UNIT_SP, conf.entryBodyFontSize.toFloat())
+        setTextIsSelectable(true)
+    }
+
     private fun SpannableStringBuilder.applyStyle(textView: TextView) {
         val spans = getSpans(0, length - 1, Any::class.java)
 
@@ -443,4 +515,40 @@ class EntryFragment : AppFragment() {
             outRect.set(gapInPixels, gapInPixels, gapInPixels, bottomGap)
         }
     }
+}
+
+internal sealed interface EntryContentBlock {
+    data class Markup(val content: String) : EntryContentBlock
+    data class Preformatted(val content: String) : EntryContentBlock
+}
+
+private val preformattedBlockRegex = Regex("""(?is)<pre\b[^>]*>.*?</pre\s*>""")
+
+internal fun splitEntryContent(content: String): List<EntryContentBlock> {
+    val blocks = mutableListOf<EntryContentBlock>()
+    var markupStart = 0
+
+    preformattedBlockRegex.findAll(content).forEach { match ->
+        if (match.range.first > markupStart) {
+            blocks += EntryContentBlock.Markup(content.substring(markupStart, match.range.first))
+        }
+
+        val preformatted = Jsoup.parseBodyFragment(match.value)
+            .selectFirst("pre")
+            ?.wholeText()
+            ?.trim('\r', '\n')
+            .orEmpty()
+        blocks += EntryContentBlock.Preformatted(preformatted)
+        markupStart = match.range.last + 1
+    }
+
+    if (markupStart < content.length) {
+        blocks += EntryContentBlock.Markup(content.substring(markupStart))
+    }
+
+    if (blocks.isEmpty()) {
+        blocks += EntryContentBlock.Markup(content)
+    }
+
+    return blocks
 }

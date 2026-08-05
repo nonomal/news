@@ -29,6 +29,24 @@ open class Miniflux(
         val title: String,
         val feedUrl: String,
         val siteUrl: String,
+        val categoryId: Long?,
+    )
+
+    data class MinifluxCategory(
+        val id: Long,
+        val title: String,
+    )
+
+    /**
+     * A snapshot of one feed as the Miniflux API returned it: the local
+     * projection, the links, and the upstream `category_id`. The category id
+     * is opaque to the rest of the app — it is what we use to reconcile the
+     * remote category list into local [TagTable] / [FeedTagTable] rows.
+     */
+    data class FreshFeed(
+        val feed: FeedTable.Feed,
+        val links: List<LinkTable.Link>,
+        val categoryId: Long?,
     )
 
     private data class EntriesPayload(
@@ -95,10 +113,10 @@ open class Miniflux(
     }
 
     final override suspend fun getFeeds(): List<FeedTable.Feed> {
-        return getFeedsWithLinks().map { it.first }
+        return getFeedsWithLinks().map { it.feed }
     }
 
-    open suspend fun getFeedsWithLinks(): List<Pair<FeedTable.Feed, List<LinkTable.Link>>> {
+    open suspend fun getFeedsWithLinks(): List<FreshFeed> {
         // https://miniflux.app/docs/api.html#endpoint-get-feeds
         val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("feeds").build()).get()
             .build()
@@ -106,7 +124,10 @@ open class Miniflux(
         return if (res.code == 200) {
             JsonParser.parseString(res.body.string()).asJsonArray.map { it.asJsonObject }
                 .map { it.toMinifluxFeed() }
-                .map { it.toVestiFeed() }
+                .map { fresh ->
+                    val (feed, links) = fresh.toVestiFeed()
+                    FreshFeed(feed = feed, links = links, categoryId = fresh.categoryId)
+                }
         } else {
             throw IOException("unexpected response code ${res.code}")
         }
@@ -142,6 +163,7 @@ open class Miniflux(
     override suspend fun sync(initial: Boolean) {
         val sync = MinifluxSync(this, db)
         sync.syncFeeds()
+        sync.syncCategories()
         sync.syncEntries(initial = initial)
     }
 
@@ -232,6 +254,74 @@ open class Miniflux(
             if (!rawRes.isSuccessful) {
                 throw IOException("http request failed with response code ${rawRes.code}")
             }
+        }
+    }
+
+    open suspend fun getCategories(): List<MinifluxCategory> {
+        // https://miniflux.app/docs/api.html#endpoint-get-categories
+        val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("categories").build())
+            .get().build()
+        val res = client.newCall(req).executeAsync()
+        return if (res.code == 200) {
+            JsonParser.parseString(res.body.string()).asJsonArray
+                .map { it.asJsonObject.toMinifluxCategory() }
+        } else {
+            throw IOException("unexpected response code ${res.code}")
+        }
+    }
+
+    open suspend fun createCategory(title: String): MinifluxCategory {
+        // https://miniflux.app/docs/api.html#endpoint-create-category
+        val args = JsonObject().apply { add("title", JsonPrimitive(title)) }
+        val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("categories").build())
+            .post(args.toString().toRequestBody(JSON)).build()
+        val res = client.newCall(req).executeAsync()
+        return if (res.code == 201) {
+            JsonParser.parseString(res.body.string()).asJsonObject.toMinifluxCategory()
+        } else {
+            throw IOException("unexpected response code ${res.code}")
+        }
+    }
+
+    open suspend fun updateCategory(id: Long, title: String): MinifluxCategory {
+        // https://miniflux.app/docs/api.html#endpoint-update-category
+        val args = JsonObject().apply {
+            add("id", JsonPrimitive(id))
+            add("title", JsonPrimitive(title))
+        }
+        val req = Request.Builder()
+            .url(baseUrl.newBuilder().addPathSegment("categories").addPathSegment(id.toString()).build())
+            .put(args.toString().toRequestBody(JSON)).build()
+        val res = client.newCall(req).executeAsync()
+        return if (res.code == 201) {
+            JsonParser.parseString(res.body.string()).asJsonObject.toMinifluxCategory()
+        } else {
+            throw IOException("unexpected response code ${res.code}")
+        }
+    }
+
+    open suspend fun deleteCategory(id: Long): Result<Unit> {
+        // https://miniflux.app/docs/api.html#endpoint-delete-category
+        val req = Request.Builder()
+            .url(baseUrl.newBuilder().addPathSegment("categories").addPathSegment(id.toString()).build())
+            .delete().build()
+        val res = client.newCall(req).executeAsync()
+        return if (res.code == 204) {
+            Result.success(Unit)
+        } else {
+            Result.failure(IOException("unexpected response code ${res.code}"))
+        }
+    }
+
+    open suspend fun moveFeedToCategory(feedId: String, categoryId: Long) {
+        // https://miniflux.app/docs/api.html#endpoint-update-feed
+        val args = JsonObject().apply { add("category_id", JsonPrimitive(categoryId)) }
+        val req = Request.Builder()
+            .url(baseUrl.newBuilder().addPathSegment("feeds").addPathSegment(feedId).build())
+            .put(args.toString().toRequestBody(JSON)).build()
+        val res = client.newCall(req).executeAsync()
+        if (!res.isSuccessful) {
+            throw IOException("unexpected response code ${res.code}")
         }
     }
 
@@ -343,6 +433,21 @@ open class Miniflux(
             title = if (has("title") && !this["title"].isJsonNull) this["title"].asString else "",
             feedUrl = if (has("feed_url") && !this["feed_url"].isJsonNull) this["feed_url"].asString else "",
             siteUrl = if (has("site_url") && !this["site_url"].isJsonNull) this["site_url"].asString else "",
+            categoryId = if (has("category") && !this["category"].isJsonNull) {
+                val category = this["category"].asJsonObject
+                if (category.has("id") && !category["id"].isJsonNull) {
+                    category["id"].asLong
+                } else {
+                    null
+                }
+            } else null,
+        )
+    }
+
+    private fun JsonObject.toMinifluxCategory(): MinifluxCategory {
+        return MinifluxCategory(
+            id = this["id"].asLong,
+            title = if (has("title") && !this["title"].isJsonNull) this["title"].asString else "",
         )
     }
 

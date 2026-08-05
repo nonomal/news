@@ -116,4 +116,23 @@
     <plurals name="time_hours_ago">
         <item quantity="other">%d giờ trước</item>
     </plurals>
+    <string name="tags">Tags</string>
+    <string name="tag">Tag</string>
+    <string name="tag_title">Tag title</string>
+    <string name="manage_tags">Manage tags</string>
+    <string name="add_tag">Add tag</string>
+    <string name="rename_tag">Rename tag</string>
+    <string name="you_have_no_tags">You have no tags</string>
+    <string name="no_feeds_in_tag">No feeds in this tag</string>
+    <string name="remove_from_tag">Remove from tag</string>
+    <string name="cannot_find_tag_with_id_s">Can not find tag with id %1$s</string>
+    <plurals name="tag_feed_count">
+        <item quantity="zero">No feeds</item>
+        <item quantity="one">%d feed</item>
+        <item quantity="two">%d feeds</item>
+        <item quantity="few">%d feeds</item>
+        <item quantity="many">%d feeds</item>
+        <item quantity="other">%d feeds</item>
+    </plurals>
+    <string name="add_to_tag">Add to tag</string>
 </resources>

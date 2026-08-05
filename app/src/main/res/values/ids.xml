@@ -18,6 +18,8 @@
     <item name="feedSettingsFragment" type="id" />
     <item name="settingsFragment" type="id" />
     <item name="enclosuresFragment" type="id" />
+    <item name="tagsFragment" type="id" />
+    <item name="tagFeedsFragment" type="id" />
     
     <!-- Actions -->
     <item name="action_authFragment_to_newsFragment" type="id" />

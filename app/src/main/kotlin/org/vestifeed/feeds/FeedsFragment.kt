@@ -39,7 +39,9 @@ import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentFeedsBinding
 import org.vestifeed.db.Database
+import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.FeedTable
+import org.vestifeed.db.table.TagTable
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
@@ -55,6 +57,7 @@ import org.vestifeed.opml.leafOutlines
 import org.vestifeed.opml.toOpml
 import org.vestifeed.opml.toPrettyString
 import org.vestifeed.opml.toXmlDocument
+import org.vestifeed.tags.TagsFragment
 import java.io.InputStream
 import java.io.OutputStream
 import javax.xml.parsers.DocumentBuilderFactory
@@ -110,6 +113,7 @@ class FeedsFragment : AppFragment() {
 
         binding.toolbar.setOnMenuItemClickListener {
             when (it.itemId) {
+                R.id.manageTags -> openTagsManager()
                 R.id.importFeeds -> importFeedsLauncher.launch("*/*")
                 R.id.exportFeeds -> exportFeedsLauncher.launch("feeds.opml")
             }
@@ -388,6 +392,51 @@ class FeedsFragment : AppFragment() {
         }
     }
 
+    private fun showAddToTagDialog(feedId: String) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val tags = db().tag.selectAll()
+                    val current = db().feedTag.selectTagIdsByFeedId(feedId).toSet()
+                    Triple(tags, current, BooleanArray(tags.size) { i -> current.contains(tags[i].id) })
+                }
+            }.onSuccess { (tags, _, checked) ->
+                if (tags.isEmpty()) {
+                    showErrorDialog(R.string.you_have_no_tags)
+                    return@onSuccess
+                }
+                val tagNames = tags.map { it.name }.toTypedArray()
+                MaterialAlertDialogBuilder(requireContext())
+                    .setTitle(R.string.add_to_tag)
+                    .setMultiChoiceItems(tagNames, checked) { _, which, isChecked ->
+                        checked[which] = isChecked
+                    }
+                    .setPositiveButton(android.R.string.ok) { _, _ ->
+                        applyTagChanges(feedId, tags, checked)
+                    }
+                    .setNegativeButton(R.string.cancel, null)
+                    .show()
+            }.onFailure { e -> showErrorDialog(e) }
+        }
+    }
+
+    private fun applyTagChanges(feedId: String, tags: List<TagTable.Tag>, checked: BooleanArray) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val newSelected = tags.filterIndexed { i, _ -> checked[i] }.map { it.id }.toSet()
+                    val current = db().feedTag.selectTagIdsByFeedId(feedId).toSet()
+                    val toAdd = newSelected - current
+                    val toRemove = current - newSelected
+                    db().transaction {
+                        toAdd.forEach { db().feedTag.insert(feedId, it) }
+                        toRemove.forEach { db().feedTag.delete(feedId, it) }
+                    }
+                }
+            }.onFailure { e -> showErrorDialog(e) }
+        }
+    }
+
     private fun deleteFeed(feedId: String) {
         val prevState = state.value
         state.update { State.Loading }
@@ -401,6 +450,7 @@ class FeedsFragment : AppFragment() {
                         }
                         db().entry.deleteByFeedId(feedId)
                         db().link.deleteByFeedId(feedId)
+                        db().feedTag.deleteByFeedId(feedId)
                         db().feed.deleteById(feedId)
                     }
                 }
@@ -475,6 +525,13 @@ class FeedsFragment : AppFragment() {
         }
     }
 
+    private fun openTagsManager() {
+        parentFragmentManager.commit {
+            replace(R.id.fragmentContainerView, TagsFragment::class.java, null)
+            addToBackStack(null)
+        }
+    }
+
     private fun onAddClick(dialogInterface: DialogInterface) {
         val url =
             (dialogInterface as AlertDialog).findViewById<TextInputEditText>(R.id.url)?.text.toString()
@@ -487,65 +544,72 @@ class FeedsFragment : AppFragment() {
     }
 
     private fun createFeedsAdapter(): FeedsAdapter {
-        return FeedsAdapter(callback = object : FeedsAdapter.Callback {
-            override fun onClick(item: FeedsAdapter.Item) {
-                parentFragmentManager.commit {
-                    replace(
-                        R.id.fragmentContainerView,
-                        EntriesFragment::class.java,
-                        EntriesFilter.BelongToFeed(feedId = item.id).toBundle(),
-                    )
-                    addToBackStack(null)
+        return FeedsAdapter(
+            callback = object : FeedsAdapter.Callback {
+                override fun onClick(item: FeedsAdapter.Item) {
+                    parentFragmentManager.commit {
+                        replace(
+                            R.id.fragmentContainerView,
+                            EntriesFragment::class.java,
+                            EntriesFilter.BelongToFeed(feedId = item.id).toBundle(),
+                        )
+                        addToBackStack(null)
+                    }
                 }
-            }
 
-            override fun onSettingsClick(item: FeedsAdapter.Item) {
-                parentFragmentManager.commit {
-                    replace(
-                        R.id.fragmentContainerView,
-                        FeedSettingsFragment::class.java,
-                        bundleOf("feedId" to item.id),
-                    )
-                    addToBackStack(null)
+                override fun onSettingsClick(item: FeedsAdapter.Item) {
+                    parentFragmentManager.commit {
+                        replace(
+                            R.id.fragmentContainerView,
+                            FeedSettingsFragment::class.java,
+                            bundleOf("feedId" to item.id),
+                        )
+                        addToBackStack(null)
+                    }
                 }
-            }
 
-            override fun onOpenSelfLinkClick(item: FeedsAdapter.Item) {
-                openUrl(
-                    url = item.selfLink.toString(),
-                    useBuiltInBrowser = item.confUseBuiltInBrowser,
-                )
-            }
+                override fun onOpenSelfLinkClick(item: FeedsAdapter.Item) {
+                    openUrl(
+                        url = item.selfLink.toString(),
+                        useBuiltInBrowser = item.confUseBuiltInBrowser,
+                    )
+                }
 
-            override fun onOpenAlternateLinkClick(item: FeedsAdapter.Item) {
-                openUrl(
-                    url = item.alternateLink.toString(),
-                    useBuiltInBrowser = item.confUseBuiltInBrowser,
-                )
-            }
+                override fun onOpenAlternateLinkClick(item: FeedsAdapter.Item) {
+                    openUrl(
+                        url = item.alternateLink.toString(),
+                        useBuiltInBrowser = item.confUseBuiltInBrowser,
+                    )
+                }
 
-            override fun onRenameClick(item: FeedsAdapter.Item) {
-                val dialog =
-                    MaterialAlertDialogBuilder(requireContext()).setTitle(getString(R.string.rename))
-                        .setView(R.layout.dialog_rename_feed)
-                        .setPositiveButton(R.string.rename) { dialogInterface, _ ->
-                            onRenameClick(
-                                feedId = item.id,
-                                dialogInterface = dialogInterface,
-                            )
-                        }.setNegativeButton(R.string.cancel, null).show()
+                override fun onAddToTagClick(item: FeedsAdapter.Item) {
+                    showAddToTagDialog(item.id)
+                }
 
-                val title = dialog.findViewById<TextInputEditText>(R.id.title)!!
-                title.append(item.title)
+                override fun onRenameClick(item: FeedsAdapter.Item) {
+                    val dialog =
+                        MaterialAlertDialogBuilder(requireContext()).setTitle(getString(R.string.rename))
+                            .setView(R.layout.dialog_rename_feed)
+                            .setPositiveButton(R.string.rename) { dialogInterface, _ ->
+                                onRenameClick(
+                                    feedId = item.id,
+                                    dialogInterface = dialogInterface,
+                                )
+                            }.setNegativeButton(R.string.cancel, null).show()
 
-                title.requestFocus()
-                title.postDelayed({ showKeyboard(title) }, 300)
-            }
+                    val title = dialog.findViewById<TextInputEditText>(R.id.title)!!
+                    title.append(item.title)
 
-            override fun onDeleteClick(item: FeedsAdapter.Item) {
-                deleteFeed(item.id)
-            }
-        })
+                    title.requestFocus()
+                    title.postDelayed({ showKeyboard(title) }, 300)
+                }
+
+                override fun onDeleteClick(item: FeedsAdapter.Item) {
+                    deleteFeed(item.id)
+                }
+            },
+            tagsEditable = db().conf.select().backend != ConfTable.Backend.Miniflux,
+        )
     }
 
     class ListItemDecoration(context: Context) : RecyclerView.ItemDecoration() {

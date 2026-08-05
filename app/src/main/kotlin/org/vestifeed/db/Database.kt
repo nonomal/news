@@ -5,7 +5,9 @@ import androidx.sqlite.execSQL
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
+import org.vestifeed.db.table.FeedTagTable
 import org.vestifeed.db.table.LinkTable
+import org.vestifeed.db.table.TagTable
 
 class Database(driver: SQLiteDriver, val path: String) {
 
@@ -15,8 +17,11 @@ class Database(driver: SQLiteDriver, val path: String) {
     val entry = EntryTable(conn)
     val conf = ConfTable(conn)
     val link = LinkTable(conn)
+    val tag = TagTable(conn)
+    val feedTag = FeedTagTable(conn)
 
     init {
+        conn.execSQL("PRAGMA foreign_keys = ON;")
         migrate()
     }
 
@@ -29,8 +34,10 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(ConfTable.SCHEMA)
-            conn.execSQL("PRAGMA user_version=4;")
-            version = 4
+            conn.execSQL(TagTable.SCHEMA)
+            conn.execSQL(FeedTagTable.SCHEMA)
+            conn.execSQL("PRAGMA user_version=5;")
+            version = 5
         }
 
         if (version == 1) {
@@ -49,6 +56,13 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL("ALTER TABLE conf ADD COLUMN use_built_in_audio_player INTEGER NOT NULL DEFAULT 0;")
             conn.execSQL("PRAGMA user_version=4;")
             version = 4
+        }
+
+        if (version == 4) {
+            conn.execSQL(TagTable.SCHEMA)
+            conn.execSQL(FeedTagTable.SCHEMA)
+            conn.execSQL("PRAGMA user_version=5;")
+            version = 5
         }
     }
 

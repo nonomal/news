@@ -59,6 +59,17 @@
     <string name="importing_feeds_n_of_n">Importing feeds (%1$d of %2$d)</string>
     <string name="initial_sync">Initial sync</string>
     <string name="open_feed_settings">Open feed settings</string>
+    <string name="tags">Tags</string>
+    <string name="tag">Tag</string>
+    <string name="tag_title">Tag title</string>
+    <string name="manage_tags">Manage tags</string>
+    <string name="add_tag">Add tag</string>
+    <string name="rename_tag">Rename tag</string>
+    <string name="you_have_no_tags">You have no tags</string>
+    <string name="no_feeds_in_tag">No feeds in this tag</string>
+    <string name="remove_from_tag">Remove from tag</string>
+    <string name="cannot_find_tag_with_id_s">Can not find tag with id %1$s</string>
+    <string name="add_to_tag">Add to tag</string>
     <string name="fetch_news_on_startup">Fetch news on startup</string>
     <string name="open_entries_in_browser">Open entries in browser</string>
     <string name="removed_from_bookmarks">Removed from bookmarks</string>
@@ -136,5 +147,13 @@
         <item quantity="few">%d hours ago</item>
         <item quantity="many">%d hours ago</item>
         <item quantity="other">%d hours ago</item>
+    </plurals>
+    <plurals name="tag_feed_count">
+        <item quantity="zero">No feeds</item>
+        <item quantity="one">%d feed</item>
+        <item quantity="two">%d feeds</item>
+        <item quantity="few">%d feeds</item>
+        <item quantity="many">%d feeds</item>
+        <item quantity="other">%d feeds</item>
     </plurals>
 </resources>

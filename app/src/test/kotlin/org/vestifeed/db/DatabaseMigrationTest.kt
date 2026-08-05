@@ -9,8 +9,10 @@ import org.junit.Before
 import org.junit.Test
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
+import org.vestifeed.db.table.FeedTagTable
 import org.vestifeed.db.table.FeedTable
 import org.vestifeed.db.table.LinkTable
+import org.vestifeed.db.table.TagTable
 import java.io.File
 
 class DatabaseMigrationTest {
@@ -185,5 +187,70 @@ class DatabaseMigrationTest {
 
         db.conf.update { it.copy(useBuiltInAudioPlayer = true) }
         assertEquals(true, db.conf.select().useBuiltInAudioPlayer)
+    }
+
+    @Test
+    fun migrate_v4ToV5_createsTagAndFeedTagTables() {
+        val driver = BundledSQLiteDriver()
+        driver.open(dbFile.absolutePath).use { conn ->
+            conn.execSQL(FeedTable.SCHEMA)
+            conn.execSQL(EntryTable.SCHEMA)
+            conn.execSQL(LinkTable.SCHEMA)
+
+            val v4Schema = """
+                CREATE TABLE conf (
+                    backend TEXT,
+                    miniflux_url TEXT,
+                    miniflux_token TEXT,
+                    minifluxIncrementalSyncTimestamp TEXT,
+                    show_preview_images INTEGER NOT NULL,
+                    crop_preview_images INTEGER NOT NULL,
+                    sync_on_startup INTEGER NOT NULL,
+                    sync_in_background INTEGER NOT NULL,
+                    background_sync_interval_millis INTEGER NOT NULL,
+                    use_built_in_browser INTEGER NOT NULL,
+                    show_preview_text INTEGER NOT NULL,
+                    entry_body_font_size INTEGER NOT NULL,
+                    show_author_name INTEGER NOT NULL DEFAULT 0,
+                    use_built_in_audio_player INTEGER NOT NULL DEFAULT 0
+                ) STRICT;
+            """.trimIndent()
+            conn.execSQL(v4Schema)
+
+            conn.execSQL("PRAGMA user_version=4;")
+        }
+
+        val db = Database(driver, dbFile.absolutePath)
+
+        assertTrue(db.tag.selectAll().isEmpty())
+        assertTrue(db.feedTag.selectTagIdsByFeedId("anything").isEmpty())
+
+        val tag = TagTable.Tag(
+            id = "t1",
+            name = "Tech",
+            extSource = TagTable.Source.Embedded,
+            extMinifluxId = null,
+        )
+        db.tag.insertOrReplace(tag)
+        db.feed.insertOrReplace(
+            FeedTable.Feed(
+                id = "f1",
+                title = "Feed",
+                extOpenEntriesInBrowser = null,
+                extBlockedWords = "",
+                extShowPreviewImages = null,
+            )
+        )
+        db.feedTag.insert(feedId = "f1", tagId = "t1")
+
+        assertEquals(listOf(tag), db.tag.selectAll())
+        assertEquals(listOf("t1"), db.feedTag.selectTagIdsByFeedId("f1"))
+    }
+
+    @Test
+    fun migrate_v0ToV5_createsTagAndFeedTagTables() {
+        val db = Database(BundledSQLiteDriver(), dbFile.absolutePath)
+        assertTrue(db.tag.selectAll().isEmpty())
+        assertTrue(db.feedTag.selectTagIdsByFeedId("anything").isEmpty())
     }
 }

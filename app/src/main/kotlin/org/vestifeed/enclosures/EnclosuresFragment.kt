@@ -47,7 +47,7 @@ class EnclosuresFragment : AppFragment() {
             downloadAudioEnclosure(item.enclosure)
         }
 
-        override fun onPlayClick(item: EnclosuresAdapter.Item) {
+        override fun onPlayPauseClick(item: EnclosuresAdapter.Item) {
             playAudioEnclosure(item.enclosure)
         }
 

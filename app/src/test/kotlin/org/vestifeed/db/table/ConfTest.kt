@@ -31,6 +31,7 @@ class ConfTest {
         assertTrue(statement.contains("miniflux_url TEXT"))
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
         assertTrue(statement.contains("entry_body_font_size INTEGER NOT NULL"))
+        assertTrue(statement.contains("use_built_in_audio_player INTEGER NOT NULL"))
     }
 
     @Test
@@ -48,6 +49,7 @@ class ConfTest {
         assertTrue(defaultConf.useBuiltInBrowser)
         assertTrue(defaultConf.showPreviewText)
         assertEquals(16, defaultConf.entryBodyFontSize)
+        assertFalse(defaultConf.useBuiltInAudioPlayer)
     }
 
     @Test
@@ -76,6 +78,7 @@ class ConfTest {
         assertEquals(conf.useBuiltInBrowser, result.useBuiltInBrowser)
         assertEquals(conf.showPreviewText, result.showPreviewText)
         assertEquals(conf.entryBodyFontSize, result.entryBodyFontSize)
+        assertEquals(conf.useBuiltInAudioPlayer, result.useBuiltInAudioPlayer)
     }
 
     @Test
@@ -141,6 +144,7 @@ class ConfTest {
         showPreviewText: Boolean = false,
         entryBodyFontSize: Int = 20,
         showAuthorName: Boolean = false,
+        useBuiltInAudioPlayer: Boolean = false,
     ) = ConfTable.Conf(
         backend = backend,
         minifluxUrl = minifluxUrl,
@@ -155,5 +159,6 @@ class ConfTest {
         showPreviewText = showPreviewText,
         entryBodyFontSize = entryBodyFontSize,
         showAuthorName = showAuthorName,
+        useBuiltInAudioPlayer = useBuiltInAudioPlayer,
     )
 }

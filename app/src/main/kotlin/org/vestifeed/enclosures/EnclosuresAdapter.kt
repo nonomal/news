@@ -6,6 +6,7 @@ import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import org.vestifeed.R
 import org.vestifeed.databinding.ListItemEnclosureBinding
 import org.vestifeed.db.table.LinkTable
 
@@ -32,7 +33,7 @@ class EnclosuresAdapter(
 
     interface Callback {
         fun onDownloadClick(item: Item)
-        fun onPlayClick(item: Item)
+        fun onPlayPauseClick(item: Item)
         fun onDeleteClick(item: Item)
     }
 
@@ -41,6 +42,7 @@ class EnclosuresAdapter(
         val enclosure: LinkTable.Link,
         val primaryText: String,
         val secondaryText: String,
+        val playbackState: PlaybackState = PlaybackState.Idle,
     )
 
     class ViewHolder(
@@ -65,12 +67,29 @@ class EnclosuresAdapter(
                 downloading.isVisible = progress != 1.0
                 downloadProgress.isVisible = progress != 1.0
                 downloadProgress.progress = progressPercent
-                play.isVisible = progress == 1.0
                 delete.isVisible = progress == 1.0
+
+                when (item.playbackState) {
+                    PlaybackState.Idle -> {
+                        play.isVisible = progress == 1.0
+                        play.text = play.context.getString(R.string.listen)
+                        play.setIconResource(R.drawable.ic_baseline_headset_24)
+                    }
+                    PlaybackState.Playing -> {
+                        play.isVisible = true
+                        play.text = play.context.getString(R.string.pause)
+                        play.setIconResource(R.drawable.ic_baseline_pause_24)
+                    }
+                    PlaybackState.Paused -> {
+                        play.isVisible = true
+                        play.text = play.context.getString(R.string.resume)
+                        play.setIconResource(R.drawable.ic_baseline_play_arrow_24)
+                    }
+                }
             }
 
             download.setOnClickListener { callback.onDownloadClick(item) }
-            play.setOnClickListener { callback.onPlayClick(item) }
+            play.setOnClickListener { callback.onPlayPauseClick(item) }
             delete.setOnClickListener { callback.onDeleteClick(item) }
         }
     }
@@ -88,7 +107,14 @@ class EnclosuresAdapter(
             oldItem: Item,
             newItem: Item,
         ): Boolean {
-            return newItem.enclosure == oldItem.enclosure
+            return newItem.enclosure == oldItem.enclosure &&
+                newItem.playbackState == oldItem.playbackState
         }
     }
+}
+
+enum class PlaybackState {
+    Idle,
+    Playing,
+    Paused,
 }

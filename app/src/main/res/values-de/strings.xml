@@ -20,6 +20,8 @@
     <string name="error">Fehler</string>
     <string name="download">Herunterladen</string>
     <string name="downloading">Wird heruntergeladen</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
     <string name="listen">Anhören</string>
     <string name="crop_feed_images">Vorschaubilder zuschneiden</string>
     <string name="feeds">Feeds</string>
@@ -51,6 +53,7 @@
     <string name="close_search">Close search</string>
     <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
     <string name="no_results">No results</string>
+    <string name="could_not_play_audio">Could not play audio</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">Du hast keine Apps, die diesen Podcast abspielen können.</string>
     <string name="import_feeds_from_opml_file">Aus OPML-Datei importieren</string>
     <string name="export_feeds_to_opml_file">Als OPML-Datei exportieren</string>
@@ -83,6 +86,7 @@
     <string name="follow_settings">Einstellungen folgen</string>
     <string name="feed_url">Feed URL</string>
     <string name="view_comments">Kommentare anzeigen</string>
+    <string name="use_built_in_audio_player">Use built-in audio player</string>
     <string name="use_built_in_browser">Integrierten Browser verwenden</string>
     <string name="show_preview_text">Vorschautext anzeigen</string>
     <string name="show_author_name">Autornamen anzeigen</string>

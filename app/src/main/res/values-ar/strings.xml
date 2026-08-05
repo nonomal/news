@@ -20,6 +20,8 @@
     <string name="error">خطأ</string>
     <string name="download">تحميل</string>
     <string name="downloading">جارى التحميل</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
     <string name="listen">استماع</string>
     <string name="crop_feed_images">تصغير صور المعاينة</string>
     <string name="feeds">الخلاصات</string>
@@ -51,6 +53,7 @@
     <string name="close_search">Close search</string>
     <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
     <string name="no_results">No results</string>
+    <string name="could_not_play_audio">Could not play audio</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">ليس لديك أي تطبيقات يمكنها تشغيل هذا البودكاست.</string>
     <string name="import_feeds_from_opml_file">استيراد من ملف OPML</string>
     <string name="export_feeds_to_opml_file">تصدير إلى ملف OPML</string>
@@ -83,6 +86,7 @@
     <string name="follow_settings">اتبع الإعدادات</string>
     <string name="feed_url">عنوان URL الموجز</string>
     <string name="view_comments">عرض التعليقات</string>
+    <string name="use_built_in_audio_player">Use built-in audio player</string>
     <string name="use_built_in_browser">استخدم المتصفح المدمج</string>
     <string name="show_preview_text">إظهار نص المعاينة</string>
     <string name="show_author_name">إظهار اسم المؤلف</string>

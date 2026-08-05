@@ -23,7 +23,8 @@ class ConfTable(private val conn: SQLiteConnection) {
                 use_built_in_browser INTEGER NOT NULL,
                 show_preview_text INTEGER NOT NULL,
                 entry_body_font_size INTEGER NOT NULL,
-                show_author_name INTEGER NOT NULL DEFAULT 0
+                show_author_name INTEGER NOT NULL DEFAULT 0,
+                use_built_in_audio_player INTEGER NOT NULL DEFAULT 0
             ) STRICT;
         """
 
@@ -41,6 +42,7 @@ class ConfTable(private val conn: SQLiteConnection) {
             showPreviewText = true,
             entryBodyFontSize = 16,
             showAuthorName = false,
+            useBuiltInAudioPlayer = false,
         )
     }
 
@@ -76,6 +78,9 @@ class ConfTable(private val conn: SQLiteConnection) {
         // off by default; when true the entries adapter shows the author on
         // the secondary line between the feed title and the post date
         val showAuthorName: Boolean,
+        // off by default; when true, downloaded audio enclosures are played
+        // inside the app instead of being handed off to an external player
+        val useBuiltInAudioPlayer: Boolean,
     )
 
     fun SQLiteStatement.toConf(): Conf = Conf(
@@ -92,13 +97,14 @@ class ConfTable(private val conn: SQLiteConnection) {
         showPreviewText = getInt(10) == 1,
         entryBodyFontSize = getInt(11),
         showAuthorName = getInt(12) == 1,
+        useBuiltInAudioPlayer = getInt(13) == 1,
     )
 
     fun insert(conf: Conf) {
         conn.prepare(
             """
-            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size, show_author_name)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size, show_author_name, use_built_in_audio_player)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             stmt.bindTextOrNull(1, conf.backend?.name?.lowercase())
@@ -114,6 +120,7 @@ class ConfTable(private val conn: SQLiteConnection) {
             stmt.bindInt(11, if (conf.showPreviewText) 1 else 0)
             stmt.bindInt(12, conf.entryBodyFontSize)
             stmt.bindInt(13, if (conf.showAuthorName) 1 else 0)
+            stmt.bindInt(14, if (conf.useBuiltInAudioPlayer) 1 else 0)
             stmt.step()
         }
     }
@@ -121,7 +128,7 @@ class ConfTable(private val conn: SQLiteConnection) {
     fun select(): Conf {
         conn.prepare(
             """
-            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size, show_author_name
+            SELECT backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text, entry_body_font_size, show_author_name, use_built_in_audio_player
             FROM conf
             """
         ).use { stmt ->

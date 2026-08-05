@@ -29,8 +29,8 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL(EntryTable.SCHEMA)
             conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(ConfTable.SCHEMA)
-            conn.execSQL("PRAGMA user_version=3;")
-            version = 3
+            conn.execSQL("PRAGMA user_version=4;")
+            version = 4
         }
 
         if (version == 1) {
@@ -43,6 +43,12 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL("ALTER TABLE conf ADD COLUMN show_author_name INTEGER NOT NULL DEFAULT 0;")
             conn.execSQL("PRAGMA user_version=3;")
             version = 3
+        }
+
+        if (version == 3) {
+            conn.execSQL("ALTER TABLE conf ADD COLUMN use_built_in_audio_player INTEGER NOT NULL DEFAULT 0;")
+            conn.execSQL("PRAGMA user_version=4;")
+            version = 4
         }
     }
 

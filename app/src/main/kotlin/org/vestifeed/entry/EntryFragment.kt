@@ -5,6 +5,8 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.graphics.Rect
 import android.graphics.Typeface
+import android.media.MediaPlayer
+import android.net.Uri
 import android.os.Bundle
 import android.text.Editable
 import android.text.Html
@@ -47,6 +49,7 @@ import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.parser.AtomLinkRel
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.enclosures.EnclosuresAdapter
+import org.vestifeed.enclosures.PlaybackState
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -82,6 +85,10 @@ class EntryFragment : AppFragment() {
     private var currentMatchSpan: BackgroundColorSpan? = null
     private var currentMatchIndex: Int = -1
     private var isSearchBarVisible: Boolean = false
+
+    private var mediaPlayer: MediaPlayer? = null
+    private var currentPlaybackUri: Uri? = null
+    private var currentPlaybackState: PlaybackState = PlaybackState.Idle
 
     private val highlightColor: Int by lazy {
         ContextCompat.getColor(requireContext(), R.color.find_in_page_highlight)
@@ -177,7 +184,13 @@ class EntryFragment : AppFragment() {
         }
     }
 
+    override fun onPause() {
+        releaseMediaPlayer()
+        super.onPause()
+    }
+
     override fun onDestroyView() {
+        releaseMediaPlayer()
         clearFindInPageHighlights()
         binding.searchInput.removeTextChangedListener(searchTextWatcher)
         super.onDestroyView()
@@ -420,17 +433,7 @@ class EntryFragment : AppFragment() {
         binding.progress.isVisible = false
 
         enclosuresAdapter.submitList(
-            entryLinks
-                .filter { it.rel is AtomLinkRel.Enclosure }
-                .filter { it.type?.startsWith("audio") ?: false }
-                .mapIndexed { index, enclosure ->
-                    EnclosuresAdapter.Item(
-                        entryId = entry.id,
-                        enclosure = enclosure,
-                        primaryText = getString(R.string.audio_n, index + 1),
-                        secondaryText = enclosure.href.toString()
-                    )
-                }
+            buildEnclosureItems(entry, entryLinks)
         )
 
         val firstHtmlLink = entryLinks
@@ -535,22 +538,111 @@ class EntryFragment : AppFragment() {
         val entry = db().entry.selectById(entryId) ?: return
         val links = db().link.selectByEntryId(entryId)
 
-        enclosuresAdapter.submitList(
-            links
-                .filter { it.rel is AtomLinkRel.Enclosure }
-                .filter { it.type?.startsWith("audio") ?: false }
-                .mapIndexed { index, enclosure ->
-                    EnclosuresAdapter.Item(
-                        entryId = entry.id,
-                        enclosure = enclosure,
-                        primaryText = getString(R.string.audio_n, index + 1),
-                        secondaryText = enclosure.href
-                    )
-                }
-        )
+        enclosuresAdapter.submitList(buildEnclosureItems(entry, links))
+    }
+
+    private fun buildEnclosureItems(
+        entry: EntryTable.Entry,
+        links: List<LinkTable.Link>,
+    ): List<EnclosuresAdapter.Item> {
+        return links
+            .filter { it.rel is AtomLinkRel.Enclosure }
+            .filter { it.type?.startsWith("audio") ?: false }
+            .mapIndexed { index, enclosure ->
+                EnclosuresAdapter.Item(
+                    entryId = entry.id,
+                    enclosure = enclosure,
+                    primaryText = getString(R.string.audio_n, index + 1),
+                    secondaryText = enclosure.href.toString(),
+                    playbackState = playbackStateFor(enclosure),
+                )
+            }
+    }
+
+    private fun playbackStateFor(enclosure: LinkTable.Link): PlaybackState {
+        if (currentPlaybackUri != enclosure.extCacheUri?.toUri()) return PlaybackState.Idle
+        return currentPlaybackState
     }
 
     fun playAudioEnclosure(enclosure: LinkTable.Link) {
+        togglePlaybackFor(enclosure)
+    }
+
+    private fun togglePlaybackFor(enclosure: LinkTable.Link) {
+        val cacheUri = enclosure.extCacheUri?.toUri()
+        if (cacheUri == null || !conf.useBuiltInAudioPlayer) {
+            launchExternalAudioPlayer(enclosure)
+            return
+        }
+
+        val player = mediaPlayer
+        if (player != null && currentPlaybackUri == cacheUri) {
+            when (currentPlaybackState) {
+                PlaybackState.Playing -> {
+                    runCatching { player.pause() }
+                    setPlaybackState(cacheUri, PlaybackState.Paused)
+                }
+                PlaybackState.Paused -> {
+                    runCatching { player.start() }
+                    setPlaybackState(cacheUri, PlaybackState.Playing)
+                }
+                PlaybackState.Idle -> Unit
+            }
+        } else {
+            startPlaybackFor(cacheUri)
+        }
+    }
+
+    private fun startPlaybackFor(uri: Uri) {
+        releaseMediaPlayer()
+        val player = MediaPlayer()
+        mediaPlayer = player
+        currentPlaybackUri = uri
+        currentPlaybackState = PlaybackState.Playing
+        runCatching {
+            player.setDataSource(requireContext(), uri)
+            player.setOnPreparedListener { it.start() }
+            player.setOnCompletionListener {
+                if (mediaPlayer === it) {
+                    mediaPlayer = null
+                    currentPlaybackUri = null
+                    currentPlaybackState = PlaybackState.Idle
+                    refreshEnclosures()
+                } else {
+                    runCatching { it.release() }
+                }
+            }
+            player.setOnErrorListener { mp, _, _ ->
+                if (mediaPlayer === mp) {
+                    mediaPlayer = null
+                    currentPlaybackUri = null
+                    currentPlaybackState = PlaybackState.Idle
+                }
+                runCatching { mp.release() }
+                showErrorDialog(getString(R.string.could_not_play_audio))
+                refreshEnclosures()
+                true
+            }
+            player.prepareAsync()
+        }.onFailure {
+            if (mediaPlayer === player) {
+                mediaPlayer = null
+                currentPlaybackUri = null
+                currentPlaybackState = PlaybackState.Idle
+            }
+            runCatching { player.release() }
+            showErrorDialog(it)
+            refreshEnclosures()
+        }
+        refreshEnclosures()
+    }
+
+    private fun setPlaybackState(uri: Uri, state: PlaybackState) {
+        currentPlaybackState = state
+        refreshEnclosures()
+    }
+
+    private fun launchExternalAudioPlayer(enclosure: LinkTable.Link) {
         val intent = Intent(Intent.ACTION_VIEW)
         intent.setDataAndType(enclosure.extCacheUri!!.toUri(), enclosure.type)
 
@@ -563,6 +655,15 @@ class EntryFragment : AppFragment() {
                 showErrorDialog(it)
             }
         }
+    }
+
+    private fun releaseMediaPlayer() {
+        val player = mediaPlayer ?: return
+        mediaPlayer = null
+        currentPlaybackUri = null
+        currentPlaybackState = PlaybackState.Idle
+        runCatching { if (player.isPlaying) player.stop() }
+        runCatching { player.release() }
     }
 
     private fun deleteEnclosure(enclosure: LinkTable.Link) {
@@ -756,7 +857,8 @@ class EntryFragment : AppFragment() {
         override fun onDownloadClick(item: EnclosuresAdapter.Item) =
             downloadAudioEnclosure(item.enclosure)
 
-        override fun onPlayClick(item: EnclosuresAdapter.Item) = playAudioEnclosure(item.enclosure)
+        override fun onPlayPauseClick(item: EnclosuresAdapter.Item) =
+            togglePlaybackFor(item.enclosure)
         override fun onDeleteClick(item: EnclosuresAdapter.Item) = deleteEnclosure(item.enclosure)
     })
 

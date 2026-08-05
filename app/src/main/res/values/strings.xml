@@ -85,6 +85,10 @@
     <string name="feed_url">Feed URL</string>
     <string name="view_comments">View comments</string>
     <string name="use_built_in_browser">Use built-in browser</string>
+    <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="could_not_play_audio">Could not play audio</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
     <string name="show_preview_text">Show preview text</string>
     <string name="show_author_name">Show author name</string>
     <string name="entry_body_font_size">Body font size</string>

@@ -157,6 +157,11 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
+    private fun setUseBuiltInAudioPlayer(value: Boolean) {
+        db.conf.update { it.copy(useBuiltInAudioPlayer = value) }
+        refresh()
+    }
+
     private fun setEntryBodyFontSize(value: Int) {
         db.conf.update { it.copy(entryBodyFontSize = value) }
         refresh()
@@ -303,6 +308,11 @@ class SettingsFragment : AppFragment() {
         useBuiltInBrowser.apply {
             isChecked = state.conf.useBuiltInBrowser
             setOnCheckedChangeListener { _, isChecked -> setUseBuiltInBrowser(isChecked) }
+        }
+
+        useBuiltInAudioPlayer.apply {
+            isChecked = state.conf.useBuiltInAudioPlayer
+            setOnCheckedChangeListener { _, isChecked -> setUseBuiltInAudioPlayer(isChecked) }
         }
 
         entryBodyFontSize.text = entryBodyFontSizeLabel(state.conf.entryBodyFontSize)

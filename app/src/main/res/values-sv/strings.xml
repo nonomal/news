@@ -20,6 +20,8 @@
     <string name="error">Fel</string>
     <string name="download">Ladda ner</string>
     <string name="downloading">Laddar ner</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
     <string name="listen">Lyssna</string>
     <string name="crop_feed_images">Beskär artikelbilden</string>
     <string name="feeds">Flöden</string>
@@ -51,6 +53,7 @@
     <string name="close_search">Close search</string>
     <string name="type_at_least_3_characters_to_search">Type at least 3 characters to search</string>
     <string name="no_results">No results</string>
+    <string name="could_not_play_audio">Could not play audio</string>
     <string name="you_have_no_apps_which_can_play_this_podcast">Du har inga appar som kan spela upp denna podcast.</string>
     <string name="import_feeds_from_opml_file">Importera flöde från OPML-fil</string>
     <string name="export_feeds_to_opml_file">Exportera flöde till OPML-fil</string>
@@ -83,6 +86,7 @@
     <string name="follow_settings">Follow settings</string>
     <string name="feed_url">Feed URL</string>
     <string name="view_comments">View comments</string>
+    <string name="use_built_in_audio_player">Use built-in audio player</string>
     <string name="use_built_in_browser">Use built-in browser</string>
     <string name="show_preview_text">Show preview text</string>
     <string name="show_author_name">Visa författarens namn</string>

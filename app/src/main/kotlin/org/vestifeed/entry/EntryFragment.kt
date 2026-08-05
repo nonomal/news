@@ -111,7 +111,11 @@ class EntryFragment : AppFragment() {
         super.onViewCreated(view, savedInstanceState)
 
         binding.toolbar.setNavigationOnClickListener {
-            parentFragmentManager.popBackStack()
+            if (parentFragment is UnreadPagerFragment) {
+                requireActivity().supportFragmentManager.popBackStack()
+            } else {
+                parentFragmentManager.popBackStack()
+            }
         }
 
         binding.closeSearchButton.setOnClickListener { closeFindInPage() }

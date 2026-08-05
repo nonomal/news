@@ -178,6 +178,28 @@ class EntryQueriesTest {
     }
 
     @Test
+    fun selectUnreadIds() {
+        val feed = createFeed()
+        db.feed.insertOrReplace(feed)
+
+        val now = OffsetDateTime.now()
+        val entries = listOf(
+            entry().copy(feedId = feed.id, published = now.minusSeconds(300), extRead = false, extBookmarked = false),
+            entry().copy(feedId = feed.id, published = now.minusSeconds(100), extRead = true, extBookmarked = false),
+            entry().copy(feedId = feed.id, published = now.minusSeconds(200), extRead = false, extBookmarked = true),
+            entry().copy(feedId = feed.id, published = now, extRead = false, extBookmarked = false),
+        )
+        db.entry.insertOrReplace(entries)
+
+        val unreadIds = db.entry.selectUnreadIds()
+
+        assertEquals(
+            listOf(entries[3].id, entries[0].id),
+            unreadIds,
+        )
+    }
+
+    @Test
     fun countByOgImageFetchedAfter() {
         val now = OffsetDateTime.now()
         val longAgo = now.minusSeconds(3600)

@@ -6,18 +6,15 @@ import androidx.fragment.app.commit
 import org.vestifeed.R
 import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entry.EntryFragment
+import org.vestifeed.entry.UnreadPagerFragment
 import org.vestifeed.navigation.openUrl
 
-/**
- * Translates [EntriesItemAction]s into actual navigation. Kept separate from
- * the fragment so the wiring can be unit-tested and reused (e.g. from search
- * results that share the same entry-tap semantics).
- */
 class EntriesNavigator(private val host: Fragment) {
 
     fun handle(action: EntriesItemAction) {
         when (action) {
             is EntriesItemAction.OpenEntry -> openEntryFragment(action.entryId)
+            is EntriesItemAction.OpenUnreadPager -> openUnreadPager(action.initialEntryId, action.unreadIds)
             is EntriesItemAction.OpenExternal -> openExternal(action.href, action.useBuiltInBrowser)
             is EntriesItemAction.OpenImageExternal -> openExternal(action.href, action.useBuiltInBrowser)
             EntriesItemAction.NoExternalLinks ->
@@ -31,6 +28,17 @@ class EntriesNavigator(private val host: Fragment) {
                 R.id.fragmentContainerView,
                 EntryFragment::class.java,
                 bundleOf("entryId" to entryId),
+            )
+            addToBackStack(null)
+        }
+    }
+
+    private fun openUnreadPager(initialEntryId: String, unreadIds: List<String>) {
+        host.parentFragmentManager.commit {
+            replace(
+                R.id.fragmentContainerView,
+                UnreadPagerFragment::class.java,
+                UnreadPagerFragment.arguments(initialEntryId, unreadIds),
             )
             addToBackStack(null)
         }

@@ -26,6 +26,9 @@ constraintlayout = "2.2.1"
 # List widget
 # https://developer.android.com/jetpack/androidx/releases/recyclerview
 recyclerview = "1.4.0"
+# Horizontal swipe-between-pages container
+# https://developer.android.com/jetpack/androidx/releases/viewpager2
+viewpager2 = "1.1.0"
 # Swipe to refresh on news screen
 # https://developer.android.com/jetpack/androidx/releases/swiperefreshlayout
 swiperefreshlayout = "1.2.0"
@@ -73,6 +76,7 @@ androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-r
 androidx-lifecycle-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-ktx", version.ref = "lifecycle" }
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-recyclerview = { group = "androidx.recyclerview", name = "recyclerview", version.ref = "recyclerview" }
+androidx-viewpager2 = { group = "androidx.viewpager2", name = "viewpager2", version.ref = "viewpager2" }
 androidx-swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 okhttp-bom = { group = "com.squareup.okhttp3", name = "okhttp-bom", version.ref = "okhttp" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }

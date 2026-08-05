@@ -272,6 +272,23 @@ class EntryTable(private val conn: SQLiteConnection) {
         }
     }
 
+    fun selectUnreadIds(): List<String> {
+        conn.prepare(
+            """
+            SELECT id
+            FROM entry
+            WHERE ext_read = 0 AND ext_bookmarked = 0
+            ORDER BY published DESC;
+            """
+        ).use { stmt ->
+            return buildList {
+                while (stmt.step()) {
+                    add(stmt.getText(0))
+                }
+            }
+        }
+    }
+
     fun selectBookmarked(): List<EntriesAdapterRow> {
         conn.prepare(
             """

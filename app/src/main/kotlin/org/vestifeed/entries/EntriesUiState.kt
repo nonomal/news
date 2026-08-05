@@ -47,6 +47,10 @@ sealed class ItemsState {
  */
 sealed class EntriesItemAction {
     data class OpenEntry(val entryId: String) : EntriesItemAction()
+    data class OpenUnreadPager(
+        val initialEntryId: String,
+        val unreadIds: List<String>,
+    ) : EntriesItemAction()
     data class OpenExternal(val href: String, val useBuiltInBrowser: Boolean) : EntriesItemAction()
     data object NoExternalLinks : EntriesItemAction()
     data class OpenImageExternal(val href: String, val useBuiltInBrowser: Boolean) : EntriesItemAction()

@@ -140,6 +140,12 @@ class EntriesViewModel(
     fun onItemClicked(item: EntriesAdapter.Item) {
         viewModelScope.launch {
             runCatching {
+                val unreadIdsSnapshot = if (filter is EntriesFilter.Unread) {
+                    withContext(Dispatchers.IO) { db.entry.selectUnreadIds() }
+                } else {
+                    null
+                }
+
                 withContext(Dispatchers.IO) {
                     db.entry.updateReadAndReadSynced(
                         id = item.id,
@@ -162,7 +168,12 @@ class EntriesViewModel(
                         _actions.tryEmit(EntriesItemAction.OpenExternal(target.href, item.useBuiltInBrowser))
                     }
                 } else {
-                    _actions.tryEmit(EntriesItemAction.OpenEntry(item.id))
+                    val action = if (filter is EntriesFilter.Unread && unreadIdsSnapshot != null) {
+                        EntriesItemAction.OpenUnreadPager(item.id, unreadIdsSnapshot)
+                    } else {
+                        EntriesItemAction.OpenEntry(item.id)
+                    }
+                    _actions.tryEmit(action)
                 }
             }
         }

@@ -17,11 +17,6 @@
         app:showAsAction="ifRoom" />
 
     <item
-        android:id="@+id/showOpenedEntries"
-        android:title="@string/show_read_news"
-        app:showAsAction="never" />
-
-    <item
         android:id="@+id/markAllAsRead"
         android:title="@string/mark_all_as_read"
         app:showAsAction="never" />

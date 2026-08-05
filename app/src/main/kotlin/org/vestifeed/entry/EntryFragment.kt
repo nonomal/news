@@ -10,10 +10,12 @@ import android.text.Editable
 import android.text.Html
 import android.text.Spannable
 import android.text.SpannableStringBuilder
+import android.text.TextPaint
 import android.text.TextWatcher
 import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
 import android.text.style.BulletSpan
+import android.text.style.ClickableSpan
 import android.text.style.QuoteSpan
 import android.text.style.URLSpan
 import android.util.TypedValue
@@ -21,6 +23,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewParent
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.HorizontalScrollView
@@ -71,6 +74,8 @@ class EntryFragment : AppFragment() {
     private val binding get() = _binding!!
 
     private val enclosuresAdapter = createEnclosuresAdapter()
+
+    private val anchorIndex = mutableMapOf<String, AnchorTarget>()
 
     private val findInPageMatches = mutableListOf<FindInPageMatch>()
     private val findInPageSpans = mutableListOf<BackgroundColorSpan>()
@@ -283,6 +288,42 @@ class EntryFragment : AppFragment() {
         val line = layout.getLineForOffset(match.start)
         val rect = Rect(0, layout.getLineTop(line), match.view.width, layout.getLineBottom(line))
         match.view.requestRectangleOnScreen(rect, false)
+    }
+
+    private fun scrollToAnchor(view: TextView, offset: Int) {
+        val layout = view.layout ?: return
+        val text = view.text ?: return
+        if (offset < 0 || offset >= text.length) return
+        val line = layout.getLineForOffset(offset)
+        val lineTop = layout.getLineTop(line)
+
+        var parent: ViewParent? = view.parent
+        var scrollView: android.widget.ScrollView? = null
+        while (parent != null) {
+            if (parent is android.widget.ScrollView) {
+                scrollView = parent
+                break
+            }
+            parent = parent.parent
+        }
+
+        if (scrollView == null) {
+            view.requestRectangleOnScreen(
+                Rect(0, lineTop, view.width, layout.getLineBottom(line)),
+                false,
+            )
+            return
+        }
+
+        var yInScrollChild = lineTop
+        var node: View = view
+        while (node.parent is View && node.parent !== scrollView) {
+            node = node.parent as View
+            yInScrollChild += node.top
+        }
+        val desiredScrollY = (yInScrollChild - resources.getDimensionPixelSize(R.dimen.dp_16))
+            .coerceAtLeast(0)
+        scrollView.smoothScrollTo(0, desiredScrollY)
     }
 
     private fun collectFindInPageTextViews(): List<TextView> {
@@ -533,6 +574,7 @@ class EntryFragment : AppFragment() {
 
     private fun renderEntryContent(content: String, baseUrl: HttpUrl?) {
         binding.summaryView.removeAllViews()
+        anchorIndex.clear()
 
         splitEntryContent(content).forEach { block ->
             when (block) {
@@ -558,6 +600,19 @@ class EntryFragment : AppFragment() {
         textView.text = parsedContent
         textView.movementMethod = LinkMovementMethod.getInstance()
         binding.summaryView.addView(textView)
+        indexHeadings(content, textView)
+    }
+
+    private fun indexHeadings(html: String, textView: TextView) {
+        val rendered = textView.text.toString()
+        if (rendered.isEmpty()) return
+
+        findHeadingReferences(html).forEach { ref ->
+            if (anchorIndex.containsKey(ref.id)) return@forEach
+            val offset = rendered.lastIndexOf(ref.text)
+            if (offset < 0) return@forEach
+            anchorIndex[ref.id] = AnchorTarget(textView, offset)
+        }
     }
 
     private fun addPreformattedBlock(content: String) {
@@ -643,7 +698,24 @@ class EntryFragment : AppFragment() {
 
                 is URLSpan -> {
                     if (it.url.startsWith("#")) {
-                        removeSpan(it)
+                        val id = it.url.substring(1)
+                        if (id.isEmpty()) {
+                            removeSpan(it)
+                        } else {
+                            val start = getSpanStart(it)
+                            val end = getSpanEnd(it)
+                            removeSpan(it)
+                            setSpan(
+                                AnchorClickSpan(
+                                    anchorId = id,
+                                    onScroll = ::scrollToAnchor,
+                                    getTarget = { anchorIndex[id] },
+                                ),
+                                start,
+                                end,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+                            )
+                        }
                     }
                 }
             }
@@ -699,9 +771,42 @@ class EntryFragment : AppFragment() {
     }
 }
 
+private data class AnchorTarget(val view: TextView, val offset: Int)
+
+private class AnchorClickSpan(
+    private val anchorId: String,
+    private val onScroll: (TextView, Int) -> Unit,
+    private val getTarget: () -> AnchorTarget?,
+) : ClickableSpan() {
+    override fun onClick(widget: View) {
+        val target = getTarget() ?: return
+        onScroll(target.view, target.offset)
+    }
+
+    override fun updateDrawState(ds: TextPaint) {
+        ds.color = ds.linkColor
+        ds.isUnderlineText = true
+    }
+}
+
 internal sealed interface EntryContentBlock {
     data class Markup(val content: String) : EntryContentBlock
     data class Preformatted(val content: String) : EntryContentBlock
+}
+
+internal data class HeadingReference(val id: String, val text: String)
+
+private val headingSelector = "h1[id], h2[id], h3[id], h4[id], h5[id], h6[id]"
+
+internal fun findHeadingReferences(html: String): List<HeadingReference> {
+    return Jsoup.parseBodyFragment(html)
+        .body()
+        .select(headingSelector)
+        .mapNotNull { heading ->
+            val id = heading.id()
+            val text = heading.text()
+            if (id.isEmpty() || text.isEmpty()) null else HeadingReference(id, text)
+        }
 }
 
 private val preformattedBlockRegex = Regex("""(?is)<pre\b[^>]*>.*?</pre\s*>""")

@@ -19,6 +19,7 @@ class EntriesNavigator(private val host: Fragment) {
         when (action) {
             is EntriesItemAction.OpenEntry -> openEntryFragment(action.entryId)
             is EntriesItemAction.OpenExternal -> openExternal(action.href, action.useBuiltInBrowser)
+            is EntriesItemAction.OpenImageExternal -> openExternal(action.href, action.useBuiltInBrowser)
             EntriesItemAction.NoExternalLinks ->
                 host.showErrorDialog(R.string.this_entry_doesnt_have_any_external_links)
         }

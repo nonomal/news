@@ -22,10 +22,18 @@ class EntriesAdapterViewHolder(
         imageView.load(null)
         imageView.isVisible = false
         imageProgress.isVisible = false
+        imageView.setOnLongClickListener(null)
+        imageView.isLongClickable = false
 
         if (item.showImage && item.imageUrl.isNotEmpty()) {
             imageView.isVisible = true
             imageProgress.isVisible = true
+            imageView.isLongClickable = true
+            imageView.setOnLongClickListener {
+                callback.onImageLongClick(item)
+                true
+            }
+            imageView.setOnClickListener { callback.onItemClick(item) }
 
             val targetHeight =
                 ((screenWidth - cardMargin) * (item.imageHeight.toDouble() / item.imageWidth.toDouble()))

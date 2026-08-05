@@ -87,8 +87,18 @@ class EntriesFragment : AppFragment() {
     private val navigator = lazy { EntriesNavigator(this) }
 
     private val adapter by lazy {
-        EntriesAdapter(requireActivity()) { viewModel.onItemClicked(it) }
-            .also { it.scrollToTopOnInsert(binding.list, ::isViewAlive) }
+        EntriesAdapter(
+            activity = requireActivity(),
+            callback = object : EntriesAdapterCallback {
+                override fun onItemClick(item: EntriesAdapter.Item) {
+                    viewModel.onItemClicked(item)
+                }
+
+                override fun onImageLongClick(item: EntriesAdapter.Item) {
+                    viewModel.onImageLongClicked(item)
+                }
+            },
+        ).also { it.scrollToTopOnInsert(binding.list, ::isViewAlive) }
     }
 
     private val touchHelper by lazy { createTouchHelper() }

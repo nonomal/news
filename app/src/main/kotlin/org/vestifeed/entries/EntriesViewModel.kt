@@ -168,6 +168,16 @@ class EntriesViewModel(
         }
     }
 
+    /**
+     * User long-pressed the preview image of an entry. Asks the fragment to
+     * open the full image URL in the appropriate browser, respecting the
+     * built-in/external browser preference stored on the item.
+     */
+    fun onImageLongClicked(item: EntriesAdapter.Item) {
+        if (item.imageUrl.isEmpty()) return
+        _actions.tryEmit(EntriesItemAction.OpenImageExternal(item.imageUrl, item.useBuiltInBrowser))
+    }
+
     /** Persist the read flag and queue a sync so the server sees it. */
     fun setRead(entryId: String, read: Boolean) {
         viewModelScope.launch {

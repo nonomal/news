@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Sincronizza in background</string>
     <string name="background_sync_interval">Intervallo di sincronizzazione in background</string>
     <string name="mark_all_as_read">Segna tutti come letti</string>
+    <string name="sync">Sincronizza</string>
     <string name="mark_all_as_read_warning">Vuoi davvero segnare tutti come letti?</string>
     <string name="unread_news">Notizie non lette</string>
     <string name="notification_permission_required_title">Notification permission</string>

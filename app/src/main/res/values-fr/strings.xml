@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Synchroniser en tâche de fond</string>
     <string name="background_sync_interval">Intervalle de la sync en tâche de fond</string>
     <string name="mark_all_as_read">Tout marquer comme lu</string>
+    <string name="sync">Synchroniser</string>
     <string name="mark_all_as_read_warning">Voulez-vous vraiment tout marquer comme lu ?</string>
     <string name="unread_news">Non lu</string>
     <string name="notification_permission_required_title">Notification permission</string>

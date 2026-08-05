@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Sync in background</string>
     <string name="background_sync_interval">Background sync interval</string>
     <string name="mark_all_as_read">Mark all as read</string>
+    <string name="sync">Συγχρονισμός</string>
     <string name="mark_all_as_read_warning">Do you really want to mark all as read?</string>
     <string name="unread_news">Unread news</string>
     <string name="notification_permission_required_title">Notification permission</string>

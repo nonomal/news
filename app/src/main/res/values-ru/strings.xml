@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Синхронизация в фоновом режиме</string>
     <string name="background_sync_interval">Интервал фоновой синхронизации</string>
     <string name="mark_all_as_read">Пометить все как прочитанные</string>
+    <string name="sync">Синхронизировать</string>
     <string name="mark_all_as_read_warning">Вы действительно хотите пометить все как прочитанные?</string>
     <string name="unread_news">Непрочитанные новости</string>
     <string name="notification_permission_required_title">Notification permission</string>

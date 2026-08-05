@@ -203,12 +203,17 @@ class EntriesFragment : AppFragment() {
     }
 
     private fun initToolbarMenu() {
+        binding.toolbar.menu.findItem(R.id.sync)?.isVisible = filter is EntriesFilter.Unread
         binding.toolbar.setOnMenuItemClickListener { item ->
             when (item.itemId) {
                 R.id.search -> openFragment(SearchFragment::class.java)
                 R.id.settings -> openFragment(SettingsFragment::class.java)
                 R.id.markAllAsRead -> {
                     confirmMarkAllAsRead()
+                    true
+                }
+                R.id.sync -> {
+                    viewModel.refresh()
                     true
                 }
                 R.id.notificationPermissionWarning -> {

@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Szinkronizálás a háttérben</string>
     <string name="background_sync_interval">Háttérbeli szinkronizálás intervalluma</string>
     <string name="mark_all_as_read">Összes olvasottként való megjelölése</string>
+    <string name="sync">Szinkronizálás</string>
     <string name="mark_all_as_read_warning">Biztosan szeretné az összeset olvasottnak megjelölni?</string>
     <string name="unread_news">Olvasatlan hírek</string>
     <string name="notification_permission_required_title">Notification permission</string>

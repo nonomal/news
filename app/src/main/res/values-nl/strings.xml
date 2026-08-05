@@ -69,6 +69,7 @@
     <string name="fetch_news_in_background">Sync in achtergrond</string>
     <string name="background_sync_interval">Achtergrond sync interval</string>
     <string name="mark_all_as_read">Alles markeren als gelezen</string>
+    <string name="sync">Synchroniseren</string>
     <string name="mark_all_as_read_warning">Wilt u echt alles als gelezen markeren?</string>
     <string name="unread_news">Ongelezen nieuws</string>
     <string name="notification_permission_required_title">Notification permission</string>

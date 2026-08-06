@@ -17,7 +17,7 @@
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
 #   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
-#   ./devtools deploy nightly                 Build a signed nightly APK and copy it to website/nightly.apk
+#   ./devtools deploy nightly                 Build a signed nightly APK and copy it to website/releases/nightly.apk
 #   ./devtools deploy website                 rsync website/ to the production server (no APK rebuild)
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
@@ -819,7 +819,7 @@ Usage: ./devtools deploy <target>
 Targets:
   nightly                          Build a signed nightly APK from the keystore credentials
                                    in local.properties (storeFile / storePassword / keyAlias),
-                                   copy it to website/nightly.apk, and rsync website/ to the
+                                   copy it to website/releases/nightly.apk, and rsync website/ to the
                                    production server
   website                          rsync website/ to the production server without rebuilding
                                    the APK (use when only HTML/CSS assets changed)
@@ -904,8 +904,9 @@ deploy_nightly() {
     return 1
   fi
 
-  log "Copying nightly APK to $SCRIPT_DIR/website/nightly.apk"
-  cp "$apk_path" "$SCRIPT_DIR/website/nightly.apk"
+  log "Copying nightly APK to $SCRIPT_DIR/website/releases/nightly.apk"
+  mkdir -p "$SCRIPT_DIR/website/releases"
+  cp "$apk_path" "$SCRIPT_DIR/website/releases/nightly.apk"
 
   sync_website
 

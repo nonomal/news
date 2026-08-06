@@ -9,7 +9,5 @@
 .externalNativeBuild
 .cxx
 /crowdin.properties
-/website/debug.apk
-/website/release.apk
-/website/nightly.apk
+/website/releases/nightly.apk
 /.env

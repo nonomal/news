@@ -17,6 +17,7 @@
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
 #   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
+#   ./devtools deploy nightly                 Build a signed nightly APK and copy it to website/nightly.apk
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
@@ -77,7 +78,7 @@ log() { printf '==> %s\n' "$*"; }
 err() { printf 'error: %s\n' "$*" >&2; }
 
 usage() {
-  sed -n '2,18p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 usage_emulator() {
@@ -808,6 +809,103 @@ cmd_login() {
   "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
 }
 
+# === deploy subcommand ======================================================
+
+usage_deploy() {
+  cat <<EOF
+Usage: ./devtools deploy <target>
+
+Targets:
+  nightly                          Build a signed nightly APK from the keystore credentials
+                                   in local.properties (storeFile / storePassword / keyAlias),
+                                   copy it to website/nightly.apk, and rsync website/ to the
+                                   production server
+EOF
+}
+
+# Read a key from a Java-style properties file. Prints the value (with any
+# matching surrounding quotes stripped) on stdout. Returns 0 on hit, 1 on
+# miss. Empty lines and lines starting with `#` are ignored.
+properties_get() {
+  local file="$1" key="$2" line k v
+  [ -f "$file" ] || return 1
+  while IFS= read -r line; do
+    case "$line" in
+      ""|\#*) continue ;;
+    esac
+    k="${line%%=*}"
+    [ "$k" = "$key" ] || continue
+    v="${line#*=}"
+    if [ "${v:0:1}" = '"' ] && [ "${v: -1}" = '"' ] && [ "${#v}" -ge 2 ]; then
+      v="${v:1:${#v}-2}"
+    elif [ "${v:0:1}" = "'" ] && [ "${v: -1}" = "'" ] && [ "${#v}" -ge 2 ]; then
+      v="${v:1:${#v}-2}"
+    fi
+    printf '%s' "$v"
+    return 0
+  done < "$file"
+  return 1
+}
+
+# Build the nightly variant and drop the resulting APK in the website directory.
+# Validates local.properties up front (the build script reads it directly via
+# java.util.Properties; we only need to fail fast here).
+deploy_nightly() {
+  local props_file="$SCRIPT_DIR/local.properties"
+  local keystore_path keystore_alias keystore_password
+  local -a missing=()
+
+  if [ ! -f "$props_file" ]; then
+    err "local.properties not found at $props_file (expected keys: storeFile, keyAlias, storePassword)"
+    return 1
+  fi
+
+  keystore_path=$(properties_get "$props_file" "storeFile")
+  keystore_alias=$(properties_get "$props_file" "keyAlias")
+  keystore_password=$(properties_get "$props_file" "storePassword")
+
+  [ -z "$keystore_path" ] && missing+=("storeFile")
+  [ -z "$keystore_alias" ] && missing+=("keyAlias")
+  [ -z "$keystore_password" ] && missing+=("storePassword")
+
+  if [ "${#missing[@]}" -gt 0 ]; then
+    err "Missing keys in $props_file: ${missing[*]}"
+    return 1
+  fi
+
+  if [ ! -f "$keystore_path" ]; then
+    err "Keystore file not found: $keystore_path"
+    return 1
+  fi
+
+  log "Building nightly APK..."
+  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleNightly
+
+  local apk_path="$SCRIPT_DIR/app/build/outputs/apk/nightly/app-nightly.apk"
+  if [ ! -f "$apk_path" ]; then
+    err "Nightly APK not found at $apk_path"
+    return 1
+  fi
+
+  log "Copying nightly APK to $SCRIPT_DIR/website/nightly.apk"
+  cp "$apk_path" "$SCRIPT_DIR/website/nightly.apk"
+
+  log "Syncing website/ to vesti:/srv/http/vestifeed.org/"
+  rsync -avz --delete "$SCRIPT_DIR/website/" vesti:/srv/http/vestifeed.org/
+
+  log "Done."
+}
+
+cmd_deploy() {
+  local target="${1:-help}"
+  shift || true
+  case "$target" in
+    nightly)         deploy_nightly "$@" ;;
+    help|-h|--help)  usage_deploy ;;
+    *) err "Unknown deploy target: $target"; usage_deploy; return 1 ;;
+  esac
+}
+
 # === website subcommand ======================================================
 
 cmd_website() {
@@ -848,6 +946,7 @@ main() {
     run)      cmd_run "$@" ;;
     e2e)      cmd_e2e "$@" ;;
     login)    cmd_login "$@" ;;
+    deploy)   cmd_deploy "$@" ;;
     clean)    cmd_clean ;;
     help|-h|--help) usage ;;
     *) err "Unknown command: $cmd"; usage; return 1 ;;

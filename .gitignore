@@ -1,7 +1,6 @@
 *.iml
 .gradle
 /local.properties
-/signing.properties
 /.idea
 /.tmp
 .DS_Store
@@ -12,4 +11,5 @@
 /crowdin.properties
 /website/debug.apk
 /website/release.apk
+/website/nightly.apk
 /.env

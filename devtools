@@ -18,6 +18,7 @@
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
 #   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
 #   ./devtools deploy nightly                 Build a signed nightly APK and copy it to website/nightly.apk
+#   ./devtools deploy website                 rsync website/ to the production server (no APK rebuild)
 #   ./devtools clean                          Uninstall the debug APK from a running emulator
 #
 # Environment overrides:
@@ -820,6 +821,8 @@ Targets:
                                    in local.properties (storeFile / storePassword / keyAlias),
                                    copy it to website/nightly.apk, and rsync website/ to the
                                    production server
+  website                          rsync website/ to the production server without rebuilding
+                                   the APK (use when only HTML/CSS assets changed)
 EOF
 }
 
@@ -845,6 +848,20 @@ properties_get() {
     return 0
   done < "$file"
   return 1
+}
+
+# Sync the local website/ tree to the production server. Shared by every
+# deploy target so the rsync invocation lives in exactly one place.
+sync_website() {
+  log "Syncing website/ to vesti:/srv/http/vestifeed.org/"
+  rsync -avz --delete "$SCRIPT_DIR/website/" vesti:/srv/http/vestifeed.org/
+}
+
+# Push the current website/ tree to the production server without rebuilding
+# the APK. Use this when only HTML/CSS/JS assets changed.
+deploy_website() {
+  sync_website
+  log "Done."
 }
 
 # Build the nightly variant and drop the resulting APK in the website directory.
@@ -890,8 +907,7 @@ deploy_nightly() {
   log "Copying nightly APK to $SCRIPT_DIR/website/nightly.apk"
   cp "$apk_path" "$SCRIPT_DIR/website/nightly.apk"
 
-  log "Syncing website/ to vesti:/srv/http/vestifeed.org/"
-  rsync -avz --delete "$SCRIPT_DIR/website/" vesti:/srv/http/vestifeed.org/
+  sync_website
 
   log "Done."
 }
@@ -901,6 +917,7 @@ cmd_deploy() {
   shift || true
   case "$target" in
     nightly)         deploy_nightly "$@" ;;
+    website)         deploy_website "$@" ;;
     help|-h|--help)  usage_deploy ;;
     *) err "Unknown deploy target: $target"; usage_deploy; return 1 ;;
   esac

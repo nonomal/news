@@ -4,6 +4,11 @@
 
 This is a web feed reader for Android.
 
+It has two backends/modes
+
+- Miniflux (syncs with a server)
+- Embedded (uses in-app parser)
+
 ## Build Commands
 
 ### Build Debug APK
@@ -16,36 +21,20 @@ This is a web feed reader for Android.
 ./gradlew assembleRelease
 ```
 
-### Run Unit Tests
+### Run All Unit Tests (Local JVM Only)
 ```bash
-./gradlew testDebugUnitTest
+./gradlew test
 ```
 
 ### Run a Single Unit Test
 ```bash
-./gradlew testDebugUnitTest --tests "org.vestifeed.feeds.FeedsModelTest"
-```
-
-### Run All Tests (unit + instrumented)
-```bash
-./gradlew test
+./gradlew testDebugUnitTest --tests "org.vestifeed.backend.BackendTest"
 ```
 
 ### Run Instrumented Tests (on device/emulator)
 ```bash
 ./gradlew connectedDebugAndroidTest
 ```
-This runs the full instrumented suite without uninstalling the existing debug
-app first, so tests may read or modify persistent emulator data. Do not use
-this command when the user asks to run the E2E test.
-
-### Run E2E Test (fresh install)
-```bash
-./devtools e2e
-```
-Always use `./devtools e2e` for E2E requests. It uninstalls the debug app before
-running only `org.vestifeed.e2e.EmbeddedBackendTest`; never substitute
-`./gradlew connectedDebugAndroidTest`.
 
 ### Clean Build
 ```bash

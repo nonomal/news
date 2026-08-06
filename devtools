@@ -3,16 +3,8 @@
 # devtools — manage the Vesti Android dev environment.
 #
 # Usage:
-#   ./devtools emulator start                 Boot the AVD (default_boot snapshot if present)
+#   ./devtools emulator start                 Boot the AVD asynchronously
 #   ./devtools emulator stop                  Shut the emulator down cleanly
-#   ./devtools emulator status                Show ADB device list and boot state
-#   ./devtools emulator doctor                Diagnose Wayland / GPU / Qt plugin issues
-#   ./devtools emulator screencap [path]      Capture the device screen to PATH
-#   ./devtools emulator push <local> [remote] Push a file to the device
-#   ./devtools emulator logcat [-n N] [--tag TAG] [--pid PID]
-#                                            Dump recent logcat lines (default: $VESTI_PACKAGE only)
-#   ./devtools emulator snapshot save         Save the current state as the default_boot quickboot snapshot
-#   ./devtools emulator snapshot delete       Remove a stale default_boot snapshot
 #   ./devtools website run                  Open the website in a local browser tab
 #   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
 #   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
@@ -42,7 +34,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
-VESTI_AVD="${VESTI_AVD:-Pixel_9_Pro}"
+VESTI_AVD="Pixel_9_Pro"
 VESTI_DEVICE="${VESTI_DEVICE:-emulator-5554}"
 VESTI_PACKAGE="${VESTI_PACKAGE:-org.vestifeed.debug}"
 VESTI_LOG_DIR="${VESTI_LOG_DIR:-$SCRIPT_DIR/.tmp}"
@@ -56,13 +48,8 @@ VESTI_CORES="${VESTI_CORES:-}"
 VESTI_NO_AUDIO="${VESTI_NO_AUDIO:-0}"
 VESTI_NO_SNAPSHOT_SAVE="${VESTI_NO_SNAPSHOT_SAVE:-0}"
 
-ADB="$ANDROID_HOME/platform-tools/adb"
-EMU="$ANDROID_HOME/emulator/emulator"
-
-if [ ! -x "$ADB" ]; then
-  err "adb not found at $ADB — set ANDROID_HOME"
-  exit 1
-fi
+ADB="adb"
+EMU="emulator"
 
 # The emulator ships its own Qt (currently 6.5.x on the Linux build) and
 # its plugin dir does NOT include a Wayland platform plugin. The system
@@ -87,333 +74,19 @@ usage_emulator() {
 Usage: ./devtools emulator <command>
 
 Commands:
-  start                          Boot the AVD (uses default_boot snapshot if present)
-  stop                           Shut the emulator down cleanly via \`adb emu kill\`
-  status                         Show ADB device list and boot state
-  doctor                         Diagnose Wayland / GPU / Qt-plugin issues that cause freezes
-  screencap [path]               Capture the device screen to PATH
-                                 (default: $VESTI_LOG_DIR/vesti.png)
-  push <local> [remote]          Push LOCAL to the device at REMOTE
-                                 (default: /sdcard/Download/<basename>)
-  logcat [-n N] [--tag TAG] [--pid PID]
-                                 Dump recent logcat lines (default: $VESTI_PACKAGE only,
-                                 last 200 lines). With no --tag/--pid the ring buffer is
-                                 filtered to the app's pid so crashes and ANRs surface fast.
-  snapshot save                  Save the current state as the default_boot quickboot snapshot
-  snapshot delete                Remove a stale default_boot quickboot snapshot
-
-Common tunables (env vars):
-  VESTI_NO_WINDOW=1                   Run headless; eliminates Mutter ANR dialogs.
-                                       View screen via \`./devtools emulator screencap\` or scrcpy.
-  VESTI_CORES=N                       Cap QEMU cores (default: unset = all cores)
-  VESTI_NO_AUDIO=1                    Disable audio emulation
-  VESTI_NO_SNAPSHOT_SAVE=1            Don't save a snapshot on shutdown
+  start                          Boot the AVD asynchronously
+  stop                           Shut the emulator down cleanly
 EOF
 }
 
-# Connected and online device ids (one per line).
-adb_connected() {
-  "$ADB" devices 2>/dev/null \
-    | tail -n +2 \
-    | awk '$2 == "device" {print $1}'
-}
-
-wait_for_boot() {
-  log "Waiting for $VESTI_DEVICE to finish booting..."
-  local boot
-  for _ in $(seq 1 60); do
-    boot=$("$ADB" -s "$VESTI_DEVICE" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r\n' || true)
-    [ "$boot" = "1" ] && { log "Booted."; return 0; }
-    sleep 5
-  done
-  err "Emulator failed to boot in 5 minutes. See $VESTI_LOG_DIR/emulator.log"
-  return 1
-}
-
-# Build the emulator CLI args from the VESTI_* env knobs.
-emulator_extra_args() {
-  local -a args=()
-  [ "$VESTI_NO_WINDOW" = "1" ] && args+=(-no-window)
-  [ "$VESTI_NO_AUDIO" = "1" ] && args+=(-no-audio)
-  [ "$VESTI_NO_SNAPSHOT_SAVE" = "1" ] && args+=(-no-snapshot-save)
-  [ -n "$VESTI_CORES" ] && args+=(-cores "$VESTI_CORES")
-  printf '%s\n' "${args[@]}"
-}
-
-# === emulator subcommand ====================================================
-
 emulator_start() {
-  mkdir -p "$VESTI_LOG_DIR"
-
-  if adb_connected | grep -qx "$VESTI_DEVICE"; then
-    log "Emulator $VESTI_DEVICE is already running."
-    return 0
-  fi
-
-  if pgrep -f "qemu-system.*$VESTI_AVD" >/dev/null; then
-    log "Emulator $VESTI_AVD is starting in the background; waiting for boot..."
-    wait_for_boot
-    return 0
-  fi
-
-  if [ ! -x "$EMU" ]; then
-    err "emulator binary not found at $EMU — set ANDROID_HOME"
-    return 1
-  fi
-
-  local extra
-  extra=$(emulator_extra_args)
-
-  log "Starting AVD $VESTI_AVD (logs: $VESTI_LOG_DIR/emulator.log)"
-  log "  -gpu host${extra:+ $extra}"
   # Detach from the shell so the script can exit cleanly while the
   # emulator keeps running.
-  # shellcheck disable=SC2086
-  nohup setsid "$EMU" -avd "$VESTI_AVD" -gpu host \
-    ${extra:+$extra} \
-    > "$VESTI_LOG_DIR/emulator.log" 2>&1 < /dev/null &
-  disown
-  wait_for_boot
+  nohup setsid emulator -avd Pixel_9_Pro -gpu host > "$VESTI_LOG_DIR/emulator.log" 2>&1 < /dev/null & disown
 }
 
 emulator_stop() {
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    log "No emulator running on $VESTI_DEVICE."
-    return 0
-  fi
-
-  log "Stopping emulator $VESTI_DEVICE..."
-  "$ADB" -s "$VESTI_DEVICE" emu kill || true
-
-  # Clean stale AVD lock files from a previous interrupted run so the
-  # next start isn't blocked.
-  find "/run/user/$UID/avd/running" -name 'pid_*.ini' -delete 2>/dev/null || true
-  log "Stopped."
-}
-
-emulator_status() {
-  "$ADB" devices
-  if adb_connected | grep -qx "$VESTI_DEVICE"; then
-    local boot
-    boot=$("$ADB" -s "$VESTI_DEVICE" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r\n' || true)
-    log "Boot completed: ${boot:-?}"
-  fi
-}
-
-# Print the diagnostic signals most likely to explain emulator freezes.
-emulator_doctor() {
-  printf '== adb ==\n'
-  printf '  ANDROID_HOME=%s\n' "$ANDROID_HOME"
-  printf '  adb:  %s %s\n' "$ADB" "$([ -x "$ADB" ] && echo OK || echo MISSING)"
-  printf '  emu:  %s %s\n' "$EMU" "$([ -x "$EMU" ] && echo OK || echo MISSING)"
-
-  printf '\n== session ==\n'
-  printf '  XDG_SESSION_TYPE=%s\n' "${XDG_SESSION_TYPE:-?}"
-  printf '  DISPLAY=%s  WAYLAND_DISPLAY=%s\n' "${DISPLAY:-unset}" "${WAYLAND_DISPLAY:-unset}"
-  if pgrep -a Xwayland >/dev/null; then
-    printf '  Xwayland: running (Qt will fall back to XCB if no Wayland plugin)\n'
-  else
-    printf '  Xwayland: not running\n'
-  fi
-
-  printf '\n== Qt platform plugins ==\n'
-  local qt_plugins="$ANDROID_HOME/emulator/lib64/qt/plugins/platforms"
-  if [ -d "$qt_plugins" ]; then
-    ls "$qt_plugins" 2>/dev/null | sed 's/^/  /'
-  else
-    printf '  (emulator Qt plugins dir not found: %s)\n' "$qt_plugins"
-  fi
-  local emu_qt_ver sys_qt_ver
-  emu_qt_ver=$(strings "$ANDROID_HOME/emulator/lib64/qt/lib/libQt6CoreAndroidEmu.so.6" 2>/dev/null \
-    | grep -oE 'Qt 6\.[0-9]+\.[0-9]+' | sort -u | head -1)
-  if [ -n "$emu_qt_ver" ]; then
-    printf '  emulator Qt: %s\n' "$emu_qt_ver"
-  fi
-  if command -v qmake6 >/dev/null; then
-    sys_qt_ver=$(qmake6 -query QT_VERSION 2>/dev/null || true)
-  elif command -v qmake >/dev/null; then
-    sys_qt_ver=$(qmake -query QT_VERSION 2>/dev/null || true)
-  fi
-  [ -n "$sys_qt_ver" ] && printf '  system Qt:   %s\n' "$sys_qt_ver"
-  if [ -n "$emu_qt_ver" ] && [ -n "$sys_qt_ver" ]; then
-    local emu_minor="${emu_qt_ver#Qt 6.}" sys_minor="${sys_qt_ver#Qt 6.}"
-    if [ "$emu_minor" != "$sys_minor" ]; then
-      printf '  ABIs differ (%s vs %s) — system libqwayland.so will be rejected by the\n' "$emu_minor" "$sys_minor"
-      printf '  emulator Qt at load time. Native Wayland for the emulator requires the\n'
-      printf '  SDK to ship a Wayland plugin itself, which it currently does not.\n'
-      printf '  Workaround: VESTI_NO_WINDOW=1 (headless).\n'
-    fi
-  fi
-
-  printf '\n== Vulkan ICDs ==\n'
-  if [ -d /usr/share/vulkan/icd.d ]; then
-    ls /usr/share/vulkan/icd.d 2>/dev/null | sed 's/^/  /' || true
-  fi
-  if command -v vulkaninfo >/dev/null; then
-    printf '\n== vulkaninfo summary ==\n'
-    vulkaninfo --summary 2>/dev/null | head -20 | sed 's/^/  /'
-  fi
-
-  printf '\n== AVDs ==\n'
-  if [ -x "$EMU" ]; then
-    "$EMU" -list-avds 2>/dev/null | sed 's/^/  /' || true
-  fi
-
-  printf '\n== adb devices ==\n'
-  "$ADB" devices | sed 's/^/  /'
-
-  printf '\n== Mutter ANR timeout ==\n'
-  if command -v gsettings >/dev/null && gsettings list-keys org.gnome.mutter 2>/dev/null \
-      | grep -q '^check-alive-timeout$'; then
-    local timeout
-    timeout=$(gsettings get org.gnome.mutter check-alive-timeout 2>/dev/null || echo '?')
-    printf '  org.gnome.mutter check-alive-timeout = %s\n' "$timeout"
-    if [ "$timeout" = "uint32 0" ]; then
-      printf '  (disabled — Mutter will not pop "app not responding" dialogs)\n'
-    else
-      printf '  Mutter shows the ANR dialog after this many ms of no ping response.\n'
-      printf '  If the emulator freezes trigger it, mute with:\n'
-      printf '    gsettings set org.gnome.mutter check-alive-timeout 0\n'
-      printf '  (revert with: gsettings reset org.gnome.mutter check-alive-timeout)\n'
-    fi
-  else
-    printf '  (gsettings not available or no GNOME session)\n'
-  fi
-
-  printf '\n== running emulator processes ==\n'
-  if pgrep -af "qemu-system.*$VESTI_AVD" >/dev/null; then
-    ps -o pid,pcpu,pmem,etime,comm -p "$(pgrep -f "qemu-system.*$VESTI_AVD" | tr '\n' ',' | sed 's/,$//')" \
-      | sed 's/^/  /'
-  else
-    printf '  (none)\n'
-  fi
-
-  printf '\n== last emulator log lines (GPU / host UI / Vulkan) ==\n'
-  if [ -f "$VESTI_LOG_DIR/emulator.log" ]; then
-    grep -E 'Selecting Vulkan device|useVulkanComposition|hardware rendering|Qt platform plugin|gpu info|guestVulkanOnly|Graphics Adapter' \
-      "$VESTI_LOG_DIR/emulator.log" | tail -20 | sed 's/^/  /'
-  else
-    printf '  (no log yet — start the emulator first)\n'
-  fi
-}
-
-emulator_screencap() {
-  local dest="${1:-$VESTI_LOG_DIR/vesti.png}"
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
-    return 1
-  fi
-  mkdir -p "$(dirname "$dest")"
-  log "Capturing screen of $VESTI_DEVICE to $dest..."
-  "$ADB" -s "$VESTI_DEVICE" shell screencap -p /sdcard/vesti.png
-  "$ADB" -s "$VESTI_DEVICE" pull /sdcard/vesti.png "$dest"
-  log "Saved to $dest"
-}
-
-emulator_push() {
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
-    return 1
-  fi
-
-  if [ $# -lt 1 ]; then
-    err "Usage: ./devtools emulator push <local> [remote]"
-    return 1
-  fi
-
-  local local_path="$1"
-  local filename
-  filename="$(basename "$local_path")"
-  local remote_path="${2:-/sdcard/Download/$filename}"
-
-  if [ ! -f "$local_path" ]; then
-    err "Local file not found: $local_path"
-    return 1
-  fi
-
-  log "Pushing $local_path to $VESTI_DEVICE:$remote_path..."
-  "$ADB" -s "$VESTI_DEVICE" push "$local_path" "$remote_path"
-  log "Done. Visible to the file picker under /sdcard/Download/."
-}
-
-# Dump recent logcat. Defaults to the current $VESTI_PACKAGE pid so crashes
-# and ANRs surface immediately. Pass --tag to filter by tag, --pid to filter
-# by pid, or omit both to see the whole ring buffer.
-emulator_logcat() {
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
-    return 1
-  fi
-
-  local lines=200
-  local tag=""
-  local pid=""
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      -n) lines="${2:-200}"; shift 2 ;;
-      -n=*) lines="${1#-n=}"; shift ;;
-      --tag) tag="${2:-}"; shift 2 ;;
-      --tag=*) tag="${1#--tag=}"; shift ;;
-      --pid) pid="${2:-}"; shift 2 ;;
-      --pid=*) pid="${1#--pid=}"; shift ;;
-      -h|--help)
-        printf 'Usage: ./devtools emulator logcat [-n N] [--tag TAG] [--pid PID]\n'
-        return 0
-        ;;
-      *) err "Unknown logcat flag: $1"; return 1 ;;
-    esac
-  done
-
-  local filter_args=("-d" "-t" "$lines")
-  if [ -n "$pid" ]; then
-    filter_args+=("--pid" "$pid")
-  elif [ -n "$tag" ]; then
-    filter_args+=("-s" "$tag")
-  else
-    # Default: scope to the running app pid so a crash is visible without
-    # sifting through the entire ring buffer.
-    pid=$("$ADB" -s "$VESTI_DEVICE" shell pidof "$VESTI_PACKAGE" 2>/dev/null | tr -d '\r\n' || true)
-    if [ -n "$pid" ]; then
-      filter_args+=("--pid" "$pid")
-    else
-      log "(process $VESTI_PACKAGE not running; dumping the whole ring buffer)"
-    fi
-  fi
-
-  "$ADB" -s "$VESTI_DEVICE" logcat "${filter_args[@]}"
-}
-
-emulator_snapshot() {
-  local action="${1:-help}"
-  shift || true
-  case "$action" in
-    save)
-      if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-        err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
-        return 1
-      fi
-      log "Saving snapshot default_boot on $VESTI_DEVICE..."
-      "$ADB" -s "$VESTI_DEVICE" emu avd snapshot save default_boot
-      log "Saved. Future starts will quickboot from this snapshot."
-      ;;
-    delete)
-      local snap_dir="$HOME/.android/avd/$VESTI_AVD.avd/snapshots/default_boot"
-      if [ -d "$snap_dir" ]; then
-        log "Removing stale snapshot: $snap_dir"
-        rm -rf "$snap_dir"
-        log "Removed. The next start will cold-boot."
-      else
-        log "No snapshot to remove at $snap_dir"
-      fi
-      ;;
-    help|-h|--help)
-      printf 'Usage: ./devtools emulator snapshot <save|delete>\n'
-      ;;
-    *)
-      err "Unknown snapshot action: $action"
-      return 1
-      ;;
-  esac
+  adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done
 }
 
 cmd_emulator() {
@@ -422,12 +95,6 @@ cmd_emulator() {
   case "$sub" in
     start)     emulator_start ;;
     stop)      emulator_stop ;;
-    status)    emulator_status ;;
-    doctor)    emulator_doctor ;;
-    screencap) emulator_screencap "$@" ;;
-    push)      emulator_push "$@" ;;
-    logcat)    emulator_logcat "$@" ;;
-    snapshot)  emulator_snapshot "$@" ;;
     help|-h|--help) usage_emulator ;;
     *) err "Unknown emulator command: $sub"; usage_emulator; return 1 ;;
   esac
@@ -436,7 +103,7 @@ cmd_emulator() {
 # === run subcommand =========================================================
 
 cmd_run() {
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
+  if ! adb devices | grep -qx "$VESTI_DEVICE"; then
     log "Emulator $VESTI_DEVICE is not running; starting it..."
     emulator_start
   fi
@@ -461,112 +128,6 @@ cmd_run() {
   "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
 }
 
-cmd_e2e() {
-  local record_path=""
-  local gradle_args=()
-
-  while [ $# -gt 0 ]; do
-    case "$1" in
-      --record)
-        record_path="${2:-$VESTI_RECORD_PATH}"
-        shift 2
-        ;;
-      --record=*)
-        record_path="${1#--record=}"
-        shift
-        ;;
-      *)
-        gradle_args+=("$1")
-        shift
-        ;;
-    esac
-  done
-
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
-    return 1
-  fi
-
-  cmd_clean
-
-  if [ -n "$record_path" ]; then
-    start_screen_recording "$record_path" || return 1
-  fi
-
-  log "Running authentication end-to-end test from a fresh install..."
-  set +e
-  ANDROID_SERIAL="$VESTI_DEVICE" "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" \
-    connectedDebugAndroidTest \
-    "-Pandroid.testInstrumentationRunnerArguments.class=org.vestifeed.e2e.EmbeddedBackendTest" \
-    "${gradle_args[@]}"
-  local status=$?
-  set -e
-
-  if [ -n "$record_path" ]; then
-    stop_screen_recording "$record_path" || true
-  fi
-
-  return "$status"
-}
-
-# === screen recording =======================================================
-
-screenrecord_supported() {
-  "$ADB" -s "$VESTI_DEVICE" shell which screenrecord >/dev/null 2>&1
-}
-
-start_screen_recording() {
-  local dest="$1"
-
-  if ! screenrecord_supported; then
-    err "screenrecord is not available on $VESTI_DEVICE"
-    return 1
-  fi
-
-  if [ -f "$dest" ]; then
-    rm -f "$dest"
-  fi
-  mkdir -p "$(dirname "$dest")"
-
-  log "Recording screen of $VESTI_DEVICE to $dest..."
-  "$ADB" -s "$VESTI_DEVICE" shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1 || true
-  "$ADB" -s "$VESTI_DEVICE" shell screenrecord --time-limit 600 --size 720x1280 --bit-rate 6000000 /sdcard/e2e.mp4 &
-  echo $! > "$VESTI_RECORD_PID_FILE"
-}
-
-stop_screen_recording() {
-  local dest="$1"
-
-  if [ ! -f "$VESTI_RECORD_PID_FILE" ]; then
-    return 0
-  fi
-  local pid
-  pid=$(cat "$VESTI_RECORD_PID_FILE")
-  rm -f "$VESTI_RECORD_PID_FILE"
-
-  # Wait for the recording process inside the device to finish a valid
-  # MP4 trailer; sending `INT` to the device-side process terminates it
-  # cleanly.
-  local device_pid
-  device_pid=$("$ADB" -s "$VESTI_DEVICE" shell pidof screenrecord 2>/dev/null | tr -d '\r')
-  if [ -n "$device_pid" ]; then
-    "$ADB" -s "$VESTI_DEVICE" shell "kill -INT $device_pid" >/dev/null 2>&1 || true
-  fi
-
-  # Wait for the local adb wrapper to exit so the trailer is written.
-  wait "$pid" 2>/dev/null || true
-
-  log "Pulling recording from device..."
-  "$ADB" -s "$VESTI_DEVICE" pull /sdcard/e2e.mp4 "$dest" || {
-    err "Failed to pull recording from device"
-    return 1
-  }
-  "$ADB" -s "$VESTI_DEVICE" shell rm -f /sdcard/e2e.mp4 >/dev/null 2>&1 || true
-  log "Saved recording to $dest"
-}
-
-# === clean subcommand =======================================================
-
 cmd_clean() {
   if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
     err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
@@ -589,229 +150,6 @@ cmd_clean() {
   fi
 }
 
-# === login subcommand =======================================================
-#
-# Seeds the Miniflux backend into the app's `conf` table so a freshly installed
-# debug build boots straight into the synced entries list instead of the auth
-# picker. Credentials come from $VESTI_ENV_FILE; missing keys are prompted for
-# and the file is created on first run.
-
-# Strip matching single or double quotes from a .env value, then unescape the
-# two characters that have meaning inside a double-quoted string. The order
-# matters: backslashes must be unescaped before double quotes so we don't lose
-# the backslash that protects a literal `"` in the original value.
-env_strip_quotes() {
-  local v="$1"
-  if [ "${v:0:1}" = '"' ] && [ "${v: -1}" = '"' ] && [ "${#v}" -ge 2 ]; then
-    v="${v:1:${#v}-2}"
-    v="${v//\\\\/\\}"
-    v="${v//\\\"/\"}"
-  elif [ "${v:0:1}" = "'" ] && [ "${v: -1}" = "'" ] && [ "${#v}" -ge 2 ]; then
-    v="${v:1:${#v}-2}"
-  fi
-  printf '%s' "$v"
-}
-
-# Wrap a value in double quotes and escape the two characters that need it
-# inside a double-quoted .env value: backslash and double quote.
-env_quote() {
-  local v="$1"
-  v="${v//\\/\\\\}"
-  v="${v//\"/\\\"}"
-  printf '"%s"' "$v"
-}
-
-# Print the value of KEY from $VESTI_ENV_FILE on stdout, or nothing if absent.
-env_get() {
-  local key="$1" line k v
-  [ -f "$VESTI_ENV_FILE" ] || return 0
-  while IFS= read -r line; do
-    case "$line" in
-      ""|\#*) continue ;;
-    esac
-    k="${line%%=*}"
-    [ "$k" = "$key" ] || continue
-    v="${line#*=}"
-    env_strip_quotes "$v"
-    return 0
-  done < "$VESTI_ENV_FILE"
-}
-
-# Upsert KEY=VALUE into $VESTI_ENV_FILE, preserving other lines and comments.
-env_set() {
-  local key="$1" value="$2" tmp new_val
-  mkdir -p "$VESTI_LOG_DIR"
-  tmp="$(mktemp "$VESTI_LOG_DIR/.env.tmp.XXXXXX")"
-  new_val="$(env_quote "$value")"
-  if [ -f "$VESTI_ENV_FILE" ]; then
-    # NOTE: gawk only treats `VAR=value` as an env-var assignment when it
-    # appears before the awk invocation. After the program text it is
-    # misinterpreted as a filename argument.
-    NEW_VAL="$new_val" awk -v k="$key" -F= '
-      $0 ~ "^"k"=" {next}
-      {print}
-      END {print k"="ENVIRON["NEW_VAL"]}
-    ' "$VESTI_ENV_FILE" > "$tmp"
-  else
-    printf '%s\n' "# Vesti dev environment — consumed by ./devtools login." \
-      "# Treat these values as secrets; do not commit this file." \
-      "" \
-      "$key=$new_val" > "$tmp"
-  fi
-  mv "$tmp" "$VESTI_ENV_FILE"
-  chmod 600 "$VESTI_ENV_FILE"
-}
-
-# Read a single line from the controlling tty if there is one, otherwise from
-# stdin. Echoes the prompt to stderr so callers can capture the value cleanly
-# from stdout. `[ -t 0 ]` is the only reliable test here: `[ -r /dev/tty ]`
-# reports success based on file mode bits even when there is no controlling
-# terminal, which then makes `< /dev/tty` fail at redirect time.
-prompt_read() {
-  local __prompt="$1" __var="$2"
-  printf '%s' "$__prompt" >&2
-  if [ -t 0 ]; then
-    IFS= read -r "$__var" </dev/tty
-  else
-    IFS= read -r "$__var"
-  fi
-}
-
-prompt_read_secret() {
-  local __prompt="$1" __var="$2"
-  printf '%s' "$__prompt" >&2
-  if [ -t 0 ]; then
-    IFS= read -rs "$__var" </dev/tty
-  else
-    IFS= read -rs "$__var"
-  fi
-  printf '\n' >&2
-}
-
-# Make sure $VESTI_ENV_FILE has both MINIFLUX_URL and MINIFLUX_TOKEN. Stores
-# them via env_set so subsequent runs see them. Returns 0 on success.
-ensure_miniflux_env() {
-  local url="" token="" missing=0
-
-  url=$(env_get MINIFLUX_URL || true)
-  token=$(env_get MINIFLUX_TOKEN || true)
-
-  if [ -z "$url" ]; then
-    prompt_read "Miniflux URL (e.g. https://miniflux.example.com): " url
-    if [ -z "$url" ]; then
-      err "MINIFLUX_URL cannot be empty"
-      return 1
-    fi
-  fi
-
-  if [ -z "$token" ]; then
-    prompt_read_secret "Miniflux API token (input hidden): " token
-    if [ -z "$token" ]; then
-      err "MINIFLUX_TOKEN cannot be empty"
-      return 1
-    fi
-  fi
-
-  # Trim trailing slashes the same way the app does, so a URL pasted with
-  # `/` doesn't create a visible mismatch later.
-  url="${url%"${url##*[!/]}"}"
-
-  env_set MINIFLUX_URL "$url"
-  env_set MINIFLUX_TOKEN "$token"
-
-  log "Credentials written to $VESTI_ENV_FILE"
-}
-
-# Add .env to .gitignore so a freshly populated file isn't accidentally
-# committed. Idempotent.
-ensure_env_in_gitignore() {
-  local gi="$SCRIPT_DIR/.gitignore" entry='/.env'
-  if [ -f "$gi" ] && grep -qxF "$entry" "$gi"; then
-    return 0
-  fi
-  log "Adding $entry to .gitignore"
-  printf '%s\n' "$entry" >> "$gi"
-}
-
-# Launch the freshly installed app once so Database.migrate() (App.kt:28 ->
-# Database.kt:23) creates the schema and vesti.db appears on disk, force-stop
-# the app to release the file, then INSERT OR REPLACE the Miniflux credentials
-# into the conf row via run-as + sqlite3.
-#
-# The 7 INTEGER NOT NULL columns mirror ConfTable.defaultConf() (ConfTable.kt:28)
-# because ConfTable.toConf() (ConfTable.kt:72) calls getInt(N) with no NULL
-# fallback, and update() (ConfTable.kt:123) does INSERT OR REPLACE on every
-# save — a row with NULLs there would throw on read or break a later settings
-# change.
-prime_conf_row() {
-  local url="$1" token="$2"
-  local db_path="/data/data/$VESTI_PACKAGE/databases/vesti.db"
-
-  log "Launching $VESTI_PACKAGE so it can create the database schema..."
-  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null
-
-  log "Waiting for $db_path to appear on the device..."
-  local i
-  for i in $(seq 1 60); do
-    if "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'test -f $db_path && echo yes'" \
-        | tr -d '\r' | grep -qx yes; then
-      break
-    fi
-    sleep 1
-  done
-  if ! "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sh -c 'test -f $db_path && echo yes'" \
-      | tr -d '\r' | grep -qx yes; then
-    err "$db_path was not created by the app after 60s"
-    return 1
-  fi
-
-  log "Force-stopping $VESTI_PACKAGE to release the database file..."
-  "$ADB" -s "$VESTI_DEVICE" shell am force-stop "$VESTI_PACKAGE" >/dev/null
-
-  # SQL standard: double single quotes so apostrophes in the URL/token don't
-  # break the literal. SQLite does not interpret `\` escapes inside string
-  # literals, so we avoid them on purpose.
-  local url_lit token_lit
-  url_lit="${url//\'/\'\'}"
-  token_lit="${token//\'/\'\'}"
-
-  log "Writing Miniflux credentials into $db_path..."
-  "$ADB" -s "$VESTI_DEVICE" shell "run-as $VESTI_PACKAGE sqlite3 $db_path \"INSERT OR REPLACE INTO conf (backend, miniflux_url, miniflux_token, minifluxIncrementalSyncTimestamp, show_preview_images, crop_preview_images, sync_on_startup, sync_in_background, background_sync_interval_millis, use_built_in_browser, show_preview_text) VALUES ('miniflux', '$url_lit', '$token_lit', NULL, 1, 1, 1, 1, 10800000, 1, 1);\"" \
-    || { err "Failed to write Miniflux credentials"; return 1; }
-}
-
-cmd_login() {
-  ensure_miniflux_env || return 1
-  ensure_env_in_gitignore
-
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    log "Emulator $VESTI_DEVICE is not running; starting it..."
-    emulator_start
-  fi
-
-  log "Assembling debug APK..."
-  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleDebug "$@"
-
-  if [ ! -f "$VESTI_APK_PATH" ]; then
-    err "APK not found at $VESTI_APK_PATH"
-    return 1
-  fi
-
-  cmd_clean
-  "$ADB" -s "$VESTI_DEVICE" install -r -t "$VESTI_APK_PATH"
-
-  local url token
-  url=$(env_get MINIFLUX_URL)
-  token=$(env_get MINIFLUX_TOKEN)
-  prime_conf_row "$url" "$token"
-
-  log "Launching $VESTI_PACKAGE..."
-  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1 >/dev/null
-  "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
-}
-
-# === deploy subcommand ======================================================
-
 usage_deploy() {
   cat <<EOF
 Usage: ./devtools deploy <target>
@@ -824,30 +162,6 @@ Targets:
   website                          rsync website/ to the production server without rebuilding
                                    the APK (use when only HTML/CSS assets changed)
 EOF
-}
-
-# Read a key from a Java-style properties file. Prints the value (with any
-# matching surrounding quotes stripped) on stdout. Returns 0 on hit, 1 on
-# miss. Empty lines and lines starting with `#` are ignored.
-properties_get() {
-  local file="$1" key="$2" line k v
-  [ -f "$file" ] || return 1
-  while IFS= read -r line; do
-    case "$line" in
-      ""|\#*) continue ;;
-    esac
-    k="${line%%=*}"
-    [ "$k" = "$key" ] || continue
-    v="${line#*=}"
-    if [ "${v:0:1}" = '"' ] && [ "${v: -1}" = '"' ] && [ "${#v}" -ge 2 ]; then
-      v="${v:1:${#v}-2}"
-    elif [ "${v:0:1}" = "'" ] && [ "${v: -1}" = "'" ] && [ "${#v}" -ge 2 ]; then
-      v="${v:1:${#v}-2}"
-    fi
-    printf '%s' "$v"
-    return 0
-  done < "$file"
-  return 1
 }
 
 # Sync the local website/ tree to the production server. Shared by every
@@ -868,33 +182,6 @@ deploy_website() {
 # Validates local.properties up front (the build script reads it directly via
 # java.util.Properties; we only need to fail fast here).
 deploy_nightly() {
-  local props_file="$SCRIPT_DIR/local.properties"
-  local keystore_path keystore_alias keystore_password
-  local -a missing=()
-
-  if [ ! -f "$props_file" ]; then
-    err "local.properties not found at $props_file (expected keys: storeFile, keyAlias, storePassword)"
-    return 1
-  fi
-
-  keystore_path=$(properties_get "$props_file" "storeFile")
-  keystore_alias=$(properties_get "$props_file" "keyAlias")
-  keystore_password=$(properties_get "$props_file" "storePassword")
-
-  [ -z "$keystore_path" ] && missing+=("storeFile")
-  [ -z "$keystore_alias" ] && missing+=("keyAlias")
-  [ -z "$keystore_password" ] && missing+=("storePassword")
-
-  if [ "${#missing[@]}" -gt 0 ]; then
-    err "Missing keys in $props_file: ${missing[*]}"
-    return 1
-  fi
-
-  if [ ! -f "$keystore_path" ]; then
-    err "Keystore file not found: $keystore_path"
-    return 1
-  fi
-
   log "Building nightly APK..."
   "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleNightly
 

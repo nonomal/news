@@ -13,12 +13,18 @@ class SyncWorker(context: Context, workerParams: WorkerParameters) : Worker(cont
     override fun doWork() = runBlocking { doWorkAsync() }
 
     private suspend fun doWorkAsync(): Result {
+        val db = applicationContext.db()
+        val conf = db.conf.select()
+
+        if (conf.backend == null) {
+            return Result.failure()
+        }
+
         val sync = applicationContext.sync()
 
         try {
             sync.runInForeground()
-            val unreadEntries =
-                applicationContext.db().entry.selectUnread()
+            val unreadEntries = db.entry.selectUnread()
             if (unreadEntries.isNotEmpty() && !sync.unreadScreenVisible) {
                 UnreadEntriesNotification.post(applicationContext, unreadEntries)
             }

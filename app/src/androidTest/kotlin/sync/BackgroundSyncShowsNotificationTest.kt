@@ -48,6 +48,7 @@ class BackgroundSyncShowsNotificationTest {
         }
 
         app.db.transaction {
+            app.db.link.deleteAll()
             app.db.entry.deleteAll()
             app.db.feed.deleteAll()
         }

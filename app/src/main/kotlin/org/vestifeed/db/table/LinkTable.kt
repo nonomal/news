@@ -2,6 +2,7 @@ package org.vestifeed.db.table
 
 import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.SQLiteStatement
+import androidx.sqlite.execSQL
 import org.vestifeed.db.bindTextOrNull
 import org.vestifeed.db.getTextOrNull
 import org.vestifeed.parser.AtomLinkRel
@@ -264,6 +265,10 @@ class LinkTable(private val conn: SQLiteConnection) {
                 stmt.bindText(1, entryId)
                 stmt.step()
             }
+    }
+
+    fun deleteAll() {
+        conn.execSQL("DELETE FROM link")
     }
 
     fun selectAll(): List<Link> {

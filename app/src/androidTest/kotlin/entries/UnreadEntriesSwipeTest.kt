@@ -34,6 +34,7 @@ class UnreadEntriesSwipeTest {
             it.copy(backend = ConfTable.Backend.Embedded, syncOnStartup = false)
         }
         db.transaction {
+            db.link.deleteAll()
             db.entry.deleteAll()
             db.feed.deleteAll()
         }

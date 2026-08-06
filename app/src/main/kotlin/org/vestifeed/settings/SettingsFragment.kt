@@ -174,8 +174,9 @@ class SettingsFragment : AppFragment() {
         db.conf.delete()
 
         db.transaction {
-            db.feed.deleteAll()
+            db.link.deleteAll()
             db.entry.deleteAll()
+            db.feed.deleteAll()
         }
     }
 

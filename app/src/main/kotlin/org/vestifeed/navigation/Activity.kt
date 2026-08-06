@@ -149,8 +149,9 @@ class Activity : AppCompatActivity() {
 
         db.conf.delete()
         db.transaction {
-            db.feed.deleteAll()
+            db.link.deleteAll()
             db.entry.deleteAll()
+            db.feed.deleteAll()
         }
 
         supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)

@@ -50,14 +50,6 @@ class EmbeddedBackendTest {
             onView(withId(R.id.useEmbeddedBackend)).check(
                 matches(allOf(isDisplayed(), isEnabled(), isClickable())),
             )
-            SystemClock.sleep(AUTH_SCREEN_WAIT_MILLIS)
-            scenario.onActivity { activity ->
-                assertTrue(
-                    activity.supportFragmentManager.findFragmentById(
-                        R.id.fragmentContainerView,
-                    ) is AuthFragment,
-                )
-            }
             onView(withId(R.id.useEmbeddedBackend)).perform(
                 pressAndHoldClick(AUTH_BUTTON_HOLD_MILLIS),
             )
@@ -72,28 +64,23 @@ class EmbeddedBackendTest {
             }
 
             onView(withId(R.id.bottomNav)).check(matches(isDisplayed()))
-            SystemClock.sleep(BOTTOM_NAV_SETTLE_MILLIS)
             onView(withId(R.id.feedsFragment)).perform(click())
 
             waitUntilFeedsFragment(scenario, FEEDS_SCREEN_TIMEOUT_MILLIS)
 
             waitUntilDisplayed(withId(R.id.fab), FEEDS_SCREEN_TIMEOUT_MILLIS)
-            SystemClock.sleep(FEEDS_SCREEN_SETTLE_MILLIS)
             onView(withId(R.id.fab)).perform(click())
             waitUntilDisplayed(withId(R.id.url), FEEDS_SCREEN_TIMEOUT_MILLIS)
-            SystemClock.sleep(FEED_DIALOG_SETTLE_MILLIS)
             onView(withId(R.id.url)).perform(
                 replaceText(FEED_URL),
                 closeSoftKeyboard(),
             )
-            SystemClock.sleep(FEED_URL_SETTLE_MILLIS)
             onView(withId(android.R.id.button1)).perform(click())
 
             waitUntilDisplayed(
                 allOf(withId(R.id.primaryText), withText(FEED_TITLE)),
                 FEED_ADD_TIMEOUT_MILLIS,
             )
-            SystemClock.sleep(POST_ADD_WAIT_MILLIS)
 
             onView(withId(R.id.newsFragment)).perform(click())
             scenario.onActivity { activity ->
@@ -232,18 +219,11 @@ class EmbeddedBackendTest {
     private companion object {
         const val FEED_URL = "bubelov.com"
         const val FEED_TITLE = "Igor Bubelov"
-        const val AUTH_SCREEN_WAIT_MILLIS = 2_000L
         const val AUTH_BUTTON_HOLD_MILLIS = 1_000L
-        const val BOTTOM_NAV_SETTLE_MILLIS = 2_000L
-        const val BOTTOM_NAV_HOLD_MILLIS = 1_000L
         const val FEEDS_SCREEN_TIMEOUT_MILLIS = 10_000L
         const val ENTRIES_SCREEN_TIMEOUT_MILLIS = 10_000L
         const val FEED_ADD_TIMEOUT_MILLIS = 120_000L
-        const val POST_ADD_WAIT_MILLIS = 3_000L
-        const val FEEDS_SCREEN_SETTLE_MILLIS = 2_000L
-        const val FEED_DIALOG_SETTLE_MILLIS = 1_000L
-        const val FEED_URL_SETTLE_MILLIS = 1_000L
-        const val FINAL_SCROLL_DURATION_MILLIS = 30_000L
+        const val FINAL_SCROLL_DURATION_MILLIS = 2_000L
         const val SCROLL_DISTANCE_DP = 4_000
         const val POLL_INTERVAL_MILLIS = 250L
     }

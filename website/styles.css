@@ -18,7 +18,7 @@ a { color: inherit; }
 .eyebrow-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 5px #f3d9c8; }
 h1, h2, h3, p { margin-top: 0; }
 h1 { max-width: 700px; margin: 0 auto 25px; font: 500 clamp(2.5rem, 5.8vw, 3rem)/1.05 'Roboto Mono', monospace; text-align: center; }
-h1 em { color: var(--lime); font-style: normal; }
+h1 em { color: var(--lime); font-style: normal; display: inline-block; margin-top: 0.3em; }
 .keep { white-space: nowrap; }
 .lede { max-width: 470px; margin: 0 auto 32px; color: var(--muted); font-size: clamp(16px, 1.2vw, 18px); line-height: 1.55; text-align: center; }
 .actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; }

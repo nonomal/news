@@ -7,14 +7,14 @@ print_usage() {
 devtools — manage the Vesti Android dev environment.
 
 Usage:
-  ./devtools emulator start        Boot the AVD asynchronously
-  ./devtools emulator stop         Shut the emulator down cleanly
-  ./devtools app install           Install debug build
-  ./devtools app run               Run debug build
-  ./devtools app uninstall         Uninstall the app
-  ./devtools app deploy nightly    Build a signed nightly APK and copy it to website/releases/nightly.apk
-  ./devtools website run           Open the website in a local browser tab
-  ./devtools website deploy        Deploy website with rsync
+  ./devtools emulator start    Boot the AVD asynchronously
+  ./devtools emulator stop     Shut the emulator down cleanly
+  ./devtools app install       Install debug build
+  ./devtools app run           Install and run debug build
+  ./devtools app uninstall     Uninstall the app
+  ./devtools app deploy        Build a signed nightly APK and copy it to website/releases/nightly.apk
+  ./devtools website run       Open the website in a local browser tab
+  ./devtools website deploy    Deploy website with rsync
 EOF
 }
 
@@ -28,176 +28,194 @@ Commands:
 EOF
 }
 
-emulator_start() {
+print_usage_app() {
+  cat <<EOF
+Usage: ./devtools emulator <command>
+
+Commands:
+  install      Install debug build
+  run          Install and run debug build
+  uninstall    Uninstall the app
+  deploy       Build a signed nightly APK and copy it to website/releases/nightly.apk
+EOF
+}
+
+print_usage_website() {
+  cat <<EOF
+Usage: ./devtools website <command>
+
+Commands:
+  run       Open the website in a local browser tab
+  deploy    Deploy website with rsync
+EOF
+}
+
+# START emulator section
+
+cmd_emulator_start() {
   # Detach from the shell so the script can exit cleanly while the
   # emulator keeps running.
   nohup setsid emulator -avd Pixel_9_Pro -gpu host > emulator.log 2>&1 < /dev/null & disown
 }
 
-emulator_stop() {
+cmd_emulator_stop() {
   adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done
+  rm emulator.log
 }
 
 cmd_emulator() {
   local sub="${1:-help}"
   shift || true
   case "$sub" in
-    start)     emulator_start ;;
-    stop)      emulator_stop ;;
+    start)     cmd_emulator_start ;;
+    stop)      cmd_emulator_stop ;;
     help|-h|--help) print_usage_emulator ;;
     *) err "Unknown emulator command: $sub"; print_usage_emulator; return 1 ;;
   esac
 }
 
-# === run subcommand =========================================================
+# END emulator section
 
-cmd_run() {
-  if ! adb devices | grep -qx "$VESTI_DEVICE"; then
-    log "Emulator $VESTI_DEVICE is not running; starting it..."
-    emulator_start
-  fi
+# START app section
 
-  log "Assembling debug APK..."
-  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleDebug "$@"
+cmd_app_install() {
+  local device="emulator-5554"
+  local apk_path="./app/build/outputs/apk/debug/app-debug.apk"
 
-  if [ ! -f "$VESTI_APK_PATH" ]; then
-    err "APK not found at $VESTI_APK_PATH"
+  if ! adb devices | grep -q "^$device[[:space:]]"; then
+    echo "Error: emulator $device is not running. Start it with: ./devtools emulator start" >&2
     return 1
   fi
 
-  log "Installing $VESTI_PACKAGE on $VESTI_DEVICE..."
-  "$ADB" -s "$VESTI_DEVICE" install -r -t "$VESTI_APK_PATH"
+  echo "Assembling debug APK..."
+  ./gradlew assembleDebug "$@"
 
-  log "Launching $VESTI_PACKAGE..."
-  # `cmd package resolve-activity` returns "No activity found" for the
-  # suffixed debug id, so dispatch via monkey instead.
-  "$ADB" -s "$VESTI_DEVICE" shell monkey -p "$VESTI_PACKAGE" -c android.intent.category.LAUNCHER 1
+  if [ ! -f "$apk_path" ]; then
+    echo "Error: APK not found at $apk_path" >&2
+    return 1
+  fi
 
-  log "Process status:"
-  "$ADB" -s "$VESTI_DEVICE" shell ps -A | grep vesti || log "(process not visible yet — give it a moment)"
+  echo "Installing $apk_path on $device..."
+  adb -s "$device" install -r -t "$apk_path"
 }
 
-cmd_clean() {
-  if ! adb_connected | grep -qx "$VESTI_DEVICE"; then
-    err "Emulator $VESTI_DEVICE is not running. Start it with: ./devtools emulator start"
+cmd_app_run() {
+  local device="emulator-5554"
+  local package="org.vestifeed.debug"
+  local apk_path="./app/build/outputs/apk/debug/app-debug.apk"
+
+  if ! adb devices | grep -q "^$device[[:space:]]"; then
+    echo "Error: emulator $device is not running. Start it with: ./devtools emulator start" >&2
     return 1
   fi
 
-  if ! "$ADB" -s "$VESTI_DEVICE" shell pm list packages "$VESTI_PACKAGE" 2>/dev/null \
-      | tr -d '\r' | grep -qx "package:$VESTI_PACKAGE"; then
-    log "$VESTI_PACKAGE is not installed on $VESTI_DEVICE. Nothing to do."
+  echo "Assembling debug APK..."
+  ./gradlew assembleDebug "$@"
+
+  if [ ! -f "$apk_path" ]; then
+    echo "Error: APK not found at $apk_path" >&2
+    return 1
+  fi
+
+  echo "Installing $apk_path on $device..."
+  adb -s "$device" install -r -t "$apk_path"
+
+  echo "Launching $package..."
+  adb -s "$device" shell monkey -p "$package" -c android.intent.category.LAUNCHER 1
+
+  echo "Process status:"
+  adb -s "$device" shell ps -A | grep vesti || echo "(process not visible yet — give it a moment)"
+}
+
+cmd_app_uninstall() {
+  local device="emulator-5554"
+  local package="org.vestifeed.debug"
+
+  if ! adb devices | grep -q "^$device[[:space:]]"; then
+    echo "Error: emulator $device is not running. Start it with: ./devtools emulator start" >&2
+    return 1
+  fi
+
+  if ! adb -s "$device" shell pm list packages "$package" 2>/dev/null \
+      | tr -d '\r' | grep -qx "package:$package"; then
+    echo "$package is not installed on $device. Nothing to do."
     return 0
   fi
 
-  log "Uninstalling $VESTI_PACKAGE from $VESTI_DEVICE..."
+  echo "Uninstalling $package from $device..."
   local result
-  if result=$("$ADB" -s "$VESTI_DEVICE" uninstall "$VESTI_PACKAGE" 2>&1); then
-    log "$result"
+  if result=$(adb -s "$device" uninstall "$package" 2>&1); then
+    echo "$result"
   else
-    err "Uninstall failed: $result"
+    echo "Uninstall failed: $result" >&2
     return 1
   fi
 }
 
-usage_deploy() {
-  cat <<EOF
-Usage: ./devtools deploy <target>
+cmd_app_deploy() {
+  local apk_path="./app/build/outputs/apk/nightly/app-nightly.apk"
+  local dest="./website/releases/nightly.apk"
 
-Targets:
-  nightly                          Build a signed nightly APK from the keystore credentials
-                                   in local.properties (storeFile / storePassword / keyAlias),
-                                   copy it to website/releases/nightly.apk, and rsync website/ to the
-                                   production server
-  website                          rsync website/ to the production server without rebuilding
-                                   the APK (use when only HTML/CSS assets changed)
-EOF
-}
+  echo "Building nightly APK..."
+  ./gradlew assembleNightly "$@"
 
-# Sync the local website/ tree to the production server. Shared by every
-# deploy target so the rsync invocation lives in exactly one place.
-sync_website() {
-  log "Syncing website/ to vesti:/srv/http/vestifeed.org/"
-  rsync -avz --delete "$SCRIPT_DIR/website/" vesti:/srv/http/vestifeed.org/
-}
-
-# Push the current website/ tree to the production server without rebuilding
-# the APK. Use this when only HTML/CSS/JS assets changed.
-deploy_website() {
-  sync_website
-  log "Done."
-}
-
-# Build the nightly variant and drop the resulting APK in the website directory.
-# Validates local.properties up front (the build script reads it directly via
-# java.util.Properties; we only need to fail fast here).
-deploy_nightly() {
-  log "Building nightly APK..."
-  "$SCRIPT_DIR/gradlew" -p "$SCRIPT_DIR" assembleNightly
-
-  local apk_path="$SCRIPT_DIR/app/build/outputs/apk/nightly/app-nightly.apk"
   if [ ! -f "$apk_path" ]; then
-    err "Nightly APK not found at $apk_path"
+    echo "Error: nightly APK not found at $apk_path" >&2
     return 1
   fi
 
-  log "Copying nightly APK to $SCRIPT_DIR/website/releases/nightly.apk"
-  mkdir -p "$SCRIPT_DIR/website/releases"
-  cp "$apk_path" "$SCRIPT_DIR/website/releases/nightly.apk"
-
-  sync_website
-
-  log "Done."
+  echo "Copying nightly APK to $dest"
+  mkdir -p "$(dirname "$dest")"
+  cp "$apk_path" "$dest"
+  rsync -avz --delete "./website/" vesti:/srv/http/vestifeed.org/
 }
 
-cmd_deploy() {
+cmd_app() {
   local target="${1:-help}"
   shift || true
   case "$target" in
-    nightly)         deploy_nightly "$@" ;;
-    website)         deploy_website "$@" ;;
-    help|-h|--help)  usage_deploy ;;
-    *) err "Unknown deploy target: $target"; usage_deploy; return 1 ;;
+    install) cmd_app_install "$@" ;;
+    run) cmd_app_run "$@" ;;
+    uninstall) cmd_app_uninstall "$@" ;;
+    deploy) cmd_app_deploy "$@" ;;
+    help|-h|--help) print_usage_app ;;
+    *) err "Unknown deploy target: $target"; print_usage_app; return 1 ;;
   esac
 }
 
-# === website subcommand ======================================================
+# END app section
+
+# START website section
+
+cmd_website_run() {
+  echo "Opening the local website in the default browser..."
+  xdg-open ./website/index.html
+}
+
+cmd_website_deploy() {
+  rsync -avz --delete "./website/" vesti:/srv/http/vestifeed.org/
+}
 
 cmd_website() {
   local sub="${1:-help}"
   shift || true
   case "$sub" in
-    run)
-      if [ $# -gt 0 ]; then
-        err "Unknown website argument: $1"
-        return 1
-      fi
-      if ! command -v xdg-open >/dev/null 2>&1; then
-        err "xdg-open not found"
-        return 1
-      fi
-      log "Opening the local website in the default browser..."
-      xdg-open "$SCRIPT_DIR/website/index.html" >/dev/null 2>&1 &
-      ;;
-    help|-h|--help)
-      printf 'Usage: ./devtools website run\n'
-      ;;
-    *)
-      err "Unknown website command: $sub"
-      printf 'Usage: ./devtools website run\n'
-      return 1
-      ;;
+    run) cmd_website_run ;;
+    deploy) cmd_website_deploy ;;
+    help|-h|--help) print_usage_website ;;
+    *) err "Unknown deploy target: $target"; print_usage_app; return 1 ;;
   esac
 }
 
-# === dispatch ===============================================================
+# END website section
 
 main() {
   local cmd="${1:-help}"
   shift || true
   case "$cmd" in
     emulator) cmd_emulator "$@" ;;
-    app)  cmd_website "$@" ;;
-    website)  cmd_website "$@" ;;
+    app) cmd_app "$@" ;;
+    website) cmd_website "$@" ;;
     help|-h|--help) print_usage ;;
     *) err "Unknown command: $cmd"; print_usage; return 1 ;;
   esac

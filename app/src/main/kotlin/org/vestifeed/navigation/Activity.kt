@@ -25,7 +25,7 @@ import org.vestifeed.app.App
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.auth.AuthEvents
-import org.vestifeed.auth.AuthFragment
+import org.vestifeed.backend.BackendSelectionFragment
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.databinding.ActivityBinding
 import org.vestifeed.entries.EntriesFilter
@@ -158,7 +158,7 @@ class Activity : AppCompatActivity() {
 
         supportFragmentManager.commit {
             replace(
-                R.id.fragmentContainerView, AuthFragment::class.java, null
+                R.id.fragmentContainerView, BackendSelectionFragment::class.java, null
             )
         }
 

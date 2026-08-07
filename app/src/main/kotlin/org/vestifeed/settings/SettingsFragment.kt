@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.vestifeed.R
 import org.vestifeed.app.App
-import org.vestifeed.auth.AuthFragment
+import org.vestifeed.backend.BackendSelectionFragment
 import org.vestifeed.databinding.FragmentSettingsBinding
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.dialog.showErrorDialog
@@ -381,7 +381,7 @@ class SettingsFragment : AppFragment() {
 
             parentFragmentManager.commit {
                 replace(
-                    R.id.fragmentContainerView, AuthFragment::class.java, null
+                    R.id.fragmentContainerView, BackendSelectionFragment::class.java, null
                 )
             }
         }

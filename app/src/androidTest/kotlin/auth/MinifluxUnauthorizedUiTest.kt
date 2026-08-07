@@ -8,6 +8,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.vestifeed.R
 import org.vestifeed.app.db
+import org.vestifeed.backend.BackendSelectionFragment
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.navigation.Activity
@@ -28,7 +29,7 @@ class MinifluxUnauthorizedUiTest {
 
             AuthEvents.reportInvalidated()
 
-            waitForFragment<AuthFragment>(scenario, LOGOUT_TIMEOUT_MILLIS)
+            waitForFragment<BackendSelectionFragment>(scenario, LOGOUT_TIMEOUT_MILLIS)
 
             scenario.onActivity {
                 assertNull(

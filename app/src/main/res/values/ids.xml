@@ -1,16 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Auth Fragments -->
-    <item name="authFragment" type="id" />
     <item name="minifluxAuthFragment" type="id" />
-    <item name="nextcloudAuthFragment" type="id" />
-    
+
     <!-- Entries Fragments -->
     <item name="entriesFragment" type="id" />
     <item name="newsFragment" type="id" />
     <item name="bookmarksFragment" type="id" />
     <item name="feedEntriesFragment" type="id" />
-    
+
     <!-- Other Fragments -->
     <item name="feedsFragment" type="id" />
     <item name="entryFragment" type="id" />
@@ -20,14 +18,9 @@
     <item name="enclosuresFragment" type="id" />
     <item name="tagsFragment" type="id" />
     <item name="tagFeedsFragment" type="id" />
-    
+
     <!-- Actions -->
-    <item name="action_authFragment_to_newsFragment" type="id" />
-    <item name="action_authFragment_to_feedsFragment" type="id" />
-    <item name="action_authFragment_to_minifluxAuthFragment" type="id" />
-    <item name="action_authFragment_to_nextcloudAuthFragment" type="id" />
     <item name="action_minifluxAuthFragment_to_newsFragment" type="id" />
-    <item name="action_nextcloudAuthFragment_to_newsFragment" type="id" />
     <item name="action_entriesFragment_to_entryFragment" type="id" />
     <item name="action_entriesFragment_to_searchFragment" type="id" />
     <item name="action_entriesFragment_to_settingsFragment" type="id" />

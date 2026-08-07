@@ -1,4 +1,4 @@
-package org.vestifeed.auth
+package org.vestifeed.backend
 
 import android.graphics.drawable.Animatable
 import android.os.Bundle
@@ -11,7 +11,9 @@ import androidx.fragment.app.replace
 import org.vestifeed.R
 import org.vestifeed.app.App
 import org.vestifeed.app.db
-import org.vestifeed.databinding.FragmentAuthBinding
+import org.vestifeed.auth.AuthEvents
+import org.vestifeed.auth.MinifluxAuthFragment
+import org.vestifeed.databinding.FragmentBackendSelectionBinding
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.entries.EntriesFilter
 import org.vestifeed.entries.EntriesFragment
@@ -19,9 +21,9 @@ import org.vestifeed.entries.toBundle
 import org.vestifeed.sync.BackgroundSyncScheduler
 import java.util.concurrent.TimeUnit
 
-class AuthFragment : AppFragment() {
+class BackendSelectionFragment : AppFragment() {
 
-    private var _binding: FragmentAuthBinding? = null
+    private var _binding: FragmentBackendSelectionBinding? = null
     private val binding get() = _binding!!
 
     override fun onCreateView(
@@ -29,7 +31,7 @@ class AuthFragment : AppFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        _binding = FragmentAuthBinding.inflate(inflater, container, false)
+        _binding = FragmentBackendSelectionBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -48,7 +50,7 @@ class AuthFragment : AppFragment() {
         _binding = null
     }
 
-    private fun FragmentAuthBinding.initButtons() {
+    private fun FragmentBackendSelectionBinding.initButtons() {
         useMinifluxBackend.setOnClickListener {
             parentFragmentManager.commit {
                 replace<MinifluxAuthFragment>(R.id.fragmentContainerView)

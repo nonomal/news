@@ -26,7 +26,7 @@ import org.hamcrest.Matchers.allOf
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.vestifeed.R
-import org.vestifeed.auth.AuthFragment
+import org.vestifeed.backend.BackendSelectionFragment
 import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.feeds.FeedsFragment
 import org.vestifeed.navigation.Activity
@@ -40,7 +40,7 @@ class EmbeddedBackendTest {
                 assertTrue(
                     activity.supportFragmentManager.findFragmentById(
                         R.id.fragmentContainerView,
-                    ) is AuthFragment,
+                    ) is BackendSelectionFragment,
                 )
             }
 

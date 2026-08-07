@@ -492,5 +492,6 @@ open class Miniflux(
 
     companion object {
         val JSON = "application/json".toMediaType()
+        const val API_PATH = "/v1/"
     }
 }

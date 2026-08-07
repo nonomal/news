@@ -1,7 +1,6 @@
 package org.vestifeed.auth
 
 import android.os.Bundle
-import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -17,6 +16,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
 import org.vestifeed.backend.Miniflux
+import org.vestifeed.backend.MinifluxUnauthenticatedException
 import org.vestifeed.backend.minifluxHttpClient
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
@@ -48,8 +48,8 @@ class MinifluxAuthFragment : AppFragment() {
         binding.apply {
             toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
 
-            token.setOnEditorActionListener { _, actionId, keyEvent ->
-                if (actionId == EditorInfo.IME_ACTION_DONE || keyEvent?.keyCode == KeyEvent.KEYCODE_ENTER) {
+            token.setOnEditorActionListener { _, actionId, _ ->
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
                     connect()
                     return@setOnEditorActionListener true
                 }
@@ -62,6 +62,9 @@ class MinifluxAuthFragment : AppFragment() {
     }
 
     private fun connect() {
+        if (binding.progress.isVisible) {
+            return
+        }
         if (!binding.validate()) {
             return
         }
@@ -74,14 +77,13 @@ class MinifluxAuthFragment : AppFragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 if (!requestLocalNetworkAccess(listOf(url))) {
-                    binding.progress.isVisible = false
                     showErrorDialog(R.string.local_network_permission_required)
                     return@launch
                 }
 
                 val api = Miniflux(
                     client = minifluxHttpClient(token = token),
-                    baseUrl = "${url.toString().trim('/')}/v1/".toHttpUrl(),
+                    baseUrl = "${url.toString().trimEnd('/')}${Miniflux.API_PATH}".toHttpUrl(),
                     db = db(),
                 )
 
@@ -90,7 +92,7 @@ class MinifluxAuthFragment : AppFragment() {
                 db().conf.update {
                     it.copy(
                         backend = ConfTable.Backend.Miniflux,
-                        minifluxUrl = url.toString().trim('/'),
+                        minifluxUrl = url.toString().trimEnd('/'),
                         minifluxToken = token,
                     )
                 }
@@ -113,9 +115,14 @@ class MinifluxAuthFragment : AppFragment() {
                         )
                     }
                 }
+            } catch (_: MinifluxUnauthenticatedException) {
+                // The errorInterceptor already reported the invalidation to
+                // AuthEvents; the activity will log out and pop back to the
+                // backend selection screen, so no dialog is needed here.
             } catch (e: Throwable) {
-                binding.progress.isVisible = false
                 showErrorDialog(e.message ?: getString(R.string.direct_login_failed))
+            } finally {
+                _binding?.progress?.isVisible = false
             }
         }
     }
@@ -127,18 +134,18 @@ class MinifluxAuthFragment : AppFragment() {
         }
 
         if (urlLayout.error == null) {
-            val parsed = binding.url.text.toString().toHttpUrlOrNull()
-            urlLayout.error = when {
-                parsed == null -> getString(R.string.invalid_url)
-                !parsed.isHttps -> getString(R.string.invalid_url)
-                else -> null
+            val parsed = url.text.toString().toHttpUrlOrNull()
+            urlLayout.error = if (parsed == null) {
+                getString(R.string.invalid_url)
+            } else {
+                null
             }
         }
 
-        if (binding.token.text.isNullOrEmpty()) {
-            binding.tokenLayout.error = getString(R.string.field_is_empty)
+        tokenLayout.error = if (token.text.isNullOrEmpty()) {
+            getString(R.string.field_is_empty)
         } else {
-            binding.tokenLayout.error = null
+            null
         }
 
         return urlLayout.error == null && tokenLayout.error == null

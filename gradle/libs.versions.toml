@@ -90,6 +90,7 @@ jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 re2j = { group = "com.google.re2j", name = "re2j", version.ref = "re2j" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-core = { group = "androidx.test", name = "core-ktx", version.ref = "testrunner" }
+androidx-test-rules = { group = "androidx.test", name = "rules", version.ref = "testrunner" }
 androidx-test-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "testrunner" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "extjunit" }

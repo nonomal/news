@@ -115,6 +115,7 @@ dependencies {
     implementation(libs.okhttp)
     implementation(libs.okhttp.logging)
     testImplementation(libs.okhttp.mockwebserver)
+    androidTestImplementation(libs.okhttp.mockwebserver)
 
     // JSON
     implementation(libs.gson)
@@ -134,6 +135,7 @@ dependencies {
     // Instrumented tests
     androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.test.core)
+    androidTestImplementation(libs.androidx.test.rules)
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.ext.junit)

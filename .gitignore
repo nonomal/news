@@ -11,3 +11,4 @@
 /crowdin.properties
 /website/releases/nightly.apk
 /.env
+/emulator.log

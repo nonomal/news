@@ -31,7 +31,7 @@ EOF
 emulator_start() {
   # Detach from the shell so the script can exit cleanly while the
   # emulator keeps running.
-  nohup setsid emulator -avd Pixel_9_Pro -gpu host > "$VESTI_LOG_DIR/emulator.log" 2>&1 < /dev/null & disown
+  nohup setsid emulator -avd Pixel_9_Pro -gpu host > emulator.log 2>&1 < /dev/null & disown
 }
 
 emulator_stop() {

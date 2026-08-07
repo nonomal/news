@@ -1,81 +1,30 @@
 #!/usr/bin/env bash
-#
-# devtools — manage the Vesti Android dev environment.
-#
-# Usage:
-#   ./devtools emulator start                 Boot the AVD asynchronously
-#   ./devtools emulator stop                  Shut the emulator down cleanly
-#   ./devtools website run                  Open the website in a local browser tab
-#   ./devtools e2e [-- ...]                   Fresh-install and run the authentication end-to-end test
-#   ./devtools e2e --record [path] [-- ...]    Like `e2e`, but also record the screen to PATH (.mp4)
-#   ./devtools login                          Fresh-install the debug APK and seed Miniflux credentials
-#   ./devtools deploy nightly                 Build a signed nightly APK and copy it to website/releases/nightly.apk
-#   ./devtools deploy website                 rsync website/ to the production server (no APK rebuild)
-#   ./devtools clean                          Uninstall the debug APK from a running emulator
-#
-# Environment overrides:
-#   ANDROID_HOME         Android SDK root             (default: $HOME/Android/Sdk)
-#   VESTI_AVD            AVD name to launch           (default: Pixel_9_Pro)
-#   VESTI_DEVICE         ADB device id                (default: emulator-5554)
-#   VESTI_PACKAGE        Application id (debug build) (default: org.vestifeed.debug)
-#   VESTI_LOG_DIR        Where to write emulator logs (default: <repo>/.tmp)
-#   VESTI_APK_PATH       Debug APK to install         (default: <repo>/app/build/outputs/apk/debug/app-debug.apk)
-#   VESTI_RECORD_PATH    Output video for `e2e --record` (default: <repo>/e2e.mp4)
-#   VESTI_ENV_FILE       .env file with Miniflux creds (default: <repo>/.env)
-#
-# Emulator tuning (only relevant for `emulator start` / `run`):
-#   VESTI_NO_WINDOW      1 to run headless (no Mutter window, no ANR dialogs) (default: 0)
-#   VESTI_CORES          Cap QEMU to N cores — helps when ANR trips on overload  (default: unset)
-#   VESTI_NO_AUDIO       1 to disable audio  (default: 0)
-#   VESTI_NO_SNAPSHOT_SAVE  1 to skip snapshot save on shutdown  (default: 0)
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+print_usage() {
+  cat <<EOF
+devtools — manage the Vesti Android dev environment.
 
-ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
-VESTI_AVD="Pixel_9_Pro"
-VESTI_DEVICE="${VESTI_DEVICE:-emulator-5554}"
-VESTI_PACKAGE="${VESTI_PACKAGE:-org.vestifeed.debug}"
-VESTI_LOG_DIR="${VESTI_LOG_DIR:-$SCRIPT_DIR/.tmp}"
-VESTI_APK_PATH="${VESTI_APK_PATH:-$SCRIPT_DIR/app/build/outputs/apk/debug/app-debug.apk}"
-VESTI_RECORD_PATH="${VESTI_RECORD_PATH:-$SCRIPT_DIR/e2e.mp4}"
-VESTI_RECORD_PID_FILE="${VESTI_RECORD_PID_FILE:-$VESTI_LOG_DIR/e2e-screenrecord.pid}"
-VESTI_ENV_FILE="${VESTI_ENV_FILE:-$SCRIPT_DIR/.env}"
-
-VESTI_NO_WINDOW="${VESTI_NO_WINDOW:-0}"
-VESTI_CORES="${VESTI_CORES:-}"
-VESTI_NO_AUDIO="${VESTI_NO_AUDIO:-0}"
-VESTI_NO_SNAPSHOT_SAVE="${VESTI_NO_SNAPSHOT_SAVE:-0}"
-
-ADB="adb"
-EMU="emulator"
-
-# The emulator ships its own Qt (currently 6.5.x on the Linux build) and
-# its plugin dir does NOT include a Wayland platform plugin. The system
-# libqwayland.so cannot be substituted: Qt enforces a per-minor-version
-# ABI check, so even when the plugin is on the search path, the emulator
-# Qt will refuse to load it. Native Wayland for the emulator requires
-# the SDK to ship a Wayland plugin itself, which it doesn't. The Qt
-# platform ends up being xcb (XWayland) on Wayland sessions, which is
-# what triggers the ANR loop. The real workaround is:
-#   - VESTI_NO_WINDOW=1 to run headless (no Mutter window)
-# Leave VESTI_QT_PLATFORM unset to accept the emulator's default.
-
-log() { printf '==> %s\n' "$*"; }
-err() { printf 'error: %s\n' "$*" >&2; }
-
-usage() {
-  sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'
+Usage:
+  ./devtools emulator start        Boot the AVD asynchronously
+  ./devtools emulator stop         Shut the emulator down cleanly
+  ./devtools app install           Install debug build
+  ./devtools app run               Run debug build
+  ./devtools app uninstall         Uninstall the app
+  ./devtools app deploy nightly    Build a signed nightly APK and copy it to website/releases/nightly.apk
+  ./devtools website run           Open the website in a local browser tab
+  ./devtools website deploy        Deploy website with rsync
+EOF
 }
 
-usage_emulator() {
+print_usage_emulator() {
   cat <<EOF
 Usage: ./devtools emulator <command>
 
 Commands:
-  start                          Boot the AVD asynchronously
-  stop                           Shut the emulator down cleanly
+  start    Boot the AVD asynchronously
+  stop     Shut the emulator down cleanly
 EOF
 }
 
@@ -95,8 +44,8 @@ cmd_emulator() {
   case "$sub" in
     start)     emulator_start ;;
     stop)      emulator_stop ;;
-    help|-h|--help) usage_emulator ;;
-    *) err "Unknown emulator command: $sub"; usage_emulator; return 1 ;;
+    help|-h|--help) print_usage_emulator ;;
+    *) err "Unknown emulator command: $sub"; print_usage_emulator; return 1 ;;
   esac
 }
 
@@ -247,14 +196,10 @@ main() {
   shift || true
   case "$cmd" in
     emulator) cmd_emulator "$@" ;;
+    app)  cmd_website "$@" ;;
     website)  cmd_website "$@" ;;
-    run)      cmd_run "$@" ;;
-    e2e)      cmd_e2e "$@" ;;
-    login)    cmd_login "$@" ;;
-    deploy)   cmd_deploy "$@" ;;
-    clean)    cmd_clean ;;
-    help|-h|--help) usage ;;
-    *) err "Unknown command: $cmd"; usage; return 1 ;;
+    help|-h|--help) print_usage ;;
+    *) err "Unknown command: $cmd"; print_usage; return 1 ;;
   esac
 }
 

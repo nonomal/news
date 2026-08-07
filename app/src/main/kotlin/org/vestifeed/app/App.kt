@@ -2,6 +2,7 @@ package org.vestifeed.app
 
 import android.app.Application
 import android.content.Context
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import kotlinx.coroutines.CoroutineScope
@@ -18,12 +19,6 @@ import java.io.File
 class App : Application() {
     val scope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
-    val sync by lazy { Sync(scope, db) }
-
-    val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
-
-    val api by lazy { backend(db) }
-
     val db by lazy {
         Database(
             driver = AndroidSQLiteDriver(),
@@ -31,9 +26,21 @@ class App : Application() {
         )
     }
 
+    val sync by lazy { Sync(scope, db) }
+
+    val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
+
+    val api by lazy { backend(db) }
+
     override fun onCreate() {
         super.onCreate()
-        scope.launch { ogFetcher.fetchAndWatch() }
+        scope.launch {
+            try {
+                ogFetcher.fetchAndWatch()
+            } catch (e: Throwable) {
+                Log.e("App", "ogFetcher failed", e)
+            }
+        }
     }
 
     fun databaseFile(): File {

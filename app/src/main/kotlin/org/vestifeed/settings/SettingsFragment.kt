@@ -206,7 +206,7 @@ class SettingsFragment : AppFragment() {
                     runCatching {
                         withContext(Dispatchers.IO) {
                             requireContext().contentResolver.openOutputStream(uri)?.use {
-                                (requireContext().applicationContext as App).databaseFile()
+                                (requireContext().applicationContext as App).databaseFile
                                     .inputStream().copyTo(it)
                             }
                         }

@@ -17,20 +17,20 @@ import org.vestifeed.sync.Sync
 import java.io.File
 
 class App : Application() {
-    val scope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
+    internal val scope by lazy { CoroutineScope(SupervisorJob() + Dispatchers.IO) }
 
-    val db by lazy {
+    internal val db by lazy {
         Database(
             driver = AndroidSQLiteDriver(),
-            path = databaseFile().absolutePath,
+            path = databaseFile.absolutePath,
         )
     }
 
-    val sync by lazy { Sync(scope, db) }
+    internal val sync by lazy { Sync(scope, db) }
 
-    val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
+    internal val ogFetcher by lazy { OpenGraphImageFetcher(db, this) }
 
-    val api by lazy { backend(db) }
+    internal val api by lazy { backend(db) }
 
     override fun onCreate() {
         super.onCreate()
@@ -43,9 +43,8 @@ class App : Application() {
         }
     }
 
-    fun databaseFile(): File {
-        return getDatabasePath("vesti.db")
-    }
+    internal val databaseFile: File
+        get() = getDatabasePath(Database.NAME)
 }
 
 fun Fragment.sync() = requireContext().sync()

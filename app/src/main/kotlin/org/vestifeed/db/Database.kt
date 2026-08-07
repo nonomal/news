@@ -11,6 +11,10 @@ import org.vestifeed.db.table.TagTable
 
 class Database(driver: SQLiteDriver, val path: String) {
 
+    companion object {
+        const val NAME = "vesti.db"
+    }
+
     private val conn = driver.open(path)
 
     val feed = FeedTable(conn)

@@ -85,9 +85,8 @@ reproduction, log capture, or manual UI checks.
 Use `adb` or `devtools` to interact with a running emulator.
 
 ```bash
-./devtools emulator start     # boot the AVD (loads default_boot snapshot if present)
-./devtools emulator status    # confirm the device is online and booted
-./devtools emulator stop      # shut down cleanly via `adb emu kill`
-./devtools run                # assemble debug APK, install it, launch it
-./devtools clean              # uninstall the debug APK from a running emulator
+./devtools emulator start     # boot the AVD
+./devtools emulator stop      # shut down cleanly
+./devtools app run            # assemble debug APK, install it, launch it
+./devtools app uninstall      # uninstall the debug APK from a running emulator
 ```

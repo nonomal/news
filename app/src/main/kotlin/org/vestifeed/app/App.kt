@@ -7,7 +7,6 @@ import androidx.sqlite.driver.AndroidSQLiteDriver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import org.vestifeed.backend.Backend
 import org.vestifeed.backend.backend
@@ -35,11 +34,6 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         scope.launch { ogFetcher.fetchAndWatch() }
-    }
-
-    override fun onTerminate() {
-        super.onTerminate()
-        scope.cancel()
     }
 
     fun databaseFile(): File {

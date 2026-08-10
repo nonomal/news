@@ -66,6 +66,7 @@ class Activity : AppCompatActivity() {
     }
 
     private fun updateBottomNavVisibility() {
+        if (supportFragmentManager.isStateSaved) return
         val top = supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
         binding.bottomNav.isVisible = supportFragmentManager.backStackEntryCount == 0 &&
             (top is EntriesFragment || top is FeedsFragment)
@@ -120,7 +121,7 @@ class Activity : AppCompatActivity() {
         lifecycleScope.launch {
             val conf = db().conf.select()
 
-            if (conf.backend != null) {
+            if (conf.backend != null && savedInstanceState == null) {
                 supportFragmentManager.commit {
                     replace(
                         R.id.fragmentContainerView,

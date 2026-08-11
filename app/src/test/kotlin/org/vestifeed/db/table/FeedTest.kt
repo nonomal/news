@@ -79,6 +79,26 @@ class FeedTest {
     }
 
     @Test
+    fun feedQueries_selectAll_sortsByTitleCaseInsensitive() {
+        val feeds = listOf(
+            createFeed(id = "1", title = "banana"),
+            createFeed(id = "2", title = "Apple"),
+            createFeed(id = "3", title = "cherry"),
+            createFeed(id = "4", title = "Banana"),
+            createFeed(id = "5", title = "apple"),
+        )
+        db.feed.insertOrReplace(feeds)
+
+        val result = db.feed.selectAll()
+        val titles = result.map { it.title }
+        assertEquals(
+            "Expected case-insensitive sort: 'apple' and 'Apple' should be next to each other",
+            listOf("Apple", "apple", "banana", "Banana", "cherry"),
+            titles,
+        )
+    }
+
+    @Test
     fun feedQueries_selectAll_empty() {
         assertTrue(db.feed.selectAll().isEmpty())
     }

@@ -59,7 +59,7 @@ class FeedTable(private val conn: SQLiteConnection) {
             """
             SELECT id, title, ext_open_entries_in_browser, ext_blocked_words, ext_show_preview_images
             FROM feed
-            ORDER BY title;
+            ORDER BY title COLLATE NOCASE;
             """
         ).use { stmt ->
             return buildList {

@@ -299,7 +299,7 @@ class EntriesFragment : AppFragment() {
                 viewModel.state.collect { state ->
                     renderTitle(state.title)
                     binding.swipeRefresh.isRefreshing = state.pullToRefreshInProgress
-                    renderItems(state.items)
+                    renderItems(state.items, state.scrollToEntryId)
                 }
             }
         }
@@ -323,7 +323,7 @@ class EntriesFragment : AppFragment() {
         )
     }
 
-    private fun renderItems(items: ItemsState) {
+    private fun renderItems(items: ItemsState, scrollToEntryId: String? = null) {
         when (items) {
             ItemsState.Loading -> {
                 binding.progress.isVisible = true
@@ -342,7 +342,11 @@ class EntriesFragment : AppFragment() {
                 binding.progress.isVisible = false
                 binding.message.isVisible = false
                 binding.swipeRefresh.isVisible = true
-                adapter.submitList(items.items)
+                adapter.submitList(items.items) {
+                    if (scrollToEntryId != null) {
+                        scrollToEntry(scrollToEntryId)
+                    }
+                }
                 restoreScrollPositionIfNeeded()
             }
 
@@ -354,6 +358,25 @@ class EntriesFragment : AppFragment() {
                 adapter.submitList(emptyList())
             }
         }
+    }
+
+    /**
+     * After a "marked as read" undo restores an entry, the list re-renders
+     * with that entry back at its original position. Locate the row and
+     * scroll the viewport to it so the user actually sees the re-appearance
+     * instead of staring at whatever they had scrolled to. Runs inside the
+     * [androidx.recyclerview.widget.ListAdapter] submit callback so the new
+     * list is already the adapter's currentList; the underlying
+     * [androidx.recyclerview.widget.LinearLayoutManager] will request a
+     * layout pass and scroll on the next frame.
+     */
+    private fun scrollToEntry(entryId: String) {
+        val list = _binding?.list ?: return
+        val position = adapter.currentList.indexOfFirst { it.id == entryId }
+        if (position < 0) return
+        (list.layoutManager as? LinearLayoutManager)
+            ?.scrollToPositionWithOffset(position, 0)
+        viewModel.consumeScrollToEntry()
     }
 
     private fun createTouchHelper(): ItemTouchHelper? {

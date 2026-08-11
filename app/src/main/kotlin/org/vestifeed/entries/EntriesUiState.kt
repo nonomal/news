@@ -18,6 +18,14 @@ data class EntriesScreenState(
      * the indicator.
      */
     val pullToRefreshInProgress: Boolean = false,
+    /**
+     * When non-null, the fragment should scroll the list so the entry with
+     * this id is at the top of the viewport. Set by the undo path of
+     * [org.vestifeed.entries.EntriesViewModel.setRead] so that after an entry
+     * is restored from the "marked as read" snackbar, the user is taken back
+     * to where it re-appears. The fragment clears this once it has scrolled.
+     */
+    val scrollToEntryId: String? = null,
 )
 
 sealed class TitleState {

@@ -199,9 +199,21 @@ class EntriesViewModel(
                     extReadSynced = false,
                 )
             }
-            reload()
+            reloadInternal()
+            if (!read) {
+                _state.update { it.copy(scrollToEntryId = entryId) }
+            }
             sync.runInBackground()
         }
+    }
+
+    /**
+     * Called by the fragment once it has scrolled to the entry requested by
+     * [EntriesScreenState.scrollToEntryId], so the field doesn't keep firing
+     * the same scroll on every subsequent state emission.
+     */
+    fun consumeScrollToEntry() {
+        _state.update { it.copy(scrollToEntryId = null) }
     }
 
     /** Persist the bookmark flag and queue a sync so the server sees it. */

@@ -191,8 +191,8 @@ class UnreadPagerMarksAllAsReadOnSwipeTest {
 
                 val location = IntArray(2)
                 pager.getLocationOnScreen(location)
-                val startX = (location[0] + width - 4).toFloat()
-                val endX = (location[0] + 4).toFloat()
+                val startX = (location[0] + width - EDGE_MARGIN_PX).toFloat()
+                val endX = (location[0] + EDGE_MARGIN_PX).toFloat()
                 val y = (location[1] + pager.height / 2).toFloat()
 
                 val startTime = SystemClock.uptimeMillis()
@@ -294,5 +294,6 @@ class UnreadPagerMarksAllAsReadOnSwipeTest {
         const val SWIPE_DURATION_MILLIS = 250L
         const val SWIPE_STEPS = 25
         const val MOTION_TICK_MILLIS = 12L
+        const val EDGE_MARGIN_PX = 80
     }
 }

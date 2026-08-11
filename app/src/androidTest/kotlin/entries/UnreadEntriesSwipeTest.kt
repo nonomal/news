@@ -125,8 +125,8 @@ class UnreadEntriesSwipeTest {
                 val location = IntArray(2)
                 recyclerView.getLocationOnScreen(location)
                 val startY = (location[1] + itemView.top + itemView.height / 2).toFloat()
-                val startX = (location[0] + 4).toFloat()
-                val endX = (location[0] + itemView.width - 4).toFloat()
+                val startX = (location[0] + EDGE_MARGIN_PX).toFloat()
+                val endX = (location[0] + itemView.width - EDGE_MARGIN_PX).toFloat()
                 val distance = endX - startX
 
                 val startTime = SystemClock.uptimeMillis()
@@ -214,5 +214,6 @@ class UnreadEntriesSwipeTest {
         const val LOAD_TIMEOUT_MILLIS = 15_000L
         const val EMPTY_TIMEOUT_MILLIS = 15_000L
         const val POLL_INTERVAL_MILLIS = 200L
+        const val EDGE_MARGIN_PX = 80
     }
 }

@@ -40,6 +40,21 @@ class MinifluxAuthFragmentTest {
         InstrumentationRegistry.getInstrumentation().targetContext
             .db().conf.delete()
         AuthEvents.reset()
+        // On API 37+ MockWebServer binds to 127.0.0.1, which the OS gates
+        // behind ACCESS_LOCAL_NETWORK. Without granting it the connect call
+        // silently fails and the success-path tests never reach the server.
+        // Wrapped in runCatching because the instrumentation UI thread has
+        // occasionally refused the grant on emulator startup, and we don't
+        // want that to kill the whole test class.
+        if (Build.VERSION.SDK_INT >= 37) {
+            runCatching {
+                InstrumentationRegistry.getInstrumentation().uiAutomation
+                    .grantRuntimePermission(
+                        TARGET_PACKAGE,
+                        android.Manifest.permission.ACCESS_LOCAL_NETWORK,
+                    )
+            }
+        }
     }
 
     @After
@@ -183,8 +198,9 @@ class MinifluxAuthFragmentTest {
         const val REQUEST_TIMEOUT_MILLIS = 5_000L
         const val POLL_INTERVAL_MILLIS = 100L
 
-        // ACCESS_LOCAL_NETWORK only exists on API 37+; on older devices the
-        // LocalNetworkAccess check short-circuits and no permission is needed.
-        val ACCESS_LOCAL_NETWORK_AVAILABLE = Build.VERSION.SDK_INT >= 37
+        // The instrumentation target package is the debug build of the app,
+        // i.e. the same package that registers the ACCESS_LOCAL_NETWORK
+        // permission and serves as the test runner's targetPackage.
+        const val TARGET_PACKAGE = "org.vestifeed.debug"
     }
 }

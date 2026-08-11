@@ -2,6 +2,7 @@ package org.vestifeed.navigation
 
 import android.os.Bundle
 import android.util.Log
+import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -221,6 +222,34 @@ R.id.newsFragment -> {
                 fragment.childFragmentManager.fragments.forEach {
                     (it as? OnItemReselectedListener)?.onNavigationItemReselected(item)
                 }
+            }
+            scrollListToTopIfReselected(item)
+        }
+    }
+
+    /**
+     * When the user re-taps the currently-active bottom-nav tab, scroll
+     * that tab's list back to position 0 — the conventional
+     * "tap-to-jump-to-top" gesture for feed-style screens. No-op when the
+     * visible top fragment isn't the one matching the reselected tab (e.g.
+     * re-tapping Unread while the Feeds screen is up).
+     */
+    private fun scrollListToTopIfReselected(item: MenuItem) {
+        val top = supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
+        when (item.itemId) {
+            R.id.newsFragment -> {
+                val entries = top as? EntriesFragment ?: return
+                if (!entries.hasFilter(EntriesFilter.Unread)) return
+                entries.scrollToTop()
+            }
+            R.id.bookmarksFragment -> {
+                val entries = top as? EntriesFragment ?: return
+                if (!entries.hasFilter(EntriesFilter.Bookmarked)) return
+                entries.scrollToTop()
+            }
+            R.id.feedsFragment -> {
+                val feeds = top as? FeedsFragment ?: return
+                feeds.scrollToTop()
             }
         }
     }

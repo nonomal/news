@@ -191,6 +191,28 @@ class EntriesFragment : AppFragment() {
         scrollState.set(currentFilter, position, offset)
     }
 
+    /**
+     * Snap the list back to position 0. Invoked by the hosting activity when
+     * the user re-taps the same bottom-nav entry (Unread or Bookmarks) — a
+     * common "scroll to top" gesture in feed-style apps. Also persists the
+     * new top position to [scrollState] so a subsequent fragment recreation
+     * doesn't restore the pre-scroll offset.
+     *
+     * Any in-progress fling is cancelled first so a list still coasting
+     * from a recent swipe doesn't keep scrolling after we re-anchor at
+     * position 0.
+     */
+    fun scrollToTop() {
+        val list = _binding?.list ?: return
+        list.stopScroll()
+        (list.layoutManager as? LinearLayoutManager)
+            ?.scrollToPositionWithOffset(0, 0)
+        scrollState.set(requireNotNull(filter) { "filter required to persist scroll state" }, 0, 0)
+    }
+
+    /** True when this fragment is rendering the given [EntriesFilter]. */
+    fun hasFilter(expected: EntriesFilter): Boolean = filter == expected
+
     private fun isViewAlive(): Boolean = _binding != null
 
     private fun applyStatusBarInsets() {

@@ -189,6 +189,21 @@ class FeedsFragment : AppFragment() {
         _binding = null
     }
 
+    /**
+     * Snap the feeds list back to position 0. Invoked by the hosting
+     * activity when the user re-taps the Feeds bottom-nav entry while it's
+     * already active — a "scroll to top" gesture mirroring the Unread and
+     * Bookmarks tabs. Any in-progress fling is cancelled first so a list
+     * still coasting from a recent swipe doesn't keep scrolling after we
+     * re-anchor at position 0.
+     */
+    fun scrollToTop() {
+        val list = _binding?.list ?: return
+        list.stopScroll()
+        (list.layoutManager as? LinearLayoutManager)
+            ?.scrollToPositionWithOffset(0, 0)
+    }
+
     private suspend fun importOpml(document: InputStream) {
         val outlines = try {
             withContext(Dispatchers.IO) {

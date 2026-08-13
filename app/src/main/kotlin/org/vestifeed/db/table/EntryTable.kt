@@ -307,6 +307,28 @@ class EntryTable(private val conn: SQLiteConnection) {
         }
     }
 
+    /**
+     * Returns the number of unread entries belonging to any feed that has
+     * been tagged with [tagId]. Matches the semantics of the feeds tab's
+     * per-feed unread badge: an entry counts as "unread" when
+     * `ext_read = 0`, regardless of whether it has been bookmarked.
+     * Returns 0 when no feed is tagged with [tagId] so the query never
+     * joins against an empty feed set.
+     */
+    fun selectUnreadCountByTagId(tagId: String): Long {
+        conn.prepare(
+            """
+            SELECT COUNT(*)
+            FROM entry e
+            JOIN feed_tag ft ON ft.feed_id = e.feed_id
+            WHERE ft.tag_id = ? AND e.ext_read = 0;
+            """
+        ).use { stmt ->
+            stmt.bindText(1, tagId)
+            return if (stmt.step()) stmt.getLong(0) else 0L
+        }
+    }
+
     fun selectUnreadIds(): List<String> {
         conn.prepare(
             """

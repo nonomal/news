@@ -3,9 +3,11 @@ package org.vestifeed.tags
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.appcompat.widget.PopupMenu
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import java.text.NumberFormat
 import org.vestifeed.R
 import org.vestifeed.databinding.ListItemTagBinding
 
@@ -19,6 +21,7 @@ class TagsAdapter(
         val id: String,
         val name: String,
         val feedCount: Long,
+        val unreadCount: Long,
         val editable: Boolean,
     )
 
@@ -28,6 +31,8 @@ class TagsAdapter(
     ) : RecyclerView.ViewHolder(
         binding.root,
     ) {
+        private val integerFormat = NumberFormat.getIntegerInstance()
+
         fun bind(item: Item) {
             binding.apply {
                 primaryText.text = item.name
@@ -36,6 +41,9 @@ class TagsAdapter(
                     item.feedCount.toInt().coerceAtLeast(0),
                     item.feedCount.toInt().coerceAtLeast(0),
                 )
+
+                unreadCount.isVisible = item.unreadCount > 0
+                unreadCount.text = integerFormat.format(item.unreadCount)
 
                 actions.isClickable = item.editable
                 actions.alpha = if (item.editable) 1.0f else 0.3f

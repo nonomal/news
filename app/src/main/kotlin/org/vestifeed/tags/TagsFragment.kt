@@ -126,6 +126,7 @@ class TagsFragment : AppFragment() {
                 id = tag.id,
                 name = tag.name,
                 feedCount = feedIds.size.toLong(),
+                unreadCount = db.entry.selectUnreadCountByTagId(tag.id),
                 editable = isEditable,
             )
         }

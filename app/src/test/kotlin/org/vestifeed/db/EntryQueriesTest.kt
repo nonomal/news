@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTable
+import org.vestifeed.db.table.TagTable
 import kotlin.collections.sortedByDescending
 
 class EntryQueriesTest {
@@ -246,6 +247,46 @@ class EntryQueriesTest {
     }
 
     @Test
+    fun selectUnreadCountByTagId() {
+        val taggedFeed = createFeed(title = "Tagged feed")
+        val untaggedFeed = createFeed(title = "Untagged feed")
+        val otherTaggedFeed = createFeed(title = "Other tagged feed")
+        db.feed.insertOrReplace(listOf(taggedFeed, untaggedFeed, otherTaggedFeed))
+
+        val tag = createTag(id = "tag-1", name = "Tech")
+        val otherTag = createTag(id = "tag-2", name = "News")
+        db.tag.insertOrReplace(listOf(tag, otherTag))
+        db.feedTag.insert(taggedFeed.id, tag.id)
+        db.feedTag.insert(otherTaggedFeed.id, otherTag.id)
+
+        db.entry.insertOrReplace(
+            listOf(
+                entry().copy(feedId = taggedFeed.id, extRead = false, extBookmarked = false),
+                entry().copy(feedId = taggedFeed.id, extRead = false, extBookmarked = true),
+                entry().copy(feedId = taggedFeed.id, extRead = true, extBookmarked = false),
+                entry().copy(feedId = untaggedFeed.id, extRead = false, extBookmarked = false),
+                entry().copy(feedId = otherTaggedFeed.id, extRead = false, extBookmarked = false),
+            ),
+        )
+
+        assertEquals(2L, db.entry.selectUnreadCountByTagId(tag.id))
+        assertEquals(1L, db.entry.selectUnreadCountByTagId(otherTag.id))
+    }
+
+    @Test
+    fun selectUnreadCountByTagId_noMatchingFeeds_returnsZero() {
+        val tag = createTag(id = "tag-orphan", name = "Empty")
+        db.tag.insertOrReplace(tag)
+
+        assertEquals(0L, db.entry.selectUnreadCountByTagId(tag.id))
+    }
+
+    @Test
+    fun selectUnreadCountByTagId_unknownTag_returnsZero() {
+        assertEquals(0L, db.entry.selectUnreadCountByTagId("not-a-real-tag"))
+    }
+
+    @Test
     fun updateOgImageWritesFetchedAt() {
         val now = OffsetDateTime.now()
         val inserted = entry()
@@ -372,4 +413,14 @@ private fun createFeed(
     extOpenEntriesInBrowser = extOpenEntriesInBrowser,
     extBlockedWords = extBlockedWords,
     extShowPreviewImages = extShowPreviewImages,
+)
+
+private fun createTag(
+    id: String = UUID.randomUUID().toString(),
+    name: String = "Test Tag",
+) = TagTable.Tag(
+    id = id,
+    name = name,
+    extSource = TagTable.Source.Embedded,
+    extMinifluxId = null,
 )

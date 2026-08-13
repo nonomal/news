@@ -226,29 +226,45 @@ internal class MinifluxSync(private val api: Miniflux, private val db: Database)
             }
             var changedAfter =
                 OffsetDateTime.parse(db.conf.select().minifluxIncrementalSyncTimestamp)
-            val batchSize = 100L
+            val baseBatchSize = 100L
+            var batchSize = baseBatchSize
             while (true) {
                 val currentBatch = api.getEntriesChangedAfter(changedAfter, batchSize)
                 if (currentBatch.isEmpty()) {
                     break
-                } else {
-                    val newChangedAfter = currentBatch.maxOf { it.first.updated }
-                    db.transaction {
-                        currentBatch.forEach {
-                            db.entry.insertOrReplace(listOf(it.first))
-                            db.link.insertForEntry(it.first.id, it.second)
-                        }
-                        db.conf.update {
-                            it.copy(
-                                minifluxIncrementalSyncTimestamp = newChangedAfter.toString(),
-                            )
-                        }
-                        changedAfter = newChangedAfter
-                    }
+                }
+                val newChangedAfter = currentBatch.maxOf { it.first.updated }
+                if (newChangedAfter.toEpochSecond() == changedAfter.toEpochSecond()) {
+                    // Every returned entry's `changed_at` falls inside the same
+                    // second as the cursor. Miniflux's `changed_after` is
+                    // second-precision, so toEpochSecond() can't distinguish
+                    // them and we'd loop forever. Grow the batch so a single
+                    // request pulls past the end of that second; the cursor
+                    // advances on the next pass when `newChangedAfter` lands in
+                    // a later second.
                     if (currentBatch.size < batchSize) {
+                        // Server has nothing more at or after the cursor.
                         break
                     }
+                    batchSize += baseBatchSize
+                    continue
                 }
+                db.transaction {
+                    currentBatch.forEach {
+                        db.entry.insertOrReplace(listOf(it.first))
+                        db.link.insertForEntry(it.first.id, it.second)
+                    }
+                    db.conf.update {
+                        it.copy(
+                            minifluxIncrementalSyncTimestamp = newChangedAfter.toString(),
+                        )
+                    }
+                    changedAfter = newChangedAfter
+                }
+                if (currentBatch.size < batchSize) {
+                    break
+                }
+                batchSize = baseBatchSize
             }
         }
     }

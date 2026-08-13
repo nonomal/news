@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.MenuItem
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
@@ -90,6 +91,7 @@ class Activity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         binding = ActivityBinding.inflate(layoutInflater)
         setContentView(binding.root)

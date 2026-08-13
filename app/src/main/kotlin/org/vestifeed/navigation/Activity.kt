@@ -34,6 +34,7 @@ import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.entries.toBundle
 import org.vestifeed.feeds.FeedsFragment
 import org.vestifeed.lan.LocalNetworkPermissionRequester
+import org.vestifeed.tags.TagsFragment
 
 class Activity : AppCompatActivity() {
 
@@ -57,6 +58,11 @@ class Activity : AppCompatActivity() {
     }
 
     private val onBackStackChangedListener = FragmentManager.OnBackStackChangedListener {
+        // Popping Settings (which lives on the back stack) doesn't trigger
+        // onResume() on the Activity, so the tags-tab visibility toggle set
+        // there wouldn't be picked up otherwise. Refresh the menu every
+        // time the back stack changes.
+        refreshBottomNavMenu()
         updateBottomNavVisibility()
     }
 
@@ -70,7 +76,17 @@ class Activity : AppCompatActivity() {
         if (supportFragmentManager.isStateSaved) return
         val top = supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
         binding.bottomNav.isVisible = supportFragmentManager.backStackEntryCount == 0 &&
-            (top is EntriesFragment || top is FeedsFragment)
+            (top is EntriesFragment || top is FeedsFragment || top is TagsFragment)
+    }
+
+    /**
+     * The Tags tab is opt-in: the menu item is hidden when the user has not
+     * enabled "Show Tags tab" in settings. Called both at startup (after the
+     * conf has been loaded) and after returning from the settings screen.
+     */
+    private fun refreshBottomNavMenu() {
+        val showTags = db().conf.select().showTagsTab
+        binding.bottomNav.menu.findItem(R.id.tagsFragment)?.isVisible = showTags
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +98,7 @@ class Activity : AppCompatActivity() {
             fragmentLifecycleCallbacks,
             false,
         )
+        refreshBottomNavMenu()
 
         ViewCompat.setOnApplyWindowInsetsListener(binding.bottomNav) { v, insets ->
             insets.getInsets(WindowInsetsCompat.Type.navigationBars()).let {
@@ -208,6 +225,17 @@ R.id.newsFragment -> {
                         true
                     }
 
+                    R.id.tagsFragment -> {
+                        supportFragmentManager.commit {
+                            replace(
+                                R.id.fragmentContainerView,
+                                TagsFragment::class.java,
+                                null,
+                            )
+                        }
+                        true
+                    }
+
                     else -> false
                 }
             }
@@ -256,6 +284,7 @@ R.id.newsFragment -> {
 
     override fun onResume() {
         super.onResume()
+        refreshBottomNavMenu()
         updateBottomNavVisibility()
     }
 

@@ -97,6 +97,8 @@
     <string name="view_comments">View comments</string>
     <string name="use_built_in_browser">Use built-in browser</string>
     <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="show_tags_tab">Show Tags tab</string>
+    <string name="tag_has_no_unread_entries">No entries in this tag</string>
     <string name="could_not_play_audio">Could not play audio</string>
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>

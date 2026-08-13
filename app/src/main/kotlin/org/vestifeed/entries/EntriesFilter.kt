@@ -150,6 +150,48 @@ sealed class EntriesFilter : Parcelable {
         }
     }
 
+    /**
+     * Filter for the "Tags" tab: shows unread entries from every feed that
+     * has been tagged with [tagId]. The toolbar title is the tag's display
+     * name. Empty list surfaces a tag-specific empty message.
+     */
+    data class BelongToTag(val tagId: String) : EntriesFilter() {
+        override val swipeRefreshEnabled = true
+        override val swipePolicy = SwipePolicy(
+            left = SwipeAction(
+                iconRes = R.drawable.ic_baseline_visibility_24,
+                messageRes = R.string.marked_as_read,
+                apply = { setRead(it, read = true) },
+                undo = { setRead(it, read = false) },
+            ),
+            right = SwipeAction(
+                iconRes = R.drawable.ic_baseline_bookmark_add_24,
+                messageRes = R.string.bookmarked,
+                apply = { setBookmarked(it, bookmarked = true) },
+                undo = { setBookmarked(it, bookmarked = false) },
+            ),
+        )
+
+        override suspend fun loadEntries(db: Database): List<EntryTable.EntriesAdapterRow> {
+            val feedIds = db.feedTag.selectFeedIdsByTagId(tagId)
+            return db.entry.selectUnreadByFeedIds(feedIds)
+        }
+
+        override suspend fun resolveTitle(db: Database): TitleFormat {
+            val tag = db.tag.selectById(tagId)
+            return TitleFormat.Custom(tag?.name ?: tagId)
+        }
+
+        override fun emptyMessageRes(feedCount: Int): Int = R.string.tag_has_no_unread_entries
+
+        override fun describeContents(): Int = 0
+
+        override fun writeToParcel(parcel: Parcel, flags: Int) {
+            parcel.writeInt(3)
+            parcel.writeString(tagId)
+        }
+    }
+
     companion object {
         const val ARG_FILTER = "filter"
 
@@ -160,6 +202,7 @@ sealed class EntriesFilter : Parcelable {
                     0 -> Unread
                     1 -> Bookmarked
                     2 -> BelongToFeed(parcel.readString()!!)
+                    3 -> BelongToTag(parcel.readString()!!)
                     else -> throw IllegalArgumentException("Unknown EntriesFilter type")
                 }
             }

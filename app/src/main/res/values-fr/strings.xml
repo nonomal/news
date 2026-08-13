@@ -87,6 +87,8 @@
     <string name="feed_url">URL du flux</string>
     <string name="view_comments">Voir les commentaires</string>
     <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="show_tags_tab">Show Tags tab</string>
+    <string name="tag_has_no_unread_entries">No entries in this tag</string>
     <string name="use_built_in_browser">Utiliser le navigateur intégré</string>
     <string name="show_preview_text">Afficher un aperçu du texte</string>
     <string name="show_author_name">Afficher le nom de l’auteur</string>

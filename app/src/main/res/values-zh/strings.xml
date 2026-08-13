@@ -87,6 +87,8 @@
     <string name="feed_url">订阅源URL</string>
     <string name="view_comments">查看评论</string>
     <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="show_tags_tab">Show Tags tab</string>
+    <string name="tag_has_no_unread_entries">No entries in this tag</string>
     <string name="use_built_in_browser">使用内置浏览器</string>
     <string name="show_preview_text">显示预览文本</string>
     <string name="show_author_name">显示作者姓名</string>

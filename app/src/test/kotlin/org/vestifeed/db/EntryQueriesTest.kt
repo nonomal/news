@@ -178,6 +178,31 @@ class EntryQueriesTest {
     }
 
     @Test
+    fun selectUnreadByFeedIds() {
+        val feed1 = createFeed(title = "Feed 1")
+        val feed2 = createFeed(title = "Feed 2")
+        val feed3 = createFeed(title = "Feed 3")
+        db.feed.insertOrReplace(listOf(feed1, feed2, feed3))
+
+        val entries = listOf(
+            entry().copy(feedId = feed1.id, title = "F1 unread", extRead = false, extBookmarked = false),
+            entry().copy(feedId = feed1.id, title = "F1 read", extRead = true, extBookmarked = false),
+            entry().copy(feedId = feed1.id, title = "F1 bookmarked", extRead = false, extBookmarked = true),
+            entry().copy(feedId = feed2.id, title = "F2 unread", extRead = false, extBookmarked = false),
+            entry().copy(feedId = feed3.id, title = "F3 read", extRead = true, extBookmarked = false),
+        )
+        db.entry.insertOrReplace(entries)
+
+        assertEquals(2, db.entry.selectUnreadByFeedIds(listOf(feed1.id, feed2.id)).size)
+        assertEquals(
+            setOf("F1 unread", "F2 unread"),
+            db.entry.selectUnreadByFeedIds(listOf(feed1.id, feed2.id)).map { it.title }.toSet(),
+        )
+        assertEquals(0, db.entry.selectUnreadByFeedIds(listOf(feed3.id)).size)
+        assertEquals(0, db.entry.selectUnreadByFeedIds(emptyList()).size)
+    }
+
+    @Test
     fun selectUnreadIds() {
         val feed = createFeed()
         db.feed.insertOrReplace(feed)

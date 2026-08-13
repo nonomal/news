@@ -29,6 +29,9 @@ import org.vestifeed.databinding.FragmentTagsBinding
 import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.TagTable
 import org.vestifeed.dialog.showErrorDialog
+import org.vestifeed.entries.EntriesFilter
+import org.vestifeed.entries.EntriesFragment
+import org.vestifeed.entries.toBundle
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.showKeyboard
 import java.util.UUID
@@ -79,6 +82,15 @@ class TagsFragment : AppFragment() {
 
         binding.toolbar.setNavigationOnClickListener { parentFragmentManager.popBackStack() }
 
+        // When the Tags tab is the root fragment (shown directly by the
+        // bottom nav), there's nothing to pop — hide the up arrow so the
+        // screen reads as a top-level destination. When reached from the
+        // Feeds screen (which pushes it on the back stack), the arrow is
+        // kept so the user can return.
+        if (parentFragmentManager.backStackEntryCount == 0) {
+            binding.toolbar.navigationIcon = null
+        }
+
         binding.list.apply {
             setHasFixedSize(true)
             adapter = createTagsAdapter()
@@ -125,8 +137,8 @@ class TagsFragment : AppFragment() {
                 parentFragmentManager.commit {
                     replace(
                         R.id.fragmentContainerView,
-                        TagFeedsFragment::class.java,
-                        bundleOf("tagId" to item.id),
+                        EntriesFragment::class.java,
+                        EntriesFilter.BelongToTag(tagId = item.id).toBundle(),
                     )
                     addToBackStack(null)
                 }
@@ -246,7 +258,11 @@ class TagsFragment : AppFragment() {
         when (state) {
             is State.Loading -> listOf(toolbar, progress).forEach { it.isVisible = true }
             is State.ShowingTags -> {
-                listOf(toolbar, list, fab).forEach { it.isVisible = true }
+                listOf(toolbar, list).forEach { it.isVisible = true }
+                // The "Add tag" FAB is hidden in Miniflux mode because tags
+                // are read-only there; the same flag controls the
+                // per-row rename/delete affordance.
+                if (isEditable) fab.isVisible = true
                 (binding.list.adapter as? TagsAdapter)?.submitList(state.tags)
 
                 if (state.tags.isEmpty()) {

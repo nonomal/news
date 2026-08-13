@@ -21,4 +21,10 @@
         android:title="@string/feeds"
         app:showAsAction="ifRoom" />
 
+    <item
+        android:id="@+id/tagsFragment"
+        android:icon="@drawable/ic_tag"
+        android:title="@string/tags"
+        app:showAsAction="ifRoom" />
+
 </menu>

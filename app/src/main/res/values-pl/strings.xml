@@ -87,6 +87,8 @@
     <string name="feed_url">URL kanału</string>
     <string name="view_comments">Zobacz komentarze</string>
     <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="show_tags_tab">Show Tags tab</string>
+    <string name="tag_has_no_unread_entries">No entries in this tag</string>
     <string name="use_built_in_browser">Użyj wbudowanej przeglądarki</string>
     <string name="show_preview_text">Pokaż podgląd tekstu</string>
     <string name="show_author_name">Pokaż nazwę autora</string>

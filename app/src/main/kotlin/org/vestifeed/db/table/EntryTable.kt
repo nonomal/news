@@ -237,6 +237,41 @@ class EntryTable(private val conn: SQLiteConnection) {
         }
     }
 
+    /**
+     * Returns unread, non-bookmarked entries belonging to any feed whose id
+     * appears in [feedIds]. Used by the tag entries screen to surface
+     * articles from every feed that has been tagged with the active tag.
+     * Returns an empty list when [feedIds] is empty so we don't issue a
+     * query that would match every entry.
+     */
+    fun selectUnreadByFeedIds(feedIds: List<String>): List<EntriesAdapterRow> {
+        if (feedIds.isEmpty()) return emptyList()
+        val placeholders = feedIds.joinToString(",") { "?" }
+        return conn.prepare(
+            """
+            SELECT e.id, e.feed_id, e.ext_bookmarked, e.ext_og_image_url,
+                   e.ext_og_image_width, e.ext_og_image_height, e.title,
+                   f.title as feed_title, f.ext_show_preview_images,
+                   e.published, e.summary, e.ext_read, f.ext_open_entries_in_browser,
+                   e.author_name
+            FROM entry e
+            JOIN feed f ON f.id = e.feed_id
+            WHERE e.feed_id IN ($placeholders)
+              AND e.ext_read = 0 AND e.ext_bookmarked = 0
+            ORDER BY e.published DESC;
+            """
+        ).use { stmt ->
+            feedIds.forEachIndexed { index, feedId ->
+                stmt.bindText(index + 1, feedId)
+            }
+            buildList {
+                while (stmt.step()) {
+                    add(statementToEntriesAdapterRow(stmt))
+                }
+            }
+        }
+    }
+
     fun selectUnread(): List<EntriesAdapterRow> {
         conn.prepare(
             """

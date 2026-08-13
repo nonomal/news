@@ -32,6 +32,7 @@ class ConfTest {
         assertTrue(statement.contains("background_sync_interval_millis INTEGER NOT NULL"))
         assertTrue(statement.contains("entry_body_font_size INTEGER NOT NULL"))
         assertTrue(statement.contains("use_built_in_audio_player INTEGER NOT NULL"))
+        assertTrue(statement.contains("show_tags_tab INTEGER NOT NULL"))
     }
 
     @Test
@@ -50,6 +51,7 @@ class ConfTest {
         assertTrue(defaultConf.showPreviewText)
         assertEquals(16, defaultConf.entryBodyFontSize)
         assertFalse(defaultConf.useBuiltInAudioPlayer)
+        assertFalse(defaultConf.showTagsTab)
     }
 
     @Test
@@ -79,6 +81,7 @@ class ConfTest {
         assertEquals(conf.showPreviewText, result.showPreviewText)
         assertEquals(conf.entryBodyFontSize, result.entryBodyFontSize)
         assertEquals(conf.useBuiltInAudioPlayer, result.useBuiltInAudioPlayer)
+        assertEquals(conf.showTagsTab, result.showTagsTab)
     }
 
     @Test
@@ -130,6 +133,18 @@ class ConfTest {
         assertFalse(result.syncOnStartup)
     }
 
+    @Test
+    fun confQueries_showTagsTab_roundTrips() {
+        db.conf.insert(createConf(showTagsTab = false))
+        assertFalse(db.conf.select().showTagsTab)
+
+        db.conf.update { it.copy(showTagsTab = true) }
+        assertTrue(db.conf.select().showTagsTab)
+
+        db.conf.update { it.copy(showTagsTab = false) }
+        assertFalse(db.conf.select().showTagsTab)
+    }
+
     private fun createConf(
         backend: ConfTable.Backend = ConfTable.Backend.Embedded,
         minifluxUrl: String = "https://miniflux.example.com",
@@ -145,6 +160,7 @@ class ConfTest {
         entryBodyFontSize: Int = 20,
         showAuthorName: Boolean = false,
         useBuiltInAudioPlayer: Boolean = false,
+        showTagsTab: Boolean = false,
     ) = ConfTable.Conf(
         backend = backend,
         minifluxUrl = minifluxUrl,
@@ -160,5 +176,6 @@ class ConfTest {
         entryBodyFontSize = entryBodyFontSize,
         showAuthorName = showAuthorName,
         useBuiltInAudioPlayer = useBuiltInAudioPlayer,
+        showTagsTab = showTagsTab,
     )
 }

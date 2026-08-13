@@ -87,6 +87,8 @@
     <string name="feed_url">عنوان URL الموجز</string>
     <string name="view_comments">عرض التعليقات</string>
     <string name="use_built_in_audio_player">Use built-in audio player</string>
+    <string name="show_tags_tab">Show Tags tab</string>
+    <string name="tag_has_no_unread_entries">No entries in this tag</string>
     <string name="use_built_in_browser">استخدم المتصفح المدمج</string>
     <string name="show_preview_text">إظهار نص المعاينة</string>
     <string name="show_author_name">إظهار اسم المؤلف</string>

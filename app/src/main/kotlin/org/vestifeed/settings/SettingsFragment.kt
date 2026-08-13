@@ -162,6 +162,11 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
+    private fun setShowTagsTab(value: Boolean) {
+        db.conf.update { it.copy(showTagsTab = value) }
+        refresh()
+    }
+
     private fun setEntryBodyFontSize(value: Int) {
         db.conf.update { it.copy(entryBodyFontSize = value) }
         refresh()
@@ -314,6 +319,11 @@ class SettingsFragment : AppFragment() {
         useBuiltInAudioPlayer.apply {
             isChecked = state.conf.useBuiltInAudioPlayer
             setOnCheckedChangeListener { _, isChecked -> setUseBuiltInAudioPlayer(isChecked) }
+        }
+
+        showTagsTab.apply {
+            isChecked = state.conf.showTagsTab
+            setOnCheckedChangeListener { _, isChecked -> setShowTagsTab(isChecked) }
         }
 
         entryBodyFontSize.text = entryBodyFontSizeLabel(state.conf.entryBodyFontSize)

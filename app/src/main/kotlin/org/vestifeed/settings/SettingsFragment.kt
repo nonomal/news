@@ -167,6 +167,11 @@ class SettingsFragment : AppFragment() {
         refresh()
     }
 
+    private fun setShowPodcastsTab(value: Boolean) {
+        db.conf.update { it.copy(showPodcastsTab = value) }
+        refresh()
+    }
+
     private fun setEntryBodyFontSize(value: Int) {
         db.conf.update { it.copy(entryBodyFontSize = value) }
         refresh()
@@ -324,6 +329,11 @@ class SettingsFragment : AppFragment() {
         showTagsTab.apply {
             isChecked = state.conf.showTagsTab
             setOnCheckedChangeListener { _, isChecked -> setShowTagsTab(isChecked) }
+        }
+
+        showPodcastsTab.apply {
+            isChecked = state.conf.showPodcastsTab
+            setOnCheckedChangeListener { _, isChecked -> setShowPodcastsTab(isChecked) }
         }
 
         entryBodyFontSize.text = entryBodyFontSizeLabel(state.conf.entryBodyFontSize)

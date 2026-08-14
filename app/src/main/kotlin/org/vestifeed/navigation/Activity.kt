@@ -35,6 +35,7 @@ import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.entries.toBundle
 import org.vestifeed.feeds.FeedsFragment
 import org.vestifeed.lan.LocalNetworkPermissionRequester
+import org.vestifeed.podcasts.PodcastsFragment
 import org.vestifeed.tags.TagsFragment
 
 class Activity : AppCompatActivity() {
@@ -77,17 +78,19 @@ class Activity : AppCompatActivity() {
         if (supportFragmentManager.isStateSaved) return
         val top = supportFragmentManager.findFragmentById(R.id.fragmentContainerView)
         binding.bottomNav.isVisible = supportFragmentManager.backStackEntryCount == 0 &&
-            (top is EntriesFragment || top is FeedsFragment || top is TagsFragment)
+            (top is EntriesFragment || top is FeedsFragment || top is TagsFragment || top is PodcastsFragment)
     }
 
     /**
-     * The Tags tab is opt-in: the menu item is hidden when the user has not
-     * enabled "Show Tags tab" in settings. Called both at startup (after the
-     * conf has been loaded) and after returning from the settings screen.
+     * The Tags and Podcasts tabs are opt-in: their menu items are hidden
+     * when the user has not enabled the matching switch in settings. Called
+     * both at startup (after the conf has been loaded) and after returning
+     * from the settings screen.
      */
     private fun refreshBottomNavMenu() {
-        val showTags = db().conf.select().showTagsTab
-        binding.bottomNav.menu.findItem(R.id.tagsFragment)?.isVisible = showTags
+        val conf = db().conf.select()
+        binding.bottomNav.menu.findItem(R.id.tagsFragment)?.isVisible = conf.showTagsTab
+        binding.bottomNav.menu.findItem(R.id.podcastsFragment)?.isVisible = conf.showPodcastsTab
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -238,6 +241,17 @@ R.id.newsFragment -> {
                         true
                     }
 
+                    R.id.podcastsFragment -> {
+                        supportFragmentManager.commit {
+                            replace(
+                                R.id.fragmentContainerView,
+                                PodcastsFragment::class.java,
+                                null,
+                            )
+                        }
+                        true
+                    }
+
                     else -> false
                 }
             }
@@ -280,6 +294,10 @@ R.id.newsFragment -> {
             R.id.feedsFragment -> {
                 val feeds = top as? FeedsFragment ?: return
                 feeds.scrollToTop()
+            }
+            R.id.podcastsFragment -> {
+                val podcasts = top as? PodcastsFragment ?: return
+                podcasts.scrollToTop()
             }
         }
     }

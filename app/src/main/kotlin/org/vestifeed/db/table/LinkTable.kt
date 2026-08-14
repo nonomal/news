@@ -6,6 +6,7 @@ import androidx.sqlite.execSQL
 import org.vestifeed.db.bindTextOrNull
 import org.vestifeed.db.getTextOrNull
 import org.vestifeed.parser.AtomLinkRel
+import java.time.OffsetDateTime
 
 class LinkTable(private val conn: SQLiteConnection) {
     companion object {
@@ -44,6 +45,29 @@ class LinkTable(private val conn: SQLiteConnection) {
         // extensions
         val extEnclosureDownloadProgress: Double?,
         val extCacheUri: String?,
+    )
+
+    /**
+     * One row per audio enclosure of an entry that hasn't been soft-deleted
+     * (`entry.ext_read` aside — every entry with an audio enclosure is
+     * surfaced regardless of read state so the Podcasts tab mirrors a
+     * typical feed-reader podcast experience). Sorted by entry publish date
+     * desc, with the link's own id as a tiebreaker so two enclosures of the
+     * same entry keep a stable order across queries.
+     */
+    data class AudioEnclosureRow(
+        val linkId: Long,
+        val entryId: String,
+        val feedId: String,
+        val entryTitle: String,
+        val entryPublished: OffsetDateTime,
+        val feedTitle: String,
+        val href: String,
+        val type: String,
+        val extEnclosureDownloadProgress: Double?,
+        val extCacheUri: String?,
+        val extRead: Boolean,
+        val extBookmarked: Boolean,
     )
 
     fun insertForFeed(feedId: String, links: List<Link>) {
@@ -303,6 +327,61 @@ class LinkTable(private val conn: SQLiteConnection) {
         }
     }
 
+    /**
+     * One row per audio enclosure of an entry, joined with the entry's read /
+     * bookmark state and the feed title. Used by the Podcasts tab to render
+     * its list. `WHERE l.type LIKE 'audio%'` follows the same predicate
+     * [org.vestifeed.enclosures.EnclosuresRepo.downloadAudioEnclosure] uses to
+     * gate downloads, so what's listed matches what can be downloaded.
+     */
+    fun selectAudioEnclosureRows(): List<AudioEnclosureRow> {
+        conn.prepare(
+            """
+            SELECT
+                l.id,
+                l.entry_id,
+                e.feed_id,
+                e.title,
+                e.published,
+                f.title,
+                l.href,
+                l.type,
+                l.ext_enclosure_download_progress,
+                l.ext_cache_uri,
+                e.ext_read,
+                e.ext_bookmarked
+            FROM link l
+            JOIN entry e ON e.id = l.entry_id
+            JOIN feed f ON f.id = e.feed_id
+            WHERE l.rel = 'Enclosure' AND l.type LIKE 'audio%'
+            ORDER BY e.published DESC, l.id ASC;
+            """
+        ).use { stmt ->
+            return buildList {
+                while (stmt.step()) {
+                    add(
+                        AudioEnclosureRow(
+                            linkId = stmt.getLong(0),
+                            entryId = stmt.getText(1),
+                            feedId = stmt.getText(2),
+                            entryTitle = stmt.getText(3),
+                            entryPublished = runCatching {
+                                OffsetDateTime.parse(stmt.getText(4))
+                            }.getOrDefault(OffsetDateTime.now()),
+                            feedTitle = stmt.getText(5),
+                            href = stmt.getText(6),
+                            type = stmt.getText(7),
+                            extEnclosureDownloadProgress = stmt.getTextOrNull(8)?.toDoubleOrNull(),
+                            extCacheUri = stmt.getTextOrNull(9),
+                            extRead = stmt.getInt(10) == 1,
+                            extBookmarked = stmt.getInt(11) == 1,
+                        )
+                    )
+                }
+            }
+        }
+    }
+
     fun selectByEntryIdAndHref(entryId: String, href: String): Link? {
         conn.prepare(
             """
@@ -324,6 +403,38 @@ class LinkTable(private val conn: SQLiteConnection) {
         ).use { stmt ->
             stmt.bindText(1, entryId)
             stmt.bindText(2, href)
+            return if (stmt.step()) {
+                stmt.toLink(
+                    id = stmt.getLong(0),
+                    feedId = stmt.getTextOrNull(1),
+                    entryId = stmt.getTextOrNull(2)
+                )
+            } else {
+                null
+            }
+        }
+    }
+
+    fun selectById(id: Long): Link? {
+        conn.prepare(
+            """
+            SELECT
+                id,
+                feed_id,
+                entry_id,
+                ext_enclosure_download_progress,
+                ext_cache_uri,
+                href,
+                rel,
+                type,
+                hreflang,
+                title,
+                length
+            FROM link
+            WHERE id = ?;
+            """
+        ).use { stmt ->
+            stmt.bindLong(1, id)
             return if (stmt.step()) {
                 stmt.toLink(
                     id = stmt.getLong(0),

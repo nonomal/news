@@ -522,6 +522,12 @@ class FeedsFragment : AppFragment() {
             is State.ShowingFeeds -> {
                 (binding.list.adapter as? FeedsAdapter)?.submitList(state.feeds)
 
+                toolbar.title = if (state.feeds.isEmpty()) {
+                    getString(R.string.feeds)
+                } else {
+                    getString(R.string.feeds_n, state.feeds.size)
+                }
+
                 if (state.feeds.isEmpty()) {
                     message.isVisible = true
                     message.text = getString(R.string.you_have_no_feeds)

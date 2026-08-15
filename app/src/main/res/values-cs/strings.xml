@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Chybějící požadovaný argument: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Záložky (%1$d)</string>
+    <string name="feeds_n">Feedy (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d hodinu</item>
         <item quantity="few">%d hodina</item>
@@ -131,6 +132,7 @@
         <item quantity="other">před %d hodinami</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

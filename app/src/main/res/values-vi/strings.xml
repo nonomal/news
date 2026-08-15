@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Thiếu đối số bắt buộc: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Bookmarks (%1$d)</string>
+    <string name="feeds_n">Nguồn cấp (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="other">%d hours</item>
     </plurals>
@@ -119,6 +120,7 @@
         <item quantity="other">%d giờ trước</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

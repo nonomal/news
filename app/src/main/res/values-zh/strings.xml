@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">缺少必需的参数：%1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">书签 (%1$d)</string>
+    <string name="feeds_n">订阅源 (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="other">%d 小时</item>
     </plurals>
@@ -119,6 +120,7 @@
         <item quantity="other">%d 小时前</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

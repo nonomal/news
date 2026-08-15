@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Brakujący wymagany argument: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Zakładki (%1$d)</string>
+    <string name="feeds_n">Kanały (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d godzina</item>
         <item quantity="few">%d godzin</item>
@@ -131,6 +132,7 @@
         <item quantity="other">%d godzin temu</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

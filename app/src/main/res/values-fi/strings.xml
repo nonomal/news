@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Vaadittu argumentti puuttuu: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Kirjainmerkit (%1$d)</string>
+    <string name="feeds_n">Syötteet (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d tunti</item>
         <item quantity="other">%d tuntia</item>
@@ -123,6 +124,7 @@
         <item quantity="other">%d tuntia sitten</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

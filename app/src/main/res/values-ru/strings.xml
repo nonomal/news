@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Отсутствует обязательный аргумент: %1$s</string>
     <string name="unread_n">Лента (%1$d)</string>
     <string name="bookmarks_n">Закладки (%1$d)</string>
+    <string name="feeds_n">Подписки (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d час</item>
         <item quantity="few">%d часа</item>
@@ -131,6 +132,7 @@
         <item quantity="other">%d часов назад</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

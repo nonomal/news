@@ -60,6 +60,7 @@
     <string name="initial_sync">Initial sync</string>
     <string name="open_feed_settings">Open feed settings</string>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>
@@ -121,6 +122,7 @@
     <string name="required_argument_is_missing">Required argument is missing: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Bookmarks (%1$d)</string>
+    <string name="feeds_n">Feeds (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="zero">%d hours</item>
         <item quantity="one">%d hour</item>

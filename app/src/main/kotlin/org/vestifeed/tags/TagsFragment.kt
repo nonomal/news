@@ -280,6 +280,12 @@ class TagsFragment : AppFragment() {
                 if (isEditable) fab.isVisible = true
                 (binding.list.adapter as? TagsAdapter)?.submitList(state.tags)
 
+                toolbar.title = if (state.tags.isEmpty()) {
+                    getString(R.string.tags)
+                } else {
+                    getString(R.string.tags_n, state.tags.size)
+                }
+
                 if (state.tags.isEmpty()) {
                     message.isVisible = true
                     message.text = getString(R.string.you_have_no_tags)

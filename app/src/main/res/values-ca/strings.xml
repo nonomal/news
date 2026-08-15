@@ -105,6 +105,7 @@
     <string name="required_argument_is_missing">Falta l\'argument requerit: %1$s</string>
     <string name="unread_n">Unread (%1$d)</string>
     <string name="bookmarks_n">Bookmarks (%1$d)</string>
+    <string name="feeds_n">Feeds (%1$d)</string>
     <plurals name="d_hours">
         <item quantity="one">%d hour</item>
         <item quantity="many">%d hours</item>
@@ -125,6 +126,7 @@
         <item quantity="other">fa %d hores</item>
     </plurals>
     <string name="tags">Tags</string>
+    <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
     <string name="manage_tags">Manage tags</string>

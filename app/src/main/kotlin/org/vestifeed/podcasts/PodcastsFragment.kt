@@ -16,10 +16,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.vestifeed.R
@@ -27,15 +24,15 @@ import org.vestifeed.app.db
 import org.vestifeed.app.sync
 import org.vestifeed.databinding.FragmentPodcastsBinding
 import org.vestifeed.dialog.showErrorDialog
-import org.vestifeed.entries.CardListAdapterDecoration
-import org.vestifeed.entries.SwipeHelper
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.settings.SettingsFragment
 
 /**
  * Lists every audio enclosure on the device, sorted by entry publish date
- * (newest first). Shows the same swipe-to-read/bookmark affordances as the
- * entries screen plus an audio control row at the bottom of every card.
+ * (newest first). Renders the same flat list pattern as the Feeds and
+ * Tags tabs — a single row per enclosure with an action menu exposing
+ * download / play / delete — so the visual rhythm matches the rest of
+ * the app.
  */
 class PodcastsFragment : AppFragment() {
 
@@ -55,10 +52,15 @@ class PodcastsFragment : AppFragment() {
 
     private val adapter = PodcastsAdapter(object : PodcastsAdapter.Callback {
         override fun onItemClick(item: PodcastsAdapter.Item) {
-            // Tapping the card does nothing on this tab — the audio
-            // controls below are the entry points. We could open the
-            // parent entry in a future iteration, but for now keep the
-            // behaviour predictable.
+            // Tapping a row used to do nothing on this tab. Now it plays the
+            // enclosure when it has been downloaded locally and otherwise
+            // kicks off the download — mirroring the "tap to engage" pattern
+            // users expect from the feed and tag lists.
+            if (item.cacheUri.isNullOrBlank()) {
+                requestLocalNetworkAccessThen { viewModel.downloadAudio(item) }
+            } else {
+                viewModel.playAudio(item)
+            }
         }
 
         override fun onDownloadClick(item: PodcastsAdapter.Item) {
@@ -73,8 +75,6 @@ class PodcastsFragment : AppFragment() {
             viewModel.deleteAudio(item)
         }
     })
-
-    private var swipeHelper: ItemTouchHelper? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -130,15 +130,10 @@ class PodcastsFragment : AppFragment() {
         binding.list.apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@PodcastsFragment.adapter
-            addItemDecoration(
-                CardListAdapterDecoration(
-                    resources.getDimensionPixelSize(R.dimen.entries_cards_gap),
-                ),
-            )
-        }
-
-        swipeHelper = createSwipeHelper().also {
-            it.attachToRecyclerView(binding.list)
+            // Row dividers aren't strictly required — the matching feeds and
+            // tags tabs render as one flat row per item too — but the
+            // background drawable on each row (`?selectableItemBackground`)
+            // provides a clear ripple boundary on tap.
         }
 
         // Reload every time the screen comes back into view, so a download
@@ -158,8 +153,6 @@ class PodcastsFragment : AppFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        swipeHelper?.attachToRecyclerView(null)
-        swipeHelper = null
         _binding = null
     }
 
@@ -245,54 +238,5 @@ class PodcastsFragment : AppFragment() {
             }
             after()
         }
-    }
-
-    /**
-     * Swipe policy mirrors the entries Unread variant: left marks as read,
-     * right marks as bookmarked. Each action gets its own undo snackbar so
-     * an accidental swipe can be cancelled out.
-     */
-    private fun createSwipeHelper(): ItemTouchHelper {
-        val leftIcon = R.drawable.ic_baseline_visibility_24
-        val rightIcon = R.drawable.ic_baseline_bookmark_add_24
-        return ItemTouchHelper(
-            object : SwipeHelper(requireContext(), leftIcon, rightIcon) {
-                override fun onSwiped(
-                    viewHolder: RecyclerView.ViewHolder,
-                    direction: Int,
-                ) {
-                    val item = adapter.currentList
-                        .getOrNull(viewHolder.bindingAdapterPosition) ?: return
-                    when (direction) {
-                        ItemTouchHelper.LEFT -> {
-                            showUndoSnackbar(R.string.marked_as_read) {
-                                viewModel.setRead(item.entryId, read = false)
-                            }
-                            viewModel.setRead(item.entryId, read = true)
-                        }
-                        ItemTouchHelper.RIGHT -> {
-                            showUndoSnackbar(R.string.bookmarked) {
-                                viewModel.setBookmarked(item.entryId, bookmarked = false)
-                            }
-                            viewModel.setBookmarked(item.entryId, bookmarked = true)
-                        }
-                        else -> Unit
-                    }
-                }
-            },
-        )
-    }
-
-    /**
-     * Shows a snackbar with an "undo" action that runs [onUndo] if the user
-     * taps it before the snackbar dismisses. The snackbar is anchored to the
-     * activity's bottom navigation so it doesn't cover the list.
-     */
-    private fun showUndoSnackbar(messageRes: Int, onUndo: () -> Unit) {
-        val rootView = _binding?.root ?: return
-        Snackbar.make(rootView, messageRes, Snackbar.LENGTH_SHORT)
-            .setAnchorView(requireActivity().findViewById(R.id.bottomNav))
-            .setAction(R.string.undo) { onUndo() }
-            .show()
     }
 }

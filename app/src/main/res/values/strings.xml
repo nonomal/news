@@ -114,6 +114,8 @@
     <string name="show_podcasts_tab">Show Podcasts tab</string>
     <string name="you_have_no_podcasts">You have no podcasts</string>
     <string name="podcasts_n">Podcasts (%1$d)</string>
+    <string name="played">Played</string>
+    <string name="unplayed">Unplayed</string>
     <string name="connect_to_miniflux">Connect to Miniflux</string>
     <string name="connect">Connect</string>
     <string name="invalid_url">Invalid URL</string>

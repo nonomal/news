@@ -23,7 +23,7 @@ class PodcastsAdapter(
                 LayoutInflater.from(parent.context),
                 parent,
                 false,
-            )
+            ),
         )
     }
 
@@ -65,50 +65,59 @@ class PodcastsAdapter(
             secondaryText.isVisible = item.secondaryText.isNotBlank()
             secondaryText.isEnabled = !item.read
 
-            // Audio controls are always visible — the whole point of the
-            // Podcasts tab is that one tap kicks off the download or
-            // playback flow for every row.
             bookmarkIcon.isVisible = item.bookmarked
-            card.alpha = if (item.read) 0.55f else 1f
 
-            if (item.downloadProgress == null) {
-                download.isVisible = true
-                downloading.isVisible = false
-                downloadProgress.isVisible = false
-                play.isVisible = false
-                delete.isVisible = false
-            } else {
-                val progress = item.downloadProgress
-                val progressPercent = (progress * 100).toInt()
-                download.isVisible = false
-                downloading.isVisible = progress != 1.0
-                downloadProgress.isVisible = progress != 1.0
-                downloadProgress.progress = progressPercent
-                delete.isVisible = progress == 1.0
-
-                when (item.playbackState) {
-                    PlaybackState.Idle -> {
-                        play.isVisible = progress == 1.0
-                        play.text = play.context.getString(R.string.listen)
-                        play.setIconResource(R.drawable.ic_baseline_headset_24)
-                    }
-                    PlaybackState.Playing -> {
-                        play.isVisible = true
-                        play.text = play.context.getString(R.string.pause)
-                        play.setIconResource(R.drawable.ic_baseline_pause_24)
-                    }
-                    PlaybackState.Paused -> {
-                        play.isVisible = true
-                        play.text = play.context.getString(R.string.resume)
-                        play.setIconResource(R.drawable.ic_baseline_play_arrow_24)
-                    }
-                }
+            // The download progress bar only makes sense while the file is
+            // actively downloading. Showing a full bar at 100% would look
+            // like work-in-progress, which is why we hide it then and rely on
+            // the inline action label to convey "downloaded".
+            val progress = item.downloadProgress
+            downloadProgress.isVisible = progress != null && progress < 1.0
+            if (downloadProgress.isVisible) {
+                downloadProgress.progress = (progress!! * 100).toInt()
             }
 
+            val ctx = binding.root.context
+            val sb = statusBadgeFor(item)
+            val badge: String? = when (sb) {
+                StatusBadge.Played -> ctx.getString(R.string.played)
+                StatusBadge.Downloading -> ctx.getString(R.string.downloading)
+                StatusBadge.Unplayed -> ctx.getString(R.string.unplayed)
+                else -> null
+            }
+            statusBadge.isVisible = badge != null
+            statusBadge.text = badge.orEmpty()
+
+            // The inline action label is the only way to engage with a row
+            // now that the more-vert menu is gone. It mirrors the row's
+            // available action: "Download" when the enclosure hasn't been
+            // cached yet, "Listen" once it's on disk. While a download is
+            // in progress we hide the label — the progress bar already
+            // invites attention.
+            val downloaded = progress == 1.0
+            val downloading = progress != null && !downloaded
+            val showAction = !downloading
+            actionText.isVisible = showAction
+            if (showAction) {
+                actionText.text = ctx.getString(
+                    if (downloaded) R.string.listen else R.string.download,
+                )
+            }
+
+            // The whole row is tappable: "Download" when there's nothing on
+            // disk, "Listen" once there is. The inline label forwards to the
+            // same intent so a precise tap on the label still does the right
+            // thing. Long-press isn't wired — the delete flow has to come
+            // from somewhere else once the file is on disk.
             root.setOnClickListener { callback.onItemClick(item) }
-            download.setOnClickListener { callback.onDownloadClick(item) }
-            play.setOnClickListener { callback.onPlayPauseClick(item) }
-            delete.setOnClickListener { callback.onDeleteClick(item) }
+
+            actionText.setOnClickListener {
+                if (downloaded) {
+                    callback.onPlayPauseClick(item)
+                } else {
+                    callback.onDownloadClick(item)
+                }
+            }
         }
     }
 
@@ -127,5 +136,28 @@ class PodcastsAdapter(
         ): Boolean {
             return newItem == oldItem
         }
+    }
+}
+
+/**
+ * Lightweight render of the audio enclosure state for the right-hand
+ * badge. Kept at file scope so the nested [PodcastsAdapter.ViewHolder] can
+ * call [statusBadgeFor] without the receiver-style ambiguity you get
+ * from `binding.apply { ... }`.
+ */
+internal enum class StatusBadge { Downloading, Played, Unplayed }
+
+/**
+ * Decides which status badge (if any) to render for a given row. An
+ * active download always wins over the read state; once the file is on
+ * disk we distinguish read vs unread; otherwise no badge at all.
+ */
+internal fun statusBadgeFor(item: PodcastsAdapter.Item): StatusBadge? {
+    val progress = item.downloadProgress
+    return when {
+        progress != null && progress < 1.0 -> StatusBadge.Downloading
+        progress == 1.0 && !item.read -> StatusBadge.Unplayed
+        progress == 1.0 && item.read -> StatusBadge.Played
+        else -> null
     }
 }

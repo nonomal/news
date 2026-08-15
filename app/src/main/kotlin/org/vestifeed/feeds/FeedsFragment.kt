@@ -57,6 +57,7 @@ import org.vestifeed.opml.leafOutlines
 import org.vestifeed.opml.toOpml
 import org.vestifeed.opml.toPrettyString
 import org.vestifeed.opml.toXmlDocument
+import org.vestifeed.settings.SettingsFragment
 import org.vestifeed.tags.TagsFragment
 import java.io.InputStream
 import java.io.OutputStream
@@ -116,6 +117,13 @@ class FeedsFragment : AppFragment() {
                 R.id.manageTags -> openTagsManager()
                 R.id.importFeeds -> importFeedsLauncher.launch("*/*")
                 R.id.exportFeeds -> exportFeedsLauncher.launch("feeds.opml")
+                R.id.settings -> {
+                    parentFragmentManager.commit {
+                        replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
+                        addToBackStack(null)
+                    }
+                    true
+                }
             }
 
             true

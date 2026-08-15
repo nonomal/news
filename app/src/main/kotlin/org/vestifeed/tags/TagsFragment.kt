@@ -34,6 +34,7 @@ import org.vestifeed.entries.EntriesFragment
 import org.vestifeed.entries.toBundle
 import org.vestifeed.navigation.AppFragment
 import org.vestifeed.navigation.showKeyboard
+import org.vestifeed.settings.SettingsFragment
 import java.util.UUID
 
 class TagsFragment : AppFragment() {
@@ -89,6 +90,19 @@ class TagsFragment : AppFragment() {
         // kept so the user can return.
         if (parentFragmentManager.backStackEntryCount == 0) {
             binding.toolbar.navigationIcon = null
+        }
+
+        binding.toolbar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.settings -> {
+                    parentFragmentManager.commit {
+                        replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
+                        addToBackStack(null)
+                    }
+                    true
+                }
+                else -> false
+            }
         }
 
         binding.list.apply {

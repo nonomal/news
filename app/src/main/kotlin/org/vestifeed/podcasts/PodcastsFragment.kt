@@ -11,6 +11,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.view.updatePadding
+import androidx.fragment.app.commit
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +30,7 @@ import org.vestifeed.dialog.showErrorDialog
 import org.vestifeed.entries.CardListAdapterDecoration
 import org.vestifeed.entries.SwipeHelper
 import org.vestifeed.navigation.AppFragment
+import org.vestifeed.settings.SettingsFragment
 
 /**
  * Lists every audio enclosure on the device, sorted by entry publish date
@@ -91,16 +93,9 @@ class PodcastsFragment : AppFragment() {
         // but the title sits clear of it. The navigation bar inset still has to
         // be applied to the list so the last row clears the gesture pill.
         ViewCompat.setOnApplyWindowInsetsListener(binding.toolbar) { v, insets ->
-            val statusBar = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top
-            v.updatePadding(top = statusBar)
-            // The MaterialToolbar caps its measured height at the actionBarSize
-            // even when we bump its padding-top, so the existing layout
-            // (EntriesFragment, etc.) only looks right because the toolbar has
-            // menu items that push it past that minimum. Without a menu the
-            // toolbar would otherwise stay flat — explicitly raise its minimum
-            // height so it grows to include the status bar inset.
-            v.minimumHeight = v.paddingTop +
-                v.resources.getDimensionPixelSize(R.dimen.action_bar_default_height)
+            insets.getInsets(WindowInsetsCompat.Type.statusBars()).let {
+                v.updatePadding(top = it.top)
+            }
             insets
         }
 
@@ -117,6 +112,19 @@ class PodcastsFragment : AppFragment() {
         // back stack later, the arrow becomes meaningful.
         if (parentFragmentManager.backStackEntryCount == 0) {
             binding.toolbar.navigationIcon = null
+        }
+
+        binding.toolbar.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.settings -> {
+                    parentFragmentManager.commit {
+                        replace(R.id.fragmentContainerView, SettingsFragment::class.java, null)
+                        addToBackStack(null)
+                    }
+                    true
+                }
+                else -> false
+            }
         }
 
         binding.list.apply {

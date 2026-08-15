@@ -11,9 +11,7 @@
     android:gravity="center_vertical"
     android:minHeight="56dp"
     android:orientation="horizontal"
-    android:paddingStart="16dp"
     android:paddingTop="8dp"
-    android:paddingEnd="8dp"
     android:paddingBottom="8dp">
 
     <LinearLayout
@@ -27,6 +25,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:textAppearance="?attr/textAppearanceSubtitle1"
             tools:text="Tag name" />
 
@@ -34,6 +34,8 @@
             android:id="@+id/secondaryText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
             android:textAppearance="?attr/textAppearanceCaption"
             tools:text="3 feeds" />
 
@@ -54,16 +56,26 @@
         android:textColor="?colorOnSecondary"
         tools:text="666" />
 
-    <ImageView
-        android:id="@+id/actions"
+    <FrameLayout
         android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_height="match_parent"
         android:layout_gravity="center"
-        android:background="?attr/selectableItemBackgroundBorderless"
         android:clickable="true"
-        android:contentDescription="@string/actions"
-        android:focusable="true"
-        android:padding="6dp"
-        android:src="@drawable/ic_baseline_more_vert_24" />
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/actions"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_gravity="center"
+            android:layout_marginEnd="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:contentDescription="@string/actions"
+            android:focusable="true"
+            android:padding="2dp"
+            android:src="@drawable/ic_baseline_more_vert_24" />
+
+    </FrameLayout>
 
 </LinearLayout>

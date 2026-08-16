@@ -11,7 +11,6 @@ import org.vestifeed.db.table.ConfTable
 import org.vestifeed.db.table.EntryTable
 import org.vestifeed.db.table.FeedTagTable
 import org.vestifeed.db.table.FeedTable
-import org.vestifeed.db.table.LinkTable
 import org.vestifeed.db.table.TagTable
 import java.io.File
 
@@ -35,7 +34,7 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v1Schema = """
                 CREATE TABLE conf (
@@ -92,7 +91,7 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v2Schema = """
                 CREATE TABLE conf (
@@ -143,7 +142,7 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v3Schema = """
                 CREATE TABLE conf (
@@ -195,7 +194,7 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v4Schema = """
                 CREATE TABLE conf (
@@ -260,7 +259,7 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v5Schema = """
                 CREATE TABLE conf (
@@ -313,9 +312,9 @@ class DatabaseMigrationTest {
         driver.open(dbFile.absolutePath).use { conn ->
             conn.execSQL(FeedTable.SCHEMA)
             conn.execSQL(EntryTable.SCHEMA)
-            conn.execSQL(LinkTable.SCHEMA)
             conn.execSQL(TagTable.SCHEMA)
             conn.execSQL(FeedTagTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
 
             val v6Schema = """
                 CREATE TABLE conf (
@@ -361,5 +360,47 @@ class DatabaseMigrationTest {
 
         db.conf.update { it.copy(showPodcastsTab = true) }
         assertEquals(true, db.conf.select().showPodcastsTab)
+    }
+
+    @Test
+    fun migrate_v7ToV8_addsExtPlayedColumns() {
+        val driver = BundledSQLiteDriver()
+        driver.open(dbFile.absolutePath).use { conn ->
+            conn.execSQL(FeedTable.SCHEMA)
+            conn.execSQL(EntryTable.SCHEMA)
+            conn.execSQL(LINK_SCHEMA_V7)
+
+            conn.prepare(
+                """
+                INSERT INTO link (
+                    feed_id, href, rel, type, hreflang, title, length,
+                    ext_enclosure_download_progress, ext_cache_uri
+                ) VALUES (
+                    'f1', 'https://example.com/a.mp3', 'Enclosure', 'audio/mpeg',
+                    null, null, null, 1.0, '/cache/a.mp3'
+                );
+                """.trimIndent()
+            ).use { stmt ->
+                stmt.step()
+            }
+
+            conn.execSQL("PRAGMA user_version=7;")
+        }
+
+        val db = Database(driver, dbFile.absolutePath)
+
+        // The row survives the migration with its download state intact, and
+        // the new played defaults to 0 so existing enclosures don't suddenly
+        // look played. The repo-side helper should also accept the
+        // corresponding update so the badge can flip once the user listens.
+        val link = db.link.selectByFeedId("f1").single()
+        assertEquals(1.0, link.extEnclosureDownloadProgress)
+        assertEquals(false, link.extPlayed)
+        assertEquals(null, link.extPlayedAt)
+
+        db.link.updatePlayedAndPlayedAt(link.id!!, played = true, playedAt = null)
+        val played = db.link.selectByFeedId("f1").single()
+        assertEquals(true, played.extPlayed)
+        assertEquals(null, played.extPlayedAt)
     }
 }

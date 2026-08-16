@@ -48,7 +48,8 @@ class PodcastsAdapter(
         val secondaryText: String,
         val downloadProgress: Double? = null,
         val cacheUri: String? = null,
-        val read: Boolean = false,
+        val entryRead: Boolean = false,
+        val played: Boolean = false,
         val bookmarked: Boolean = false,
         val playbackState: PlaybackState = PlaybackState.Idle,
     )
@@ -59,11 +60,11 @@ class PodcastsAdapter(
 
         fun bind(item: Item, callback: Callback) = binding.apply {
             primaryText.text = item.primaryText
-            primaryText.isEnabled = !item.read
+            primaryText.isEnabled = !item.entryRead
 
             secondaryText.text = item.secondaryText
             secondaryText.isVisible = item.secondaryText.isNotBlank()
-            secondaryText.isEnabled = !item.read
+            secondaryText.isEnabled = !item.entryRead
 
             bookmarkIcon.isVisible = item.bookmarked
 
@@ -149,15 +150,16 @@ internal enum class StatusBadge { Downloading, Played, Unplayed }
 
 /**
  * Decides which status badge (if any) to render for a given row. An
- * active download always wins over the read state; once the file is on
- * disk we distinguish read vs unread; otherwise no badge at all.
+ * active download always wins over the played state; once the file is on
+ * disk we distinguish played vs unplayed. The badge tracks per-enclosure
+ * play state, not the parent entry's read state.
  */
 internal fun statusBadgeFor(item: PodcastsAdapter.Item): StatusBadge? {
     val progress = item.downloadProgress
     return when {
         progress != null && progress < 1.0 -> StatusBadge.Downloading
-        progress == 1.0 && !item.read -> StatusBadge.Unplayed
-        progress == 1.0 && item.read -> StatusBadge.Played
+        progress == 1.0 && !item.played -> StatusBadge.Unplayed
+        progress == 1.0 && item.played -> StatusBadge.Played
         else -> null
     }
 }

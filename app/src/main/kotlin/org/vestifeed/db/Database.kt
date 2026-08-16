@@ -40,8 +40,8 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL(ConfTable.SCHEMA)
             conn.execSQL(TagTable.SCHEMA)
             conn.execSQL(FeedTagTable.SCHEMA)
-            conn.execSQL("PRAGMA user_version=7;")
-            version = 7
+            conn.execSQL("PRAGMA user_version=8;")
+            version = 8
         }
 
         if (version == 1) {
@@ -79,6 +79,13 @@ class Database(driver: SQLiteDriver, val path: String) {
             conn.execSQL("ALTER TABLE conf ADD COLUMN show_podcasts_tab INTEGER NOT NULL DEFAULT 0;")
             conn.execSQL("PRAGMA user_version=7;")
             version = 7
+        }
+
+        if (version == 7) {
+            conn.execSQL("ALTER TABLE link ADD COLUMN ext_played INTEGER NOT NULL DEFAULT 0;")
+            conn.execSQL("ALTER TABLE link ADD COLUMN ext_played_at TEXT;")
+            conn.execSQL("PRAGMA user_version=8;")
+            version = 8
         }
     }
 

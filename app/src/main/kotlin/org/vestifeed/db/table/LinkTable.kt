@@ -23,6 +23,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 entry_id TEXT REFERENCES entry(id),
                 ext_enclosure_download_progress REAL,
                 ext_cache_uri TEXT,
+                ext_played INTEGER NOT NULL DEFAULT 0,
+                ext_played_at TEXT,
                 UNIQUE(feed_id, href, rel),
                 UNIQUE(entry_id, href, rel),
                 CHECK ((feed_id IS NULL) <> (entry_id IS NULL))
@@ -45,6 +47,8 @@ class LinkTable(private val conn: SQLiteConnection) {
         // extensions
         val extEnclosureDownloadProgress: Double?,
         val extCacheUri: String?,
+        val extPlayed: Boolean = false,
+        val extPlayedAt: OffsetDateTime? = null,
     )
 
     /**
@@ -66,6 +70,7 @@ class LinkTable(private val conn: SQLiteConnection) {
         val type: String,
         val extEnclosureDownloadProgress: Double?,
         val extCacheUri: String?,
+        val extPlayed: Boolean,
         val extRead: Boolean,
         val extBookmarked: Boolean,
     )
@@ -82,8 +87,10 @@ class LinkTable(private val conn: SQLiteConnection) {
                 title,
                 length,
                 ext_enclosure_download_progress,
-                ext_cache_uri
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                ext_cache_uri,
+                ext_played,
+                ext_played_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             links.forEach { link ->
@@ -96,6 +103,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 stmt.bindTextOrNull(7, link.length?.toString())
                 stmt.bindTextOrNull(8, link.extEnclosureDownloadProgress?.toString())
                 stmt.bindTextOrNull(9, link.extCacheUri)
+                stmt.bindLong(10, if (link.extPlayed) 1 else 0)
+                stmt.bindTextOrNull(11, link.extPlayedAt?.toString())
                 stmt.step()
                 stmt.reset()
             }
@@ -114,8 +123,10 @@ class LinkTable(private val conn: SQLiteConnection) {
                 title,
                 length,
                 ext_enclosure_download_progress,
-                ext_cache_uri
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                ext_cache_uri,
+                ext_played,
+                ext_played_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """
         ).use { stmt ->
             links.forEach { link ->
@@ -128,6 +139,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 stmt.bindTextOrNull(7, link.length?.toString())
                 stmt.bindTextOrNull(8, link.extEnclosureDownloadProgress?.toString())
                 stmt.bindTextOrNull(9, link.extCacheUri)
+                stmt.bindLong(10, if (link.extPlayed) 1 else 0)
+                stmt.bindTextOrNull(11, link.extPlayedAt?.toString())
                 stmt.step()
                 stmt.reset()
             }
@@ -141,6 +154,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -167,6 +182,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -196,6 +213,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 feed_id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -229,6 +248,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 entry_id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -262,6 +283,26 @@ class LinkTable(private val conn: SQLiteConnection) {
         ).use { stmt ->
             stmt.bindTextOrNull(1, progress?.toString())
             stmt.bindTextOrNull(2, cacheUri)
+            stmt.bindLong(3, linkId)
+            stmt.step()
+        }
+    }
+
+    /**
+     * Toggle the per-enclosure "played" flag and stamp [playedAt]. Pass
+     * `null` for [playedAt] when clearing; the listener click only ever
+     * sets a value, so callers should pass `OffsetDateTime.now()` then.
+     */
+    fun updatePlayedAndPlayedAt(linkId: Long, played: Boolean, playedAt: OffsetDateTime?) {
+        conn.prepare(
+            """
+            UPDATE link
+            SET ext_played = ?, ext_played_at = ?
+            WHERE id = ?;
+            """
+        ).use { stmt ->
+            stmt.bindLong(1, if (played) 1 else 0)
+            stmt.bindTextOrNull(2, playedAt?.toString())
             stmt.bindLong(3, linkId)
             stmt.step()
         }
@@ -304,6 +345,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 entry_id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -348,6 +391,7 @@ class LinkTable(private val conn: SQLiteConnection) {
                 l.type,
                 l.ext_enclosure_download_progress,
                 l.ext_cache_uri,
+                l.ext_played,
                 e.ext_read,
                 e.ext_bookmarked
             FROM link l
@@ -373,8 +417,9 @@ class LinkTable(private val conn: SQLiteConnection) {
                             type = stmt.getText(7),
                             extEnclosureDownloadProgress = stmt.getTextOrNull(8)?.toDoubleOrNull(),
                             extCacheUri = stmt.getTextOrNull(9),
-                            extRead = stmt.getInt(10) == 1,
-                            extBookmarked = stmt.getInt(11) == 1,
+                            extPlayed = stmt.getInt(10) == 1,
+                            extRead = stmt.getInt(11) == 1,
+                            extBookmarked = stmt.getInt(12) == 1,
                         )
                     )
                 }
@@ -391,6 +436,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 entry_id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -424,6 +471,8 @@ class LinkTable(private val conn: SQLiteConnection) {
                 entry_id,
                 ext_enclosure_download_progress,
                 ext_cache_uri,
+                ext_played,
+                ext_played_at,
                 href,
                 rel,
                 type,
@@ -460,6 +509,10 @@ class LinkTable(private val conn: SQLiteConnection) {
             length = getTextOrNull(getColumnNames().indexOf("length"))?.toLongOrNull(),
             extEnclosureDownloadProgress = getTextOrNull(getColumnNames().indexOf("ext_enclosure_download_progress"))?.toDoubleOrNull(),
             extCacheUri = getTextOrNull(getColumnNames().indexOf("ext_cache_uri")),
+            extPlayed = getInt(getColumnNames().indexOf("ext_played")) == 1,
+            extPlayedAt = runCatching {
+                OffsetDateTime.parse(getText(getColumnNames().indexOf("ext_played_at")))
+            }.getOrNull(),
         )
     }
 

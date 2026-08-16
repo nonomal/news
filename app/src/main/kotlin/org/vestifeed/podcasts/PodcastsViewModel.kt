@@ -81,7 +81,8 @@ class PodcastsViewModel(
                 ),
                 downloadProgress = row.extEnclosureDownloadProgress,
                 cacheUri = row.extCacheUri,
-                read = row.extRead,
+                entryRead = row.extRead,
+                played = row.extPlayed,
                 bookmarked = row.extBookmarked,
             )
         }
@@ -123,6 +124,25 @@ class PodcastsViewModel(
     }
 
     /**
+     * Mark the link backing [item] as played (or clear it) and stamp the
+     * timestamp. Triggered when the user actually starts playback; the
+     * entry's read state is left untouched so it still surfaces on the
+     * Unread tab until the user opens it or swipes it.
+     */
+    fun setPlayed(item: PodcastsAdapter.Item, played: Boolean) {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                db.link.updatePlayedAndPlayedAt(
+                    linkId = item.linkId,
+                    played = played,
+                    playedAt = if (played) OffsetDateTime.now() else null,
+                )
+            }
+            reloadInternal()
+        }
+    }
+
+    /**
      * Trigger a download of [item]'s audio. Progress propagates back through
      * the enclosure's `ext_enclosure_download_progress`, so reloading the
      * list after the download settles is enough to surface the new state.
@@ -143,13 +163,18 @@ class PodcastsViewModel(
     /**
      * Hand [item]'s downloaded audio off to an external player via
      * ACTION_VIEW. Uses the cached file URI when available so the player
-     * can resume / seek into the file.
+     * can resume / seek into the file. Also flips the per-enclosure
+     * played flag, since this is the only signal we get that the user
+     * engaged with the audio (external players don't report completion).
      */
     fun playAudio(item: PodcastsAdapter.Item) {
         val uri = item.cacheUri
         if (uri.isNullOrBlank()) {
             _actions.tryEmit(PodcastsAction.ShowError("Not downloaded yet"))
             return
+        }
+        if (!item.played) {
+            setPlayed(item, played = true)
         }
         _actions.tryEmit(PodcastsAction.PlayAudio(uri, item.type))
     }

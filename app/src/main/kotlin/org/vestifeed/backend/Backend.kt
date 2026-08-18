@@ -15,7 +15,7 @@ sealed class Backend(protected val db: Database) {
         val entries: List<Pair<EntryTable.Entry, List<LinkTable.Link>>>,
     )
 
-    abstract suspend fun addFeed(url: HttpUrl): AddFeedResult
+    abstract suspend fun addFeed(url: HttpUrl, categoryId: Long?): AddFeedResult
 
     abstract suspend fun getFeeds(): List<FeedTable.Feed>
 

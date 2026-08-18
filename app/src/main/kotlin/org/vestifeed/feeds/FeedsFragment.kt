@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import android.widget.ArrayAdapter
 import android.widget.EditText
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
@@ -25,7 +26,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import org.vestifeed.parser.AtomLinkRel
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.textfield.MaterialAutoCompleteTextView
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -37,6 +40,7 @@ import org.vestifeed.R
 import org.vestifeed.app.api
 import org.vestifeed.app.db
 import org.vestifeed.app.sync
+import org.vestifeed.backend.Miniflux
 import org.vestifeed.databinding.FragmentFeedsBinding
 import org.vestifeed.db.Database
 import org.vestifeed.db.table.ConfTable
@@ -61,6 +65,8 @@ import org.vestifeed.settings.SettingsFragment
 import org.vestifeed.tags.TagsFragment
 import java.io.InputStream
 import java.io.OutputStream
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import javax.xml.parsers.DocumentBuilderFactory
 
 class FeedsFragment : AppFragment() {
@@ -148,32 +154,7 @@ class FeedsFragment : AppFragment() {
 
         binding.importOpml.setOnClickListener { importFeedsLauncher.launch("*/*") }
 
-        binding.fab.setOnClickListener {
-            val dialog =
-                MaterialAlertDialogBuilder(requireContext()).setTitle(getString(R.string.add_feed))
-                    .setView(R.layout.dialog_add_feed)
-                    .setPositiveButton(R.string.add) { dialogInterface, _ ->
-                        onAddClick(
-                            dialogInterface
-                        )
-                    }
-                    .setNegativeButton(R.string.cancel, null).show()
-
-            val urlView = dialog.findViewById<EditText>(R.id.url)!!
-
-            urlView.setOnEditorActionListener { _, actionId, keyEvent ->
-                if (actionId == EditorInfo.IME_ACTION_DONE || keyEvent?.keyCode == KeyEvent.KEYCODE_ENTER) {
-                    dialog.dismiss()
-                    addFeed(urlView.text.toString())
-                    return@setOnEditorActionListener true
-                }
-
-                false
-            }
-
-            urlView.requestFocus()
-            urlView.postDelayed({ showKeyboard(urlView) }, 300)
-        }
+        binding.fab.setOnClickListener { showAddFeedDialog() }
 
         viewLifecycleOwner.lifecycleScope.launch {
             state.update { State.Loading }
@@ -248,6 +229,24 @@ class FeedsFragment : AppFragment() {
             return
         }
 
+        val isMiniflux = db().conf.select().backend == ConfTable.Backend.Miniflux
+        val importCategoryId: Long? = if (isMiniflux) {
+            val title = "OPML Import ${LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)}"
+            try {
+                val miniflux = api() as? Miniflux
+                if (miniflux == null) {
+                    showErrorDialog(Exception("Miniflux backend expected but was not active"))
+                    return
+                }
+                withContext(Dispatchers.IO) { miniflux.findOrCreateCategory(title) }.id
+            } catch (e: Throwable) {
+                showErrorDialog(e)
+                return
+            }
+        } else {
+            null
+        }
+
         for (outline in outlines) {
             val outlineUrl = (outline.xmlUrl ?: "").toHttpUrlOrNull()
 
@@ -265,7 +264,7 @@ class FeedsFragment : AppFragment() {
                 feedsExisted++
             } else {
                 try {
-                    val res = api().addFeed(outlineUrl)
+                    val res = api().addFeed(outlineUrl, importCategoryId)
                     withContext(Dispatchers.IO) {
                         db().transaction {
                             db().feed.insertOrReplace(res.feed)
@@ -289,6 +288,10 @@ class FeedsFragment : AppFragment() {
                     )
                 }
             }
+        }
+
+        if (isMiniflux) {
+            sync().runInBackground()
         }
 
         val feeds = db().feed.selectAll()
@@ -344,7 +347,7 @@ class FeedsFragment : AppFragment() {
         }
     }
 
-    private fun addFeed(unvalidatedUrl: String) {
+    private fun addFeed(unvalidatedUrl: String, categoryId: Long?) {
         val trimmedUrl = unvalidatedUrl.trim()
         if (trimmedUrl.startsWith("http://")) {
             showErrorDialog(Exception("HTTP URLs are not supported. Please use HTTPS or enter a domain name."))
@@ -367,15 +370,15 @@ class FeedsFragment : AppFragment() {
                 return@launch
             }
 
-            addFeed(parsedUrl)
+            addFeed(parsedUrl, categoryId)
         }
     }
 
-    private suspend fun addFeed(url: HttpUrl) {
+    private suspend fun addFeed(url: HttpUrl, categoryId: Long?) {
         val prevState = state.value
         state.update { State.Loading }
         try {
-            val res = api().addFeed(url)
+            val res = api().addFeed(url, categoryId)
             withContext(Dispatchers.IO) {
                 db().transaction {
                     db().feed.insertOrReplace(res.feed)
@@ -549,9 +552,94 @@ class FeedsFragment : AppFragment() {
         val url = requireArguments().getString("url", "")
 
         if (url.isNotBlank()) {
-            addFeed(url)
+            addFeed(url, null)
             requireArguments().clear()
         }
+    }
+
+    /**
+     * Show the "add feed" dialog. In Miniflux mode the user is forced to
+     * pick a category — the server side assigns every feed to a category
+     * and the picker is wired to a live `GET /v1/categories` request so the
+     * list reflects the current state on the server. The OK button is
+     * disabled until a category is selected. In embedded mode the category
+     * dropdown is hidden and the dialog falls back to the URL-only flow.
+     */
+    private fun showAddFeedDialog() {
+        val isMiniflux = db().conf.select().backend == ConfTable.Backend.Miniflux
+
+        var selectedCategoryId: Long? = null
+
+        val dialog = MaterialAlertDialogBuilder(requireContext())
+            .setTitle(getString(R.string.add_feed))
+            .setView(R.layout.dialog_add_feed)
+            .setPositiveButton(R.string.add) { dialogInterface, _ ->
+                onAddClick(dialogInterface, selectedCategoryId)
+            }
+            .setNegativeButton(R.string.cancel, null)
+            .show()
+
+        val urlView = dialog.findViewById<EditText>(R.id.url)!!
+        val categoryLayout = dialog.findViewById<TextInputLayout>(R.id.categoryLayout)!!
+        val categoryView = dialog.findViewById<MaterialAutoCompleteTextView>(R.id.category)!!
+        val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+
+        if (isMiniflux) {
+            positiveButton.isEnabled = false
+            categoryLayout.isEnabled = false
+            categoryLayout.helperText = getString(R.string.loading_categories)
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                try {
+                    val miniflux = api() as? Miniflux
+                    if (miniflux == null) {
+                        showErrorDialog(Exception("Miniflux backend expected but was not active"))
+                        dialog.dismiss()
+                        return@launch
+                    }
+                    val categories = withContext(Dispatchers.IO) { miniflux.getCategories() }
+                    if (categories.isEmpty()) {
+                        showErrorDialog(R.string.no_categories_available)
+                        dialog.dismiss()
+                        return@launch
+                    }
+                    val names = categories.map { it.title }.toTypedArray()
+                    val adapter = ArrayAdapter(
+                        requireContext(),
+                        android.R.layout.simple_list_item_1,
+                        names,
+                    )
+                    categoryView.setAdapter(adapter)
+                    categoryLayout.helperText = null
+                    categoryLayout.isEnabled = true
+                    categoryView.setOnItemClickListener { _, _, position, _ ->
+                        selectedCategoryId = categories[position].id
+                        positiveButton.isEnabled = true
+                    }
+                } catch (e: Throwable) {
+                    showErrorDialog(e)
+                    dialog.dismiss()
+                }
+            }
+        } else {
+            categoryLayout.visibility = View.GONE
+        }
+
+        urlView.setOnEditorActionListener { _, actionId, keyEvent ->
+            if (actionId == EditorInfo.IME_ACTION_DONE || keyEvent?.keyCode == KeyEvent.KEYCODE_ENTER) {
+                if (isMiniflux && selectedCategoryId == null) {
+                    return@setOnEditorActionListener true
+                }
+                dialog.dismiss()
+                addFeed(urlView.text.toString(), if (isMiniflux) selectedCategoryId else null)
+                return@setOnEditorActionListener true
+            }
+
+            false
+        }
+
+        urlView.requestFocus()
+        urlView.postDelayed({ showKeyboard(urlView) }, 300)
     }
 
     private fun openTagsManager() {
@@ -561,10 +649,10 @@ class FeedsFragment : AppFragment() {
         }
     }
 
-    private fun onAddClick(dialogInterface: DialogInterface) {
+    private fun onAddClick(dialogInterface: DialogInterface, categoryId: Long?) {
         val url =
             (dialogInterface as AlertDialog).findViewById<TextInputEditText>(R.id.url)?.text.toString()
-        addFeed(url)
+        addFeed(url, categoryId)
     }
 
     private fun onRenameClick(feedId: String, dialogInterface: DialogInterface) {

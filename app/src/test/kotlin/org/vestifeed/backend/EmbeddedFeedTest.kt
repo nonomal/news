@@ -60,8 +60,8 @@ class EmbeddedFeedTest {
 
         val api = Embedded(db = db, httpClient = httpClient)
 
-        val resultOne = api.addFeed(feedOneUrl)
-        val resultTwo = api.addFeed(feedTwoUrl)
+        val resultOne = api.addFeed(feedOneUrl, null)
+        val resultTwo = api.addFeed(feedTwoUrl, null)
 
         assertEquals("https://example.com/one", resultOne.feed.id)
         assertEquals("Example Feed One", resultOne.feed.title)
@@ -178,7 +178,7 @@ class EmbeddedFeedTest {
         )
 
         val api = Embedded(db = db, httpClient = httpClient)
-        val result = api.addFeed(url)
+        val result = api.addFeed(url, null)
 
         db.transaction {
             db.feed.insertOrReplace(result.feed)

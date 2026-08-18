@@ -4,7 +4,12 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.vestifeed.db.Database
@@ -64,7 +69,7 @@ class MinifluxTest {
             baseUrl = "http://localhost".toHttpUrl(),
             db = db,
         ) {
-            override suspend fun addFeed(url: okhttp3.HttpUrl): Backend.AddFeedResult =
+            override suspend fun addFeed(url: okhttp3.HttpUrl, categoryId: Long?): Backend.AddFeedResult =
                 throw NotImplementedError()
 
             override suspend fun updateFeedTitle(feedId: String, newTitle: String): Result<Unit> =
@@ -139,7 +144,7 @@ class MinifluxTest {
             baseUrl = "http://localhost".toHttpUrl(),
             db = db,
         ) {
-            override suspend fun addFeed(url: okhttp3.HttpUrl): Backend.AddFeedResult =
+            override suspend fun addFeed(url: okhttp3.HttpUrl, categoryId: Long?): Backend.AddFeedResult =
                 throw NotImplementedError()
 
             override suspend fun updateFeedTitle(feedId: String, newTitle: String): Result<Unit> =
@@ -226,7 +231,7 @@ class MinifluxTest {
             baseUrl = "http://localhost".toHttpUrl(),
             db = db,
         ) {
-            override suspend fun addFeed(url: okhttp3.HttpUrl): Backend.AddFeedResult =
+            override suspend fun addFeed(url: okhttp3.HttpUrl, categoryId: Long?): Backend.AddFeedResult =
                 throw NotImplementedError()
 
             override suspend fun updateFeedTitle(feedId: String, newTitle: String): Result<Unit> =
@@ -282,5 +287,194 @@ class MinifluxTest {
         }
         assertEquals(1, db.tag.selectAll().size)
         assertEquals(42L, db.tag.selectAll().single().extMinifluxId)
+    }
+
+    @Test
+    fun addFeedSendsCategoryIdWhenProvided() {
+        val server = MockWebServer().apply { start() }
+        try {
+            // POST /v1/feeds -> 201 with feed_id
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(201)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""{"feed_id": 42}""")
+            )
+            // GET /v1/feeds/42 -> 200 with the feed metadata
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                        """
+                        {
+                          "id": 42,
+                          "title": "Test Feed",
+                          "feed_url": "https://example.com/feed.xml",
+                          "site_url": "https://example.com/",
+                          "category": null
+                        }
+                        """.trimIndent()
+                    )
+            )
+
+            val api = Miniflux(
+                client = OkHttpClient(),
+                baseUrl = server.url("/v1/"),
+                db = db,
+            )
+
+            runBlocking { api.addFeed("https://example.com/feed.xml".toHttpUrl(), categoryId = 7L) }
+
+            val createRequest = server.takeRequest()
+            assertEquals("POST", createRequest.method)
+            assertEquals("/v1/feeds", createRequest.path)
+            val body = createRequest.body.readUtf8()
+            assertTrue(
+                "Expected request body to include category_id, got: $body",
+                body.contains("\"category_id\":7"),
+            )
+            assertTrue(
+                "Expected request body to include feed_url, got: $body",
+                body.contains("\"feed_url\":\"https://example.com/feed.xml\""),
+            )
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun addFeedOmitsCategoryIdWhenNull() {
+        val server = MockWebServer().apply { start() }
+        try {
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(201)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""{"feed_id": 42}""")
+            )
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                        """
+                        {
+                          "id": 42,
+                          "title": "Test Feed",
+                          "feed_url": "https://example.com/feed.xml",
+                          "site_url": "https://example.com/",
+                          "category": null
+                        }
+                        """.trimIndent()
+                    )
+            )
+
+            val api = Miniflux(
+                client = OkHttpClient(),
+                baseUrl = server.url("/v1/"),
+                db = db,
+            )
+
+            runBlocking { api.addFeed("https://example.com/feed.xml".toHttpUrl(), categoryId = null) }
+
+            val createRequest = server.takeRequest()
+            assertEquals("POST", createRequest.method)
+            assertEquals("/v1/feeds", createRequest.path)
+            val body = createRequest.body.readUtf8()
+            assertFalse(
+                "Expected request body to omit category_id when null, got: $body",
+                body.contains("category_id"),
+            )
+            assertTrue(
+                "Expected request body to include feed_url, got: $body",
+                body.contains("\"feed_url\":\"https://example.com/feed.xml\""),
+            )
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun findOrCreateCategoryReturnsExistingWhenPresent() {
+        val server = MockWebServer().apply { start() }
+        try {
+            // GET /v1/categories -> 200 with one matching category
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody(
+                        """
+                        [
+                          {"id": 42, "title": "Tech"},
+                          {"id": 99, "title": "OPML Import 2026-08-18"}
+                        ]
+                        """.trimIndent()
+                    )
+            )
+            // createCategory should NOT be called. If it is, MockWebServer will
+            // fail the test when it has no more queued responses.
+
+            val api = Miniflux(
+                client = OkHttpClient(),
+                baseUrl = server.url("/v1/"),
+                db = db,
+            )
+
+            val result = runBlocking { api.findOrCreateCategory("OPML Import 2026-08-18") }
+
+            assertEquals(Miniflux.MinifluxCategory(id = 99L, title = "OPML Import 2026-08-18"), result)
+            assertEquals(1, server.requestCount)
+            val listRequest = server.takeRequest()
+            assertEquals("GET", listRequest.method)
+            assertEquals("/v1/categories", listRequest.path)
+        } finally {
+            server.shutdown()
+        }
+    }
+
+    @Test
+    fun findOrCreateCategoryCreatesWhenAbsent() {
+        val server = MockWebServer().apply { start() }
+        try {
+            // GET /v1/categories -> 200 with no matching category
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(200)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""[{"id": 42, "title": "Tech"}]""")
+            )
+            // POST /v1/categories -> 201 with the new category
+            server.enqueue(
+                MockResponse()
+                    .setResponseCode(201)
+                    .setHeader("Content-Type", "application/json")
+                    .setBody("""{"id": 7, "title": "OPML Import 2026-08-18"}""")
+            )
+
+            val api = Miniflux(
+                client = OkHttpClient(),
+                baseUrl = server.url("/v1/"),
+                db = db,
+            )
+
+            val result = runBlocking { api.findOrCreateCategory("OPML Import 2026-08-18") }
+
+            assertEquals(Miniflux.MinifluxCategory(id = 7L, title = "OPML Import 2026-08-18"), result)
+            val listRequest = server.takeRequest()
+            assertEquals("GET", listRequest.method)
+            assertEquals("/v1/categories", listRequest.path)
+            val createRequest = server.takeRequest()
+            assertEquals("POST", createRequest.method)
+            assertEquals("/v1/categories", createRequest.path)
+            val body = createRequest.body.readUtf8()
+            assertTrue(
+                "Expected POST body to include the requested title, got: $body",
+                body.contains("\"title\":\"OPML Import 2026-08-18\""),
+            )
+        } finally {
+            server.shutdown()
+        }
     }
 }

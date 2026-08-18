@@ -196,7 +196,7 @@ class OpmlTest {
 
             document.leafOutlines().forEach { leaf ->
                 val mockUrl = mockUrlByOriginal[leaf.xmlUrl!!]!!
-                val result = runBlocking { api.addFeed(mockUrl) }
+                val result = runBlocking { api.addFeed(mockUrl, null) }
                 db.transaction {
                     db.feed.insertOrReplace(result.feed)
                     db.link.insertForFeed(result.feed.id, result.feedLinks)
@@ -312,7 +312,7 @@ class OpmlTest {
                     .setBody(body)
             )
 
-            val result = runBlocking { api.addFeed(mockUrl) }
+            val result = runBlocking { api.addFeed(mockUrl, null) }
             db.transaction {
                 db.feed.insertOrReplace(result.feed)
                 db.link.insertForFeed(result.feed.id, result.feedLinks)

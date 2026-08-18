@@ -22,7 +22,7 @@ class Embedded(
 
     private val fetcher = EmbeddedFeedFetcher(db, httpClient)
 
-    override suspend fun addFeed(url: HttpUrl): AddFeedResult {
+    override suspend fun addFeed(url: HttpUrl, categoryId: Long?): AddFeedResult {
         val request = Request.Builder().url(url).build()
 
         runCatching {
@@ -58,9 +58,9 @@ class Embedded(
                 val absolute = !href.startsWith("/")
 
                 return if (absolute) {
-                    addFeed(href.toHttpUrl())
+                    addFeed(href.toHttpUrl(), categoryId)
                 } else {
-                    addFeed("$url$href".toHttpUrl())
+                    addFeed("$url$href".toHttpUrl(), categoryId)
                 }
             } else {
                 val result = runCatching {

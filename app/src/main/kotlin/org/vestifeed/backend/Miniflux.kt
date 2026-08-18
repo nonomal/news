@@ -92,9 +92,14 @@ open class Miniflux(
         }
     }
 
-    override suspend fun addFeed(url: HttpUrl): AddFeedResult {
+    override suspend fun addFeed(url: HttpUrl, categoryId: Long?): AddFeedResult {
         // https://miniflux.app/docs/api.html#endpoint-create-feed
-        val args = JsonObject().apply { add("feed_url", JsonPrimitive(url.toString())) }
+        val args = JsonObject().apply {
+            add("feed_url", JsonPrimitive(url.toString()))
+            if (categoryId != null) {
+                add("category_id", JsonPrimitive(categoryId))
+            }
+        }
         val req = Request.Builder().url(baseUrl.newBuilder().addPathSegment("feeds").build())
             .post(args.toString().toRequestBody(JSON)).build()
         val res = client.newCall(req).executeAsync()
@@ -281,6 +286,12 @@ open class Miniflux(
         } else {
             throw IOException("unexpected response code ${res.code}")
         }
+    }
+
+    open suspend fun findOrCreateCategory(title: String): MinifluxCategory {
+        val existing = getCategories().firstOrNull { it.title == title }
+        if (existing != null) return existing
+        return createCategory(title)
     }
 
     open suspend fun updateCategory(id: Long, title: String): MinifluxCategory {

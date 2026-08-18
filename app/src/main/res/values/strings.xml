@@ -70,7 +70,6 @@
     <string name="no_feeds_in_tag">No feeds in this tag</string>
     <string name="remove_from_tag">Remove from tag</string>
     <string name="cannot_find_tag_with_id_s">Can not find tag with id %1$s</string>
-    <string name="add_to_tag">Add to tag</string>
     <string name="fetch_news_on_startup">Fetch news on startup</string>
     <string name="open_entries_in_browser">Open entries in browser</string>
     <string name="removed_from_bookmarks">Removed from bookmarks</string>

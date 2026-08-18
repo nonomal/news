@@ -433,7 +433,7 @@ class FeedsFragment : AppFragment() {
                 }
                 val tagNames = tags.map { it.name }.toTypedArray()
                 MaterialAlertDialogBuilder(requireContext())
-                    .setTitle(R.string.add_to_tag)
+                    .setTitle(R.string.manage_tags)
                     .setMultiChoiceItems(tagNames, checked) { _, which, isChecked ->
                         checked[which] = isChecked
                     }

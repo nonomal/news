@@ -129,7 +129,7 @@
     <string name="tags_n">Tags (%1$d)</string>
     <string name="tag">Tag</string>
     <string name="tag_title">Tag title</string>
-    <string name="manage_tags">Manage tags</string>
+    <string name="manage_tags">Gestionar etiquetas</string>
     <string name="add_tag">Add tag</string>
     <string name="rename_tag">Rename tag</string>
     <string name="you_have_no_tags">You have no tags</string>
@@ -144,5 +144,4 @@
         <item quantity="many">%d feeds</item>
         <item quantity="other">%d feeds</item>
     </plurals>
-    <string name="add_to_tag">Add to tag</string>
 </resources>

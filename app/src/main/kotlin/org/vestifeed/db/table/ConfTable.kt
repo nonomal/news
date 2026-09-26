@@ -5,6 +5,7 @@ import androidx.sqlite.SQLiteStatement
 import androidx.sqlite.execSQL
 import org.vestifeed.db.bindTextOrNull
 import org.vestifeed.db.getTextOrNull
+import org.vestifeed.db.transaction
 import kotlin.use
 
 class ConfTable(private val conn: SQLiteConnection) {
@@ -157,16 +158,10 @@ class ConfTable(private val conn: SQLiteConnection) {
     }
 
     fun update(newConf: (Conf) -> Conf) {
-        val oldConf = select()
-        val updatedConf = newConf(oldConf)
-        conn.execSQL("BEGIN TRANSACTION")
-        try {
+        conn.transaction {
+            val updatedConf = newConf(select())
             delete()
             insert(updatedConf)
-            conn.execSQL("COMMIT")
-        } catch (e: Exception) {
-            conn.execSQL("ROLLBACK")
-            throw e
         }
     }
 

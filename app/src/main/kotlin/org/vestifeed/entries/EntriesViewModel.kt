@@ -114,7 +114,7 @@ class EntriesViewModel(
         val conf = withContext(Dispatchers.IO) { db.conf.select() }
 
         val items = rows.map { EntryRowMapper.toItem(it, conf, now, resources) }
-        val title = filter.resolveTitle(db)
+        val title = withContext(Dispatchers.IO) { filter.resolveTitle(db) }
         val itemsState = when {
             items.isNotEmpty() -> ItemsState.Showing(items)
             // Don't surface the empty-state message while a sync is in

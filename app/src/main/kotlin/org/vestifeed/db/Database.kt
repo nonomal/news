@@ -15,7 +15,7 @@ class Database(driver: SQLiteDriver, val path: String) {
         const val NAME = "vesti.db"
     }
 
-    private val conn = driver.open(path)
+    private val conn = LockingSQLiteConnection(driver.open(path))
 
     val feed = FeedTable(conn)
     val entry = EntryTable(conn)
@@ -30,8 +30,9 @@ class Database(driver: SQLiteDriver, val path: String) {
     }
 
     private fun migrate() {
-        val stmt = conn.prepare("SELECT user_version FROM pragma_user_version;")
-        var version = if (stmt.step()) stmt.getInt(0) else 0
+        var version = conn.prepare("SELECT user_version FROM pragma_user_version;").use { stmt ->
+            if (stmt.step()) stmt.getInt(0) else 0
+        }
 
         if (version == 0) {
             conn.execSQL(FeedTable.SCHEMA)
@@ -96,13 +97,6 @@ class Database(driver: SQLiteDriver, val path: String) {
     }
 
     fun transaction(block: () -> Unit) {
-        conn.execSQL("BEGIN TRANSACTION;")
-        try {
-            block()
-            conn.execSQL("COMMIT;")
-        } catch (e: Exception) {
-            conn.execSQL("ROLLBACK;")
-            throw e
-        }
+        conn.transaction(block)
     }
 }
